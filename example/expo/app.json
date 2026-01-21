@@ -30,6 +30,12 @@
           "iosGoogleMapsApiKey": "AIzaSyBeaou3cjmq_BED6HlTRdg5fSyArUCzoTM",
           "androidGoogleMapsApiKey": "AIzaSyBeaou3cjmq_BED6HlTRdg5fSyArUCzoTM"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Show current location on map"
+        }
       ]
     ]
   }

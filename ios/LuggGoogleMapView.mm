@@ -159,6 +159,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.settings.scrollGestures = viewProps.scrollEnabled;
   _mapView.settings.rotateGestures = viewProps.rotateEnabled;
   _mapView.settings.tiltGestures = viewProps.pitchEnabled;
+  _mapView.myLocationEnabled = viewProps.userLocationEnabled;
 
   if (viewProps.minZoom > 0) {
     [_mapView setMinZoom:(float)viewProps.minZoom maxZoom:_mapView.maxZoom];
@@ -363,6 +364,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _mapView.settings.scrollGestures = newViewProps.scrollEnabled;
     _mapView.settings.rotateGestures = newViewProps.rotateEnabled;
     _mapView.settings.tiltGestures = newViewProps.pitchEnabled;
+    _mapView.myLocationEnabled = newViewProps.userLocationEnabled;
     _mapView.padding = UIEdgeInsetsMake(
         newViewProps.padding.top, newViewProps.padding.left,
         newViewProps.padding.bottom, newViewProps.padding.right);

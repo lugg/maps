@@ -47,6 +47,7 @@ export interface NativeProps extends ViewProps {
   rotateEnabled?: boolean;
   pitchEnabled?: boolean;
   padding?: EdgeInsets;
+  userLocationEnabled?: boolean;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
   onCameraIdle?: DirectEventHandler<CameraIdleEvent>;
   onReady?: DirectEventHandler<ReadyEvent>;

@@ -3338,6 +3338,7 @@ __metadata:
     "@types/react": "npm:~19.1.0"
     babel-preset-expo: "npm:~13.2.0"
     expo: "npm:~54.0.0"
+    expo-location: "npm:~18.1.0"
     expo-status-bar: "npm:~3.0.0"
     react: "npm:19.1.0"
     react-native: "npm:0.81.5"
@@ -7575,6 +7576,15 @@ __metadata:
     expo: "*"
     react: "*"
   checksum: 10c0/23064b18285498e70be0aa525dc875cc809fc723b9a101d51e4721a09b1460eb041c73ebeb6d51e9175bb4c9b7a668bc08a48b99ebddac4cfaadb5a47194d329
+  languageName: node
+  linkType: hard
+
+"expo-location@npm:~18.1.0":
+  version: 18.1.6
+  resolution: "expo-location@npm:18.1.6"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/94ae7ae5ca144f2cd327fc26f76355783e81b5454b6328a5d127511251e1b09ff04e70084f314dff825a91211338fb801434c6680af2901539ceb11c949af8d9
   languageName: node
   linkType: hard
 

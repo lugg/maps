@@ -103,6 +103,11 @@ class LuggGoogleMapViewManager :
     view.setPitchEnabled(value)
   }
 
+  @ReactProp(name = "userLocationEnabled", defaultBoolean = false)
+  override fun setUserLocationEnabled(view: LuggGoogleMapView, value: Boolean) {
+    view.setUserLocationEnabled(value)
+  }
+
   @ReactProp(name = "minZoom")
   override fun setMinZoom(view: LuggGoogleMapView, value: Double) {
     view.setMinZoom(value)

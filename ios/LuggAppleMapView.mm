@@ -155,6 +155,7 @@ using namespace luggmaps::events;
   _mapView.scrollEnabled = viewProps.scrollEnabled;
   _mapView.rotateEnabled = viewProps.rotateEnabled;
   _mapView.pitchEnabled = viewProps.pitchEnabled;
+  _mapView.showsUserLocation = viewProps.userLocationEnabled;
 
   _minZoom = viewProps.minZoom;
   _maxZoom = viewProps.maxZoom;
@@ -208,8 +209,8 @@ using namespace luggmaps::events;
   CLLocationDistance minDistance = _maxZoom > 0 ? [self cameraDistanceForZoomLevel:_maxZoom] : 0;
   CLLocationDistance maxDistance = _minZoom > 0 ? [self cameraDistanceForZoomLevel:_minZoom] : -1;
 
-  MKMapViewCameraZoomRange *zoomRange =
-      [[MKMapViewCameraZoomRange alloc] initWithMinCenterCoordinateDistance:minDistance
+  MKMapCameraZoomRange *zoomRange =
+      [[MKMapCameraZoomRange alloc] initWithMinCenterCoordinateDistance:minDistance
                                               maxCenterCoordinateDistance:maxDistance];
   _mapView.cameraZoomRange = zoomRange;
 }
@@ -230,6 +231,7 @@ using namespace luggmaps::events;
     _mapView.scrollEnabled = newViewProps.scrollEnabled;
     _mapView.rotateEnabled = newViewProps.rotateEnabled;
     _mapView.pitchEnabled = newViewProps.pitchEnabled;
+    _mapView.showsUserLocation = newViewProps.userLocationEnabled;
     _mapView.layoutMargins = UIEdgeInsetsMake(
         newViewProps.padding.top, newViewProps.padding.left,
         newViewProps.padding.bottom, newViewProps.padding.right);

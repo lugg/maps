@@ -25,11 +25,13 @@ import {
   MARKER_TYPES,
   INITIAL_MARKERS,
 } from './markers';
+import { useLocationPermission } from './useLocationPermission';
 
 export function Home() {
   const mapRef = useRef<MapView>(null);
   const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
+  const locationPermission = useLocationPermission();
   const [provider, setProvider] = useState<MapProvider>('google');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
@@ -115,6 +117,7 @@ export function Home() {
           provider={provider}
           markers={markers}
           padding={mapPadding}
+          userLocationEnabled={locationPermission}
           onReady={handleMapReady}
           onCameraMove={handleCameraMove}
           onCameraIdle={handleCameraIdle}

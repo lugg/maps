@@ -69,6 +69,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   private var scrollEnabled: Boolean = true
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
+  private var userLocationEnabled: Boolean = false
 
   // Zoom limits
   private var minZoom: Float? = null
@@ -169,6 +170,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     applyUiSettings()
     applyZoomLimits()
     applyPadding()
+    applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
 
@@ -210,6 +212,13 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   private fun applyPadding() {
     googleMap?.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun applyUserLocation() {
+    val hasPermission = context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+      context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    googleMap?.isMyLocationEnabled = userLocationEnabled && hasPermission
   }
 
   // endregion
@@ -409,6 +418,11 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   fun setPitchEnabled(enabled: Boolean) {
     pitchEnabled = enabled
     googleMap?.uiSettings?.isTiltGesturesEnabled = enabled
+  }
+
+  fun setUserLocationEnabled(enabled: Boolean) {
+    userLocationEnabled = enabled
+    applyUserLocation()
   }
 
   fun setMinZoom(zoom: Double) {

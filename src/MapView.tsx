@@ -79,6 +79,7 @@ export class MapView
       rotateEnabled,
       pitchEnabled,
       padding,
+      userLocationEnabled,
       onCameraMove,
       onCameraIdle,
       onReady,
@@ -105,6 +106,7 @@ export class MapView
         rotateEnabled={rotateEnabled}
         pitchEnabled={pitchEnabled}
         padding={padding}
+        userLocationEnabled={userLocationEnabled}
         onCameraMove={onCameraMove}
         onCameraIdle={onCameraIdle}
         onReady={onReady}

@@ -96,6 +96,12 @@ export interface MapViewProps extends ViewProps {
    */
   padding?: EdgeInsets;
   /**
+   * Show current user location on the map.
+   * Requires location permission to be granted, otherwise silently ignored.
+   * @default false
+   */
+  userLocationEnabled?: boolean;
+  /**
    * Called when camera moves
    */
   onCameraMove?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
