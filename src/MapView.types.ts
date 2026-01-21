@@ -64,6 +64,14 @@ export interface MapViewProps extends ViewProps {
    */
   initialZoom?: number;
   /**
+   * Minimum zoom level
+   */
+  minZoom?: number;
+  /**
+   * Maximum zoom level
+   */
+  maxZoom?: number;
+  /**
    * Enable zoom gestures
    * @default true
    */

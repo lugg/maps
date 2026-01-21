@@ -40,6 +40,8 @@ export interface ReadyEvent {}
 export interface NativeProps extends ViewProps {
   initialCoordinate?: Coordinate;
   initialZoom?: Double;
+  minZoom?: Double;
+  maxZoom?: Double;
   zoomEnabled?: boolean;
   scrollEnabled?: boolean;
   rotateEnabled?: boolean;

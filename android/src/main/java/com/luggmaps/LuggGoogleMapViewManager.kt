@@ -103,6 +103,16 @@ class LuggGoogleMapViewManager :
     view.setPitchEnabled(value)
   }
 
+  @ReactProp(name = "minZoom")
+  override fun setMinZoom(view: LuggGoogleMapView, value: Double) {
+    view.setMinZoom(value)
+  }
+
+  @ReactProp(name = "maxZoom")
+  override fun setMaxZoom(view: LuggGoogleMapView, value: Double) {
+    view.setMaxZoom(value)
+  }
+
   @ReactProp(name = "padding")
   override fun setPadding(view: LuggGoogleMapView, value: ReadableMap?) {
     value?.let {

@@ -41,6 +41,8 @@ export interface NativeProps extends ViewProps {
   mapId?: string;
   initialCoordinate?: Coordinate;
   initialZoom?: Double;
+  minZoom?: Double;
+  maxZoom?: Double;
   zoomEnabled?: boolean;
   scrollEnabled?: boolean;
   rotateEnabled?: boolean;

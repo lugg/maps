@@ -42,6 +42,8 @@ using namespace luggmaps::events;
   LuggMapWrapperView *_mapWrapperView;
   BOOL _isMapReady;
   BOOL _isDragging;
+  double _minZoom;
+  double _maxZoom;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -154,6 +156,10 @@ using namespace luggmaps::events;
   _mapView.rotateEnabled = viewProps.rotateEnabled;
   _mapView.pitchEnabled = viewProps.pitchEnabled;
 
+  _minZoom = viewProps.minZoom;
+  _maxZoom = viewProps.maxZoom;
+  [self applyZoomRange];
+
   [_mapWrapperView addSubview:_mapView];
 
   [self setCameraWithLatitude:viewProps.initialCoordinate.latitude
@@ -190,6 +196,24 @@ using namespace luggmaps::events;
   [_mapView setCenterCoordinate:center zoomLevel:zoom animated:animated];
 }
 
+- (CLLocationDistance)cameraDistanceForZoomLevel:(double)zoomLevel {
+  // Approximate conversion: at zoom 0, altitude ~128M km
+  // Each zoom level halves the altitude
+  return 128000000.0 / pow(2, zoomLevel);
+}
+
+- (void)applyZoomRange {
+  if (!_mapView) return;
+
+  CLLocationDistance minDistance = _maxZoom > 0 ? [self cameraDistanceForZoomLevel:_maxZoom] : 0;
+  CLLocationDistance maxDistance = _minZoom > 0 ? [self cameraDistanceForZoomLevel:_minZoom] : -1;
+
+  MKMapViewCameraZoomRange *zoomRange =
+      [[MKMapViewCameraZoomRange alloc] initWithMinCenterCoordinateDistance:minDistance
+                                              maxCenterCoordinateDistance:maxDistance];
+  _mapView.cameraZoomRange = zoomRange;
+}
+
 - (MKMapView *)mapView {
   return _mapView;
 }
@@ -209,6 +233,10 @@ using namespace luggmaps::events;
     _mapView.layoutMargins = UIEdgeInsetsMake(
         newViewProps.padding.top, newViewProps.padding.left,
         newViewProps.padding.bottom, newViewProps.padding.right);
+
+    _minZoom = newViewProps.minZoom;
+    _maxZoom = newViewProps.maxZoom;
+    [self applyZoomRange];
   }
 
   [super updateProps:props oldProps:oldProps];

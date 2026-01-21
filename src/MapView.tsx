@@ -72,6 +72,8 @@ export class MapView
       mapId,
       initialCoordinate,
       initialZoom,
+      minZoom,
+      maxZoom,
       zoomEnabled,
       scrollEnabled,
       rotateEnabled,
@@ -96,6 +98,8 @@ export class MapView
         mapId={mapId}
         initialCoordinate={initialCoordinate}
         initialZoom={initialZoom}
+        minZoom={minZoom}
+        maxZoom={maxZoom}
         zoomEnabled={zoomEnabled}
         scrollEnabled={scrollEnabled}
         rotateEnabled={rotateEnabled}

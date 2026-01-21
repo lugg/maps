@@ -70,6 +70,10 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
 
+  // Zoom limits
+  private var minZoom: Float? = null
+  private var maxZoom: Float? = null
+
   // Padding
   private var paddingTop: Int = 0
   private var paddingLeft: Int = 0
@@ -163,6 +167,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     map.setOnCameraIdleListener(this)
 
     applyUiSettings()
+    applyZoomLimits()
     applyPadding()
     processPendingMarkers()
     processPendingPolylines()
@@ -193,6 +198,13 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       isScrollGesturesEnabled = scrollEnabled
       isRotateGesturesEnabled = rotateEnabled
       isTiltGesturesEnabled = pitchEnabled
+    }
+  }
+
+  private fun applyZoomLimits() {
+    googleMap?.apply {
+      minZoom?.let { setMinZoomPreference(it) }
+      maxZoom?.let { setMaxZoomPreference(it) }
     }
   }
 
@@ -397,6 +409,20 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   fun setPitchEnabled(enabled: Boolean) {
     pitchEnabled = enabled
     googleMap?.uiSettings?.isTiltGesturesEnabled = enabled
+  }
+
+  fun setMinZoom(zoom: Double) {
+    minZoom = if (zoom > 0) zoom.toFloat() else null
+    googleMap?.let { map ->
+      minZoom?.let { map.setMinZoomPreference(it) } ?: map.resetMinMaxZoomPreference()
+    }
+  }
+
+  fun setMaxZoom(zoom: Double) {
+    maxZoom = if (zoom > 0) zoom.toFloat() else null
+    googleMap?.let { map ->
+      maxZoom?.let { map.setMaxZoomPreference(it) } ?: map.resetMinMaxZoomPreference()
+    }
   }
 
   fun setMapPadding(top: Int, left: Int, bottom: Int, right: Int) {
