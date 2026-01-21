@@ -168,9 +168,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     [_mapView setMinZoom:_mapView.minZoom maxZoom:(float)viewProps.maxZoom];
   }
 
-  _mapView.padding = UIEdgeInsetsMake(
-      viewProps.padding.top, viewProps.padding.left, viewProps.padding.bottom,
-      viewProps.padding.right);
+  _mapView.padding =
+      UIEdgeInsetsMake(viewProps.padding.top, viewProps.padding.left,
+                       viewProps.padding.bottom, viewProps.padding.right);
 
   [_mapWrapperView addSubview:_mapView];
 
@@ -429,7 +429,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   UIEdgeInsets edgePadding =
       UIEdgeInsetsMake(paddingTop, paddingLeft, paddingBottom, paddingRight);
   GMSCameraUpdate *cameraUpdate = [GMSCameraUpdate fitBounds:bounds
-                                                 withEdgeInsets:edgePadding];
+                                              withEdgeInsets:edgePadding];
 
   if (duration < 0) {
     [_mapView animateWithCameraUpdate:cameraUpdate];
