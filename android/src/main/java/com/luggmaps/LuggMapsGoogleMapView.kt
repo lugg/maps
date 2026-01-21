@@ -28,7 +28,7 @@ interface LuggMapsGoogleMapViewEventDelegate {
     zoom: Float,
     dragging: Boolean
   )
-  fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float)
+  fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, dragging: Boolean)
 }
 
 @SuppressLint("ViewConstructor")
@@ -174,8 +174,8 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
   override fun onCameraIdle() {
     val map = googleMap ?: return
     val position = map.cameraPosition
+    eventDelegate?.onCameraIdle(this, position.target.latitude, position.target.longitude, position.zoom, isDragging)
     isDragging = false
-    eventDelegate?.onCameraIdle(this, position.target.latitude, position.target.longitude, position.zoom)
   }
 
   private fun applyUiSettings() {

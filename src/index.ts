@@ -5,8 +5,7 @@ export type {
   MapViewProps,
   MapViewRef,
   MoveCameraOptions,
-  CameraMoveEvent,
-  CameraIdleEvent,
+  CameraEventPayload,
 } from './MapView.types';
 export type { MarkerProps } from './Marker.types';
 export type { PolylineProps } from './Polyline.types';

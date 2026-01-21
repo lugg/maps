@@ -192,13 +192,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)mapView:(GMSMapView *)mapView
     idleAtCameraPosition:(GMSCameraPosition *)position {
+  BOOL wasDragging = _isDragging;
   _isDragging = NO;
   if (_eventEmitter) {
     auto emitter =
         std::static_pointer_cast<LuggMapsGoogleMapViewEventEmitter const>(
             _eventEmitter);
     CameraIdleEvent{position.target.latitude, position.target.longitude,
-                    position.zoom}
+                    position.zoom, static_cast<bool>(wasDragging)}
         .emit(emitter);
   }
 }

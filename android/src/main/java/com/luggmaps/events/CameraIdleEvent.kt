@@ -3,8 +3,14 @@ package com.luggmaps.events
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.events.Event
 
-class CameraIdleEvent(surfaceId: Int, viewId: Int, private val latitude: Double, private val longitude: Double, private val zoom: Float) :
-  Event<CameraIdleEvent>(surfaceId, viewId) {
+class CameraIdleEvent(
+  surfaceId: Int,
+  viewId: Int,
+  private val latitude: Double,
+  private val longitude: Double,
+  private val zoom: Float,
+  private val dragging: Boolean
+) : Event<CameraIdleEvent>(surfaceId, viewId) {
   override fun getEventName() = "topCameraIdle"
 
   override fun getEventData() =
@@ -17,5 +23,6 @@ class CameraIdleEvent(surfaceId: Int, viewId: Int, private val latitude: Double,
         }
       )
       putDouble("zoom", zoom.toDouble())
+      putBoolean("dragging", dragging)
     }
 }

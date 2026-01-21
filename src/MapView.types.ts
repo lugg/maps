@@ -33,20 +33,12 @@ export interface MapViewRef {
 }
 
 /**
- * Camera move event data
+ * Camera event payload
  */
-export interface CameraMoveEvent {
+export interface CameraEventPayload {
   coordinate: Coordinate;
   zoom: number;
   dragging: boolean;
-}
-
-/**
- * Camera idle event data
- */
-export interface CameraIdleEvent {
-  coordinate: Coordinate;
-  zoom: number;
 }
 
 /**
@@ -98,11 +90,11 @@ export interface MapViewProps extends ViewProps {
   /**
    * Called when camera moves
    */
-  onCameraMove?: (event: NativeSyntheticEvent<CameraMoveEvent>) => void;
+  onCameraMove?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
   /**
    * Called when camera stops moving
    */
-  onCameraIdle?: (event: NativeSyntheticEvent<CameraIdleEvent>) => void;
+  onCameraIdle?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
   /**
    * Map children (markers, polylines, etc.)
    */

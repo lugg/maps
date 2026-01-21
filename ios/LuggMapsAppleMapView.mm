@@ -379,13 +379,15 @@ using namespace luggmaps::events;
 }
 
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
+  BOOL wasDragging = _isDragging;
   _isDragging = NO;
   if (_eventEmitter) {
     auto emitter =
         std::static_pointer_cast<LuggMapsAppleMapViewEventEmitter const>(
             _eventEmitter);
     CameraIdleEvent{mapView.centerCoordinate.latitude,
-                    mapView.centerCoordinate.longitude, mapView.zoomLevel}
+                    mapView.centerCoordinate.longitude, mapView.zoomLevel,
+                    static_cast<bool>(wasDragging)}
         .emit(emitter);
   }
 }
