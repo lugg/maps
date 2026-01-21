@@ -9,7 +9,7 @@ struct CameraIdleEvent {
   double latitude;
   double longitude;
   double zoom;
-  bool dragging;
+  bool gesture;
 
   template <typename Emitter>
   void emit(std::shared_ptr<Emitter const> emitter) const {
@@ -17,7 +17,7 @@ struct CameraIdleEvent {
     event.coordinate.latitude = latitude;
     event.coordinate.longitude = longitude;
     event.zoom = zoom;
-    event.dragging = dragging;
+    event.gesture = gesture;
     emitter->onCameraIdle(event);
   }
 };

@@ -9,7 +9,7 @@ class CameraIdleEvent(
   private val latitude: Double,
   private val longitude: Double,
   private val zoom: Float,
-  private val dragging: Boolean
+  private val gesture: Boolean
 ) : Event<CameraIdleEvent>(surfaceId, viewId) {
   override fun getEventName() = "topCameraIdle"
 
@@ -23,6 +23,6 @@ class CameraIdleEvent(
         }
       )
       putDouble("zoom", zoom.toDouble())
-      putBoolean("dragging", dragging)
+      putBoolean("gesture", gesture)
     }
 }

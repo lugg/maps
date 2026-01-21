@@ -43,21 +43,21 @@ class LuggMapsGoogleMapViewManager :
     latitude: Double,
     longitude: Double,
     zoom: Float,
-    dragging: Boolean
+    gesture: Boolean
   ) {
     val eventDispatcher = UIManagerHelper.getEventDispatcherForReactTag(
       view.context as ThemedReactContext,
       view.id
     )
-    eventDispatcher?.dispatchEvent(CameraMoveEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, dragging))
+    eventDispatcher?.dispatchEvent(CameraMoveEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, gesture))
   }
 
-  override fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, dragging: Boolean) {
+  override fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean) {
     val eventDispatcher = UIManagerHelper.getEventDispatcherForReactTag(
       view.context as ThemedReactContext,
       view.id
     )
-    eventDispatcher?.dispatchEvent(CameraIdleEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, dragging))
+    eventDispatcher?.dispatchEvent(CameraIdleEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, gesture))
   }
 
   @ReactProp(name = "mapId")

@@ -23,7 +23,7 @@ export interface CameraMoveEvent {
     longitude: Double;
   };
   zoom: Double;
-  dragging: boolean;
+  gesture: boolean;
 }
 
 export interface CameraIdleEvent {
@@ -32,7 +32,7 @@ export interface CameraIdleEvent {
     longitude: Double;
   };
   zoom: Double;
-  dragging: boolean;
+  gesture: boolean;
 }
 
 export interface NativeProps extends ViewProps {

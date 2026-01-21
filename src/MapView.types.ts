@@ -38,7 +38,7 @@ export interface MapViewRef {
 export interface CameraEventPayload {
   coordinate: Coordinate;
   zoom: number;
-  dragging: boolean;
+  gesture: boolean;
 }
 
 /**

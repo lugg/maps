@@ -26,9 +26,9 @@ interface LuggMapsGoogleMapViewEventDelegate {
     latitude: Double,
     longitude: Double,
     zoom: Float,
-    dragging: Boolean
+    gesture: Boolean
   )
-  fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, dragging: Boolean)
+  fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
 }
 
 @SuppressLint("ViewConstructor")

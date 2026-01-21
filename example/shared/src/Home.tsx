@@ -130,7 +130,7 @@ export function Home() {
             {cameraPosition.coordinate.latitude.toFixed(5)},{' '}
             {cameraPosition.coordinate.longitude.toFixed(5)} (z
             {cameraPosition.zoom.toFixed(1)})
-            {isIdle ? ' (idle)' : cameraPosition.dragging ? ' (dragging)' : ''}
+            {isIdle ? ' (idle)' : cameraPosition.gesture ? ' (gesture)' : ''}
           </Text>
         )}
         <View style={styles.sheetContent}>
