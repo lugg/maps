@@ -66,7 +66,10 @@ interface NativeCommands {
   fitCoordinates: (
     viewRef: React.ElementRef<ComponentType>,
     coordinates: Coordinate[],
-    padding: Double,
+    paddingTop: Double,
+    paddingLeft: Double,
+    paddingBottom: Double,
+    paddingRight: Double,
     duration: Double
   ) => void;
 }

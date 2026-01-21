@@ -35,9 +35,16 @@ export function Home() {
   const [provider, setProvider] = useState<MapProvider>('google');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
-  const [mapPadding, setMapPadding] = useState<EdgeInsets>();
+  const [sheetHeight, setSheetHeight] = useState(0);
   const [cameraPosition, setCameraPosition] = useState<CameraEventPayload>();
   const [isIdle, setIsIdle] = useState(true);
+
+  const mapPadding: EdgeInsets = {
+    top: 0,
+    left: 0,
+    bottom: sheetHeight,
+    right: 0,
+  };
 
   const handleCameraMove = useCallback(
     (event: { nativeEvent: CameraEventPayload }) => {
@@ -57,8 +64,7 @@ export function Home() {
 
   const handleSheetPresent = useCallback(
     (event: DidPresentEvent) => {
-      const sheetHeight = screenHeight - event.nativeEvent.position;
-      setMapPadding({ top: 0, left: 0, bottom: sheetHeight, right: 0 });
+      setSheetHeight(screenHeight - event.nativeEvent.position);
     },
     [screenHeight]
   );
@@ -106,7 +112,9 @@ export function Home() {
 
   const fitAllMarkers = () => {
     const coordinates = markers.map((m) => m.coordinate);
-    mapRef.current?.fitCoordinates(coordinates, { padding: 40 });
+    mapRef.current?.fitCoordinates(coordinates, {
+      padding: { top: 40, left: 40, bottom: sheetHeight + 40, right: 40 },
+    });
   };
 
   return (

@@ -466,7 +466,14 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     }
   }
 
-  fun fitCoordinates(coordinates: List<LatLng>, padding: Int, duration: Int) {
+  fun fitCoordinates(
+    coordinates: List<LatLng>,
+    paddingTop: Int,
+    paddingLeft: Int,
+    paddingBottom: Int,
+    paddingRight: Int,
+    duration: Int
+  ) {
     val map = googleMap ?: return
     if (coordinates.isEmpty()) return
 
@@ -474,12 +481,29 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     coordinates.forEach { boundsBuilder.include(it) }
     val bounds = boundsBuilder.build()
 
-    val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding.toFloat().dpToPx().toInt())
+    val top = paddingTop.toFloat().dpToPx().toInt()
+    val left = paddingLeft.toFloat().dpToPx().toInt()
+    val bottom = paddingBottom.toFloat().dpToPx().toInt()
+    val right = paddingRight.toFloat().dpToPx().toInt()
+
+    // Set padding before camera update, then restore after
+    map.setPadding(
+      this.paddingLeft + left,
+      this.paddingTop + top,
+      this.paddingRight + right,
+      this.paddingBottom + bottom
+    )
+
+    val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 0)
+
     when {
       duration < 0 -> map.animateCamera(cameraUpdate)
       duration > 0 -> map.animateCamera(cameraUpdate, duration, null)
       else -> map.moveCamera(cameraUpdate)
     }
+
+    // Restore base padding
+    map.setPadding(this.paddingLeft, this.paddingTop, this.paddingRight, this.paddingBottom)
   }
 
   // endregion

@@ -523,7 +523,10 @@ using namespace luggmaps::events;
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
-               padding:(double)padding
+            paddingTop:(double)paddingTop
+           paddingLeft:(double)paddingLeft
+         paddingBottom:(double)paddingBottom
+          paddingRight:(double)paddingRight
               duration:(double)duration {
   if (!_mapView || coordinates.count == 0) {
     return;
@@ -546,7 +549,7 @@ using namespace luggmaps::events;
   free(coords);
 
   UIEdgeInsets edgePadding =
-      UIEdgeInsetsMake(padding, padding, padding, padding);
+      UIEdgeInsetsMake(paddingTop, paddingLeft, paddingBottom, paddingRight);
 
   if (duration < 0) {
     [_mapView setVisibleMapRect:mapRect edgePadding:edgePadding animated:YES];

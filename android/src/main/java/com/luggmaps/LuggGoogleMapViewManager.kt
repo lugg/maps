@@ -144,7 +144,15 @@ class LuggGoogleMapViewManager :
     view.moveCamera(latitude, longitude, zoom, duration.toInt())
   }
 
-  override fun fitCoordinates(view: LuggGoogleMapView, coordinates: ReadableArray?, padding: Double, duration: Double) {
+  override fun fitCoordinates(
+    view: LuggGoogleMapView,
+    coordinates: ReadableArray?,
+    paddingTop: Double,
+    paddingLeft: Double,
+    paddingBottom: Double,
+    paddingRight: Double,
+    duration: Double
+  ) {
     val coords = mutableListOf<LatLng>()
     coordinates?.let {
       for (i in 0 until it.size()) {
@@ -154,7 +162,7 @@ class LuggGoogleMapViewManager :
         coords.add(LatLng(lat, lng))
       }
     }
-    view.fitCoordinates(coords, padding.toInt(), duration.toInt())
+    view.fitCoordinates(coords, paddingTop.toInt(), paddingLeft.toInt(), paddingBottom.toInt(), paddingRight.toInt(), duration.toInt())
   }
 
   companion object {

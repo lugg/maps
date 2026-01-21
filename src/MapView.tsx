@@ -55,7 +55,8 @@ export class MapView
     const first = coordinates[0];
     if (!ref || !first) return;
 
-    const { padding = 0, duration = -1 } = options ?? {};
+    const { padding, duration = -1 } = options ?? {};
+    const { top = 0, left = 0, bottom = 0, right = 0 } = padding ?? {};
 
     if (coordinates.length === 1) {
       const zoom = this.props.initialZoom ?? 10;
@@ -63,7 +64,15 @@ export class MapView
       return;
     }
 
-    this.nativeCommands.fitCoordinates(ref, coordinates, padding, duration);
+    this.nativeCommands.fitCoordinates(
+      ref,
+      coordinates,
+      top,
+      left,
+      bottom,
+      right,
+      duration
+    );
   }
 
   render() {

@@ -13,11 +13,10 @@ export interface MoveCameraOptions {
 
 /**
  * Options for fitting coordinates in view
- * @default padding 0
  * @default duration -1
  */
 export interface FitCoordinatesOptions {
-  padding?: number;
+  padding?: EdgeInsets;
   duration?: number;
 }
 
