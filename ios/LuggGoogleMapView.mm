@@ -168,6 +168,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     [_mapView setMinZoom:_mapView.minZoom maxZoom:(float)viewProps.maxZoom];
   }
 
+  _mapView.padding = UIEdgeInsetsMake(
+      viewProps.padding.top, viewProps.padding.left, viewProps.padding.bottom,
+      viewProps.padding.right);
+
   [_mapWrapperView addSubview:_mapView];
 
   _isMapReady = YES;

@@ -161,6 +161,10 @@ using namespace luggmaps::events;
   _maxZoom = viewProps.maxZoom;
   [self applyZoomRange];
 
+  _mapView.layoutMargins = UIEdgeInsetsMake(
+      viewProps.padding.top, viewProps.padding.left, viewProps.padding.bottom,
+      viewProps.padding.right);
+
   [_mapWrapperView addSubview:_mapView];
 
   [self setCameraWithLatitude:viewProps.initialCoordinate.latitude
