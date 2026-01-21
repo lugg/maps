@@ -5,7 +5,6 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.PixelUtil.dpToPx
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.ViewGroupManager
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.annotations.ReactProp
@@ -14,6 +13,8 @@ import com.facebook.react.viewmanagers.LuggGoogleMapViewManagerInterface
 import com.google.android.gms.maps.model.LatLng
 import com.luggmaps.events.CameraIdleEvent
 import com.luggmaps.events.CameraMoveEvent
+import com.luggmaps.events.ReadyEvent
+import com.luggmaps.extensions.dispatchEvent
 
 @ReactModule(name = LuggGoogleMapViewManager.NAME)
 class LuggGoogleMapViewManager :
@@ -35,7 +36,8 @@ class LuggGoogleMapViewManager :
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
     mapOf(
       "topCameraMove" to mapOf("registrationName" to "onCameraMove"),
-      "topCameraIdle" to mapOf("registrationName" to "onCameraIdle")
+      "topCameraIdle" to mapOf("registrationName" to "onCameraIdle"),
+      "topReady" to mapOf("registrationName" to "onReady")
     )
 
   override fun onCameraMove(
@@ -45,19 +47,21 @@ class LuggGoogleMapViewManager :
     zoom: Float,
     gesture: Boolean
   ) {
-    val eventDispatcher = UIManagerHelper.getEventDispatcherForReactTag(
-      view.context as ThemedReactContext,
-      view.id
-    )
-    eventDispatcher?.dispatchEvent(CameraMoveEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, gesture))
+    view.dispatchEvent(CameraMoveEvent(view, latitude, longitude, zoom, gesture))
   }
 
-  override fun onCameraIdle(view: LuggGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean) {
-    val eventDispatcher = UIManagerHelper.getEventDispatcherForReactTag(
-      view.context as ThemedReactContext,
-      view.id
-    )
-    eventDispatcher?.dispatchEvent(CameraIdleEvent(UIManagerHelper.getSurfaceId(view), view.id, latitude, longitude, zoom, gesture))
+  override fun onCameraIdle(
+    view: LuggGoogleMapView,
+    latitude: Double,
+    longitude: Double,
+    zoom: Float,
+    gesture: Boolean
+  ) {
+    view.dispatchEvent(CameraIdleEvent(view, latitude, longitude, zoom, gesture))
+  }
+
+  override fun onReady(view: LuggGoogleMapView) {
+    view.dispatchEvent(ReadyEvent(view))
   }
 
   @ReactProp(name = "mapId")

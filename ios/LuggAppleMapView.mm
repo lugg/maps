@@ -1,10 +1,11 @@
 #import "LuggAppleMapView.h"
+#import "LuggMapWrapperView.h"
 #import "LuggMarkerView.h"
 #import "LuggPolylineView.h"
-#import "LuggMapWrapperView.h"
 #import "core/MKPolylineAnimator.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
+#import "events/ReadyEvent.h"
 #import "extensions/MKMapView+Zoom.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
@@ -31,14 +32,15 @@ using namespace luggmaps::events;
 @implementation LuggAppleMapViewContent
 @end
 
-@interface LuggAppleMapView () <
-    RCTLuggAppleMapViewViewProtocol, MKMapViewDelegate,
-    LuggMarkerViewDelegate, LuggPolylineViewDelegate>
+@interface LuggAppleMapView () <RCTLuggAppleMapViewViewProtocol,
+                                MKMapViewDelegate, LuggMarkerViewDelegate,
+                                LuggPolylineViewDelegate>
 @end
 
 @implementation LuggAppleMapView {
   LuggAppleMapViewContent *_mapView;
   LuggMapWrapperView *_mapWrapperView;
+  BOOL _isMapReady;
   BOOL _isDragging;
 }
 
@@ -80,8 +82,7 @@ using namespace luggmaps::events;
 
     [self markerViewDidUpdate:markerView];
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
-    LuggPolylineView *polylineView =
-        (LuggPolylineView *)childComponentView;
+    LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
     polylineView.delegate = self;
     [self addPolylineViewToMap:polylineView];
   }
@@ -104,8 +105,7 @@ using namespace luggmaps::events;
       markerView.marker = nil;
     }
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
-    LuggPolylineView *polylineView =
-        (LuggPolylineView *)childComponentView;
+    LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
     polylineView.delegate = nil;
     MKPolyline *polyline = (MKPolyline *)polylineView.polyline;
     if (polyline) {
@@ -130,6 +130,7 @@ using namespace luggmaps::events;
   [_mapView removeFromSuperview];
   _mapView = nil;
   _mapWrapperView = nil;
+  _isMapReady = NO;
 }
 
 #pragma mark - Map Initialization
@@ -142,8 +143,8 @@ using namespace luggmaps::events;
   const auto &viewProps =
       *std::static_pointer_cast<LuggAppleMapViewProps const>(_props);
 
-  _mapView = [[LuggAppleMapViewContent alloc]
-      initWithFrame:_mapWrapperView.bounds];
+  _mapView =
+      [[LuggAppleMapViewContent alloc] initWithFrame:_mapWrapperView.bounds];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   _mapView.delegate = self;
@@ -174,6 +175,10 @@ using namespace luggmaps::events;
       [self addPolylineViewToMap:polylineView];
     }
   }
+
+  _isMapReady = YES;
+
+  ReadyEvent::emit<LuggAppleMapViewEventEmitter>(_eventEmitter);
 }
 
 - (void)setCameraWithLatitude:(double)latitude
@@ -367,29 +372,19 @@ using namespace luggmaps::events;
 }
 
 - (void)mapViewDidChangeVisibleRegion:(MKMapView *)mapView {
-  if (_eventEmitter) {
-    auto emitter =
-        std::static_pointer_cast<LuggAppleMapViewEventEmitter const>(
-            _eventEmitter);
-    CameraMoveEvent{mapView.centerCoordinate.latitude,
-                    mapView.centerCoordinate.longitude, mapView.zoomLevel,
-                    _isDragging}
-        .emit(emitter);
-  }
+  CameraMoveEvent{mapView.centerCoordinate.latitude,
+                  mapView.centerCoordinate.longitude, mapView.zoomLevel,
+                  _isDragging}
+      .emit<LuggAppleMapViewEventEmitter>(_eventEmitter);
 }
 
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
-  if (_eventEmitter) {
-    auto emitter =
-        std::static_pointer_cast<LuggAppleMapViewEventEmitter const>(
-            _eventEmitter);
-    CameraIdleEvent{mapView.centerCoordinate.latitude,
-                    mapView.centerCoordinate.longitude, mapView.zoomLevel,
-                    static_cast<bool>(wasDragging)}
-        .emit(emitter);
-  }
+  CameraIdleEvent{mapView.centerCoordinate.latitude,
+                  mapView.centerCoordinate.longitude, mapView.zoomLevel,
+                  static_cast<bool>(wasDragging)}
+      .emit<LuggAppleMapViewEventEmitter>(_eventEmitter);
 }
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView
@@ -437,8 +432,7 @@ using namespace luggmaps::events;
 - (MKOverlayRenderer *)mapView:(MKMapView *)mapView
             rendererForOverlay:(id<MKOverlay>)overlay {
   if ([overlay isKindOfClass:[MKPolyline class]]) {
-    LuggPolylineView *polylineView =
-        [self findPolylineViewForOverlay:overlay];
+    LuggPolylineView *polylineView = [self findPolylineViewForOverlay:overlay];
     MKPolyline *polyline = (MKPolyline *)overlay;
 
     if (polylineView) {

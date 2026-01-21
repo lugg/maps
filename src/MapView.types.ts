@@ -96,6 +96,10 @@ export interface MapViewProps extends ViewProps {
    */
   onCameraIdle?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
   /**
+   * Called when map is loaded and ready
+   */
+  onReady?: () => void;
+  /**
    * Map children (markers, polylines, etc.)
    */
   children?: ReactNode;

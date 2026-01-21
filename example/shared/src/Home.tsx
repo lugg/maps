@@ -28,6 +28,7 @@ import {
 
 export function Home() {
   const mapRef = useRef<MapView>(null);
+  const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
   const [provider, setProvider] = useState<MapProvider>('google');
   const [showMap, setShowMap] = useState(true);
@@ -59,6 +60,10 @@ export function Home() {
     },
     [screenHeight]
   );
+
+  const handleMapReady = useCallback(() => {
+    sheetRef.current?.present();
+  }, []);
 
   const addRandomMarker = () => {
     const type = randomFrom(MARKER_TYPES);
@@ -110,16 +115,16 @@ export function Home() {
           provider={provider}
           markers={markers}
           padding={mapPadding}
+          onReady={handleMapReady}
           onCameraMove={handleCameraMove}
           onCameraIdle={handleCameraIdle}
         />
       )}
 
       <TrueSheet
+        ref={sheetRef}
         detents={['auto']}
         dimmed={false}
-        initialDetentIndex={0}
-        initialDetentAnimated={false}
         backgroundBlur="system-material-light"
         dismissible={false}
         grabber={false}

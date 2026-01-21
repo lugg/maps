@@ -12,7 +12,9 @@ struct CameraIdleEvent {
   bool gesture;
 
   template <typename Emitter>
-  void emit(std::shared_ptr<Emitter const> emitter) const {
+  void emit(const facebook::react::SharedEventEmitter &eventEmitter) const {
+    if (!eventEmitter) return;
+    auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
     typename Emitter::OnCameraIdle event;
     event.coordinate.latitude = latitude;
     event.coordinate.longitude = longitude;

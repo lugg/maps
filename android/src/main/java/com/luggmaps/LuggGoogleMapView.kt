@@ -28,7 +28,14 @@ interface LuggGoogleMapViewEventDelegate {
     zoom: Float,
     gesture: Boolean
   )
-  fun onCameraIdle(view: LuggGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
+  fun onCameraIdle(
+    view: LuggGoogleMapView,
+    latitude: Double,
+    longitude: Double,
+    zoom: Float,
+    gesture: Boolean
+  )
+  fun onReady(view: LuggGoogleMapView)
 }
 
 @SuppressLint("ViewConstructor")
@@ -159,6 +166,8 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     applyPadding()
     processPendingMarkers()
     processPendingPolylines()
+
+    eventDelegate?.onReady(this)
   }
 
   override fun onCameraMoveStarted(reason: Int) {

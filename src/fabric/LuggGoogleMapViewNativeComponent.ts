@@ -35,6 +35,8 @@ export interface CameraIdleEvent {
   gesture: boolean;
 }
 
+export interface ReadyEvent {}
+
 export interface NativeProps extends ViewProps {
   mapId?: string;
   initialCoordinate?: Coordinate;
@@ -46,6 +48,7 @@ export interface NativeProps extends ViewProps {
   padding?: EdgeInsets;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
   onCameraIdle?: DirectEventHandler<CameraIdleEvent>;
+  onReady?: DirectEventHandler<ReadyEvent>;
 }
 
 type ComponentType = HostComponent<NativeProps>;

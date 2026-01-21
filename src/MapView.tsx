@@ -79,6 +79,7 @@ export class MapView
       padding,
       onCameraMove,
       onCameraIdle,
+      onReady,
       children,
       ...rest
     } = this.props;
@@ -102,6 +103,7 @@ export class MapView
         padding={padding}
         onCameraMove={onCameraMove}
         onCameraIdle={onCameraIdle}
+        onReady={onReady}
       >
         <LuggMapWrapperViewNativeComponent style={StyleSheet.absoluteFill} />
         {children}
