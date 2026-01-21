@@ -5,9 +5,9 @@ import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
 
-class LuggMapsPackage : ReactPackage {
+class LuggPackage : ReactPackage {
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
-    listOf(LuggMapsGoogleMapViewManager(), LuggMapsMarkerViewManager(), LuggMapsWrapperViewManager(), LuggMapsPolylineViewManager())
+    listOf(LuggGoogleMapViewManager(), LuggMarkerViewManager(), LuggMapWrapperViewManager(), LuggPolylineViewManager())
 
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> = emptyList()
 }

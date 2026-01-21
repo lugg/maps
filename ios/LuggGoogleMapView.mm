@@ -1,6 +1,6 @@
-#import "LuggMapsGoogleMapView.h"
-#import "LuggMapsMarkerView.h"
-#import "LuggMapsPolylineView.h"
+#import "LuggGoogleMapView.h"
+#import "LuggMarkerView.h"
+#import "LuggPolylineView.h"
 #import "core/GMSPolylineAnimator.h"
 #import "core/PolylineAnimatorBase.h"
 #import "events/CameraIdleEvent.h"
@@ -16,35 +16,35 @@
 using namespace facebook::react;
 using namespace luggmaps::events;
 
-#import "LuggMapsWrapperView.h"
+#import "LuggMapWrapperView.h"
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
-@interface LuggMapsGoogleMapView () <
-    RCTLuggMapsGoogleMapViewViewProtocol, GMSMapViewDelegate,
-    LuggMapsMarkerViewDelegate, LuggMapsPolylineViewDelegate>
+@interface LuggGoogleMapView () <
+    RCTLuggGoogleMapViewViewProtocol, GMSMapViewDelegate,
+    LuggMarkerViewDelegate, LuggPolylineViewDelegate>
 @end
 
-@implementation LuggMapsGoogleMapView {
+@implementation LuggGoogleMapView {
   GMSMapView *_mapView;
-  LuggMapsWrapperView *_mapWrapperView;
+  LuggMapWrapperView *_mapWrapperView;
   BOOL _isMapReady;
   BOOL _isDragging;
   NSString *_mapId;
-  NSMutableArray<LuggMapsMarkerView *> *_pendingMarkerViews;
-  NSMutableArray<LuggMapsPolylineView *> *_pendingPolylineViews;
-  NSMapTable<LuggMapsPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
+  NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
+  NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
+  NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-      LuggMapsGoogleMapViewComponentDescriptor>();
+      LuggGoogleMapViewComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     static const auto defaultProps =
-        std::make_shared<const LuggMapsGoogleMapViewProps>();
+        std::make_shared<const LuggGoogleMapViewProps>();
     _props = defaultProps;
 
     _isMapReady = NO;
@@ -64,15 +64,15 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
                           index:(NSInteger)index {
   [super mountChildComponentView:childComponentView index:index];
 
-  if ([childComponentView isKindOfClass:[LuggMapsWrapperView class]]) {
-    _mapWrapperView = (LuggMapsWrapperView *)childComponentView;
-  } else if ([childComponentView isKindOfClass:[LuggMapsMarkerView class]]) {
-    LuggMapsMarkerView *markerView = (LuggMapsMarkerView *)childComponentView;
+  if ([childComponentView isKindOfClass:[LuggMapWrapperView class]]) {
+    _mapWrapperView = (LuggMapWrapperView *)childComponentView;
+  } else if ([childComponentView isKindOfClass:[LuggMarkerView class]]) {
+    LuggMarkerView *markerView = (LuggMarkerView *)childComponentView;
     markerView.delegate = self;
     [self syncMarkerView:markerView caller:@"mountChildComponentView"];
-  } else if ([childComponentView isKindOfClass:[LuggMapsPolylineView class]]) {
-    LuggMapsPolylineView *polylineView =
-        (LuggMapsPolylineView *)childComponentView;
+  } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
+    LuggPolylineView *polylineView =
+        (LuggPolylineView *)childComponentView;
     polylineView.delegate = self;
     [self syncPolylineView:polylineView];
   }
@@ -81,17 +81,17 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)unmountChildComponentView:
             (UIView<RCTComponentViewProtocol> *)childComponentView
                             index:(NSInteger)index {
-  if ([childComponentView isKindOfClass:[LuggMapsMarkerView class]]) {
-    LuggMapsMarkerView *markerView = (LuggMapsMarkerView *)childComponentView;
+  if ([childComponentView isKindOfClass:[LuggMarkerView class]]) {
+    LuggMarkerView *markerView = (LuggMarkerView *)childComponentView;
     GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
     if (marker) {
       marker.iconView = nil;
       marker.map = nil;
       markerView.marker = nil;
     }
-  } else if ([childComponentView isKindOfClass:[LuggMapsPolylineView class]]) {
-    LuggMapsPolylineView *polylineView =
-        (LuggMapsPolylineView *)childComponentView;
+  } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
+    LuggPolylineView *polylineView =
+        (LuggPolylineView *)childComponentView;
     [_polylineAnimators removeObjectForKey:polylineView];
     GMSPolyline *polyline = (GMSPolyline *)polylineView.polyline;
     if (polyline) {
@@ -131,7 +131,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
 
   const auto &viewProps =
-      *std::static_pointer_cast<LuggMapsGoogleMapViewProps const>(_props);
+      *std::static_pointer_cast<LuggGoogleMapViewProps const>(_props);
 
   GMSMapID *gmsMapId;
   if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
@@ -182,7 +182,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     didChangeCameraPosition:(GMSCameraPosition *)position {
   if (_eventEmitter) {
     auto emitter =
-        std::static_pointer_cast<LuggMapsGoogleMapViewEventEmitter const>(
+        std::static_pointer_cast<LuggGoogleMapViewEventEmitter const>(
             _eventEmitter);
     CameraMoveEvent{position.target.latitude, position.target.longitude,
                     position.zoom, _isDragging}
@@ -196,7 +196,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _isDragging = NO;
   if (_eventEmitter) {
     auto emitter =
-        std::static_pointer_cast<LuggMapsGoogleMapViewEventEmitter const>(
+        std::static_pointer_cast<LuggGoogleMapViewEventEmitter const>(
             _eventEmitter);
     CameraIdleEvent{position.target.latitude, position.target.longitude,
                     position.zoom, static_cast<bool>(wasDragging)}
@@ -206,23 +206,23 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - PolylineViewDelegate
 
-- (void)polylineViewDidUpdate:(LuggMapsPolylineView *)polylineView {
+- (void)polylineViewDidUpdate:(LuggPolylineView *)polylineView {
   [self syncPolylineView:polylineView];
 }
 
 #pragma mark - MarkerViewDelegate
 
-- (void)markerViewDidLayout:(LuggMapsMarkerView *)markerView {
+- (void)markerViewDidLayout:(LuggMarkerView *)markerView {
   [self syncMarkerView:markerView caller:@"markerViewDidLayout"];
 }
 
-- (void)markerViewDidUpdate:(LuggMapsMarkerView *)markerView {
+- (void)markerViewDidUpdate:(LuggMarkerView *)markerView {
   [self syncMarkerView:markerView caller:@"markerViewDidUpdate"];
 }
 
 #pragma mark - Marker Management
 
-- (void)syncMarkerView:(LuggMapsMarkerView *)markerView
+- (void)syncMarkerView:(LuggMarkerView *)markerView
                 caller:(NSString *)caller {
   if (!_mapView) {
     if (![_pendingMarkerViews containsObject:markerView]) {
@@ -256,15 +256,15 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
   }
 
-  for (LuggMapsMarkerView *markerView in _pendingMarkerViews) {
+  for (LuggMarkerView *markerView in _pendingMarkerViews) {
     [self addMarkerViewToMap:markerView];
   }
   [_pendingMarkerViews removeAllObjects];
 }
 
-- (void)addMarkerViewToMap:(LuggMapsMarkerView *)markerView {
+- (void)addMarkerViewToMap:(LuggMarkerView *)markerView {
   if (!_mapView) {
-    RCTLogWarn(@"LuggMaps: addMarkerViewToMap called without a map");
+    RCTLogWarn(@"Lugg: addMarkerViewToMap called without a map");
     return;
   }
 
@@ -289,7 +289,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - Polyline Management
 
-- (void)syncPolylineView:(LuggMapsPolylineView *)polylineView {
+- (void)syncPolylineView:(LuggPolylineView *)polylineView {
   if (!_mapView) {
     if (![_pendingPolylineViews containsObject:polylineView]) {
       [_pendingPolylineViews addObject:polylineView];
@@ -320,13 +320,13 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
   }
 
-  for (LuggMapsPolylineView *polylineView in _pendingPolylineViews) {
+  for (LuggPolylineView *polylineView in _pendingPolylineViews) {
     [self addPolylineViewToMap:polylineView];
   }
   [_pendingPolylineViews removeAllObjects];
 }
 
-- (void)addPolylineViewToMap:(LuggMapsPolylineView *)polylineView {
+- (void)addPolylineViewToMap:(LuggPolylineView *)polylineView {
   if (!_mapView) {
     return;
   }
@@ -351,7 +351,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   const auto &newViewProps =
-      *std::static_pointer_cast<LuggMapsGoogleMapViewProps const>(props);
+      *std::static_pointer_cast<LuggGoogleMapViewProps const>(props);
 
   if (_mapView == nil) {
     NSString *newMapId =
@@ -430,11 +430,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
-  RCTLuggMapsGoogleMapViewHandleCommand(self, commandName, args);
+  RCTLuggGoogleMapViewHandleCommand(self, commandName, args);
 }
 
-Class<RCTComponentViewProtocol> LuggMapsGoogleMapViewCls(void) {
-  return LuggMapsGoogleMapView.class;
+Class<RCTComponentViewProtocol> LuggGoogleMapViewCls(void) {
+  return LuggGoogleMapView.class;
 }
 
 @end

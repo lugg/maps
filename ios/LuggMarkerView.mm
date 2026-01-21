@@ -1,4 +1,4 @@
-#import "LuggMapsMarkerView.h"
+#import "LuggMarkerView.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
 #import <react/renderer/components/RNMapsSpec/EventEmitters.h>
@@ -9,10 +9,10 @@
 
 using namespace facebook::react;
 
-@interface LuggMapsMarkerView () <RCTLuggMapsMarkerViewViewProtocol>
+@interface LuggMarkerView () <RCTLuggMarkerViewViewProtocol>
 @end
 
-@implementation LuggMapsMarkerView {
+@implementation LuggMarkerView {
   CLLocationCoordinate2D _coordinate;
   NSString *_title;
   NSString *_markerDescription;
@@ -23,13 +23,13 @@ using namespace facebook::react;
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-      LuggMapsMarkerViewComponentDescriptor>();
+      LuggMarkerViewComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     static const auto defaultProps =
-        std::make_shared<const LuggMapsMarkerViewProps>();
+        std::make_shared<const LuggMarkerViewProps>();
     _props = defaultProps;
 
     _coordinate = CLLocationCoordinate2DMake(0, 0);
@@ -50,7 +50,7 @@ using namespace facebook::react;
            oldProps:(Props::Shared const &)oldProps {
   [super updateProps:props oldProps:oldProps];
   const auto &newViewProps =
-      *std::static_pointer_cast<LuggMapsMarkerViewProps const>(props);
+      *std::static_pointer_cast<LuggMarkerViewProps const>(props);
 
   _coordinate = CLLocationCoordinate2DMake(newViewProps.coordinate.latitude,
                                            newViewProps.coordinate.longitude);
@@ -147,8 +147,8 @@ using namespace facebook::react;
   }
 }
 
-Class<RCTComponentViewProtocol> LuggMapsMarkerViewCls(void) {
-  return LuggMapsMarkerView.class;
+Class<RCTComponentViewProtocol> LuggMarkerViewCls(void) {
+  return LuggMarkerView.class;
 }
 
 @end

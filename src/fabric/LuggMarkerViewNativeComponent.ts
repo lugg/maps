@@ -1,5 +1,5 @@
 import { codegenNativeComponent } from 'react-native';
-import type { ViewProps, HostComponent, ColorValue } from 'react-native';
+import type { ViewProps, HostComponent } from 'react-native';
 import type { Double } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Coordinate {
@@ -7,13 +7,19 @@ export interface Coordinate {
   longitude: Double;
 }
 
+export interface Point {
+  x: Double;
+  y: Double;
+}
+
 export interface NativeProps extends ViewProps {
-  coordinates: ReadonlyArray<Coordinate>;
-  strokeColors?: ReadonlyArray<ColorValue>;
-  strokeWidth?: Double;
-  animated?: boolean;
+  name?: string;
+  coordinate: Coordinate;
+  title?: string;
+  description?: string;
+  anchor?: Point;
 }
 
 export default codegenNativeComponent<NativeProps>(
-  'LuggMapsPolylineView'
+  'LuggMarkerView'
 ) as HostComponent<NativeProps>;

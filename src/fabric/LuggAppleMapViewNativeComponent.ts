@@ -70,5 +70,5 @@ export const Commands = codegenNativeCommands<NativeCommands>({
 });
 
 export default codegenNativeComponent<NativeProps>(
-  'LuggMapsAppleMapView'
+  'LuggAppleMapView'
 ) as ComponentType;

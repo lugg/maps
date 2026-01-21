@@ -7,12 +7,12 @@ import androidx.core.view.isNotEmpty
 import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.AdvancedMarker
 
-interface LuggMapsMarkerViewDelegate {
-  fun markerViewDidUpdate(markerView: LuggMapsMarkerView)
-  fun markerViewDidLayout(markerView: LuggMapsMarkerView)
+interface LuggMarkerViewDelegate {
+  fun markerViewDidUpdate(markerView: LuggMarkerView)
+  fun markerViewDidLayout(markerView: LuggMarkerView)
 }
 
-class LuggMapsMarkerView(context: Context) : ReactViewGroup(context) {
+class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var name: String? = null
     private set
 
@@ -26,7 +26,7 @@ class LuggMapsMarkerView(context: Context) : ReactViewGroup(context) {
   var description: String? = null
     private set
 
-  var delegate: LuggMapsMarkerViewDelegate? = null
+  var delegate: LuggMarkerViewDelegate? = null
   var marker: AdvancedMarker? = null
 
   var anchorX: Float = 0.5f
@@ -129,6 +129,6 @@ class LuggMapsMarkerView(context: Context) : ReactViewGroup(context) {
   }
 
   companion object {
-    private const val TAG = "LuggMaps"
+    private const val TAG = "Lugg"
   }
 }

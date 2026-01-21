@@ -4,10 +4,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LuggMapsAppleMapViewContent : MKMapView
+@interface LuggAppleMapViewContent : MKMapView
 @end
 
-@interface LuggMapsAppleMapView : RCTViewComponentView
+@interface LuggAppleMapView : RCTViewComponentView
 
 - (MKMapView *)mapView;
 

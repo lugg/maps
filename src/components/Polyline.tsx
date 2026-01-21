@@ -1,7 +1,27 @@
 import React from 'react';
-import LuggMapsPolylineViewNativeComponent from './fabric/LuggMapsPolylineViewNativeComponent';
-import type { PolylineProps } from './Polyline.types';
+import type { ColorValue } from 'react-native';
 import { StyleSheet } from 'react-native';
+import LuggPolylineViewNativeComponent from '../fabric/LuggPolylineViewNativeComponent';
+import type { Coordinate } from '../types';
+
+export interface PolylineProps {
+  /**
+   * Array of coordinates forming the polyline
+   */
+  coordinates: Coordinate[];
+  /**
+   * Gradient colors along the polyline
+   */
+  strokeColors?: ColorValue[];
+  /**
+   * Line width in points
+   */
+  strokeWidth?: number;
+  /**
+   * Animate the polyline with a snake effect
+   */
+  animated?: boolean;
+}
 
 export class Polyline extends React.Component<PolylineProps> {
   render() {
@@ -13,7 +33,7 @@ export class Polyline extends React.Component<PolylineProps> {
     } = this.props;
 
     return (
-      <LuggMapsPolylineViewNativeComponent
+      <LuggPolylineViewNativeComponent
         style={styles.polyline}
         coordinates={coordinates}
         strokeColors={strokeColors}

@@ -3,7 +3,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LuggMapsWrapperView : RCTViewComponentView
+@interface LuggMapWrapperView : RCTViewComponentView
 @end
 
 NS_ASSUME_NONNULL_END

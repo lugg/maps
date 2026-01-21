@@ -20,37 +20,37 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.luggmaps.core.PolylineAnimator
 
-interface LuggMapsGoogleMapViewEventDelegate {
+interface LuggGoogleMapViewEventDelegate {
   fun onCameraMove(
-    view: LuggMapsGoogleMapView,
+    view: LuggGoogleMapView,
     latitude: Double,
     longitude: Double,
     zoom: Float,
     gesture: Boolean
   )
-  fun onCameraIdle(view: LuggMapsGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
+  fun onCameraIdle(view: LuggGoogleMapView, latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
 }
 
 @SuppressLint("ViewConstructor")
-class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
+class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   ReactViewGroup(reactContext),
   OnMapReadyCallback,
-  LuggMapsMarkerViewDelegate,
-  LuggMapsPolylineViewDelegate,
+  LuggMarkerViewDelegate,
+  LuggPolylineViewDelegate,
   GoogleMap.OnCameraMoveStartedListener,
   GoogleMap.OnCameraMoveListener,
   GoogleMap.OnCameraIdleListener {
 
-  var eventDelegate: LuggMapsGoogleMapViewEventDelegate? = null
+  var eventDelegate: LuggGoogleMapViewEventDelegate? = null
   private var mapView: MapView? = null
-  private var mapWrapperView: LuggMapsWrapperView? = null
+  private var mapWrapperView: LuggMapWrapperView? = null
   private var googleMap: GoogleMap? = null
   private var isMapReady = false
   private var isDragging = false
   private var mapId: String = DEMO_MAP_ID
-  private val pendingMarkerViews = mutableListOf<LuggMapsMarkerView>()
-  private val pendingPolylineViews = mutableListOf<LuggMapsPolylineView>()
-  private val polylineAnimators = mutableMapOf<LuggMapsPolylineView, PolylineAnimator>()
+  private val pendingMarkerViews = mutableListOf<LuggMarkerView>()
+  private val pendingPolylineViews = mutableListOf<LuggPolylineView>()
+  private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
 
   // Initial camera settings
   private var initialLatitude: Double = 37.78
@@ -74,14 +74,14 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
   override fun addView(child: View?, index: Int) {
     super.addView(child, index)
     when (child) {
-      is LuggMapsWrapperView -> mapWrapperView = child
+      is LuggMapWrapperView -> mapWrapperView = child
 
-      is LuggMapsMarkerView -> {
+      is LuggMarkerView -> {
         child.delegate = this
         syncMarkerView(child)
       }
 
-      is LuggMapsPolylineView -> {
+      is LuggPolylineView -> {
         child.delegate = this
         syncPolylineView(child)
       }
@@ -90,11 +90,11 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
 
   override fun removeViewAt(index: Int) {
     val view = getChildAt(index)
-    if (view is LuggMapsMarkerView) {
+    if (view is LuggMarkerView) {
       Log.d(TAG, "removing markerView: ${view.name}")
       view.marker?.remove()
       view.marker = null
-    } else if (view is LuggMapsPolylineView) {
+    } else if (view is LuggPolylineView) {
       polylineAnimators[view]?.destroy()
       polylineAnimators.remove(view)
       view.polyline?.remove()
@@ -195,7 +195,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
 
   // region PolylineViewDelegate
 
-  override fun polylineViewDidUpdate(polylineView: LuggMapsPolylineView) {
+  override fun polylineViewDidUpdate(polylineView: LuggPolylineView) {
     syncPolylineView(polylineView)
   }
 
@@ -203,7 +203,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
 
   // region MarkerViewDelegate
 
-  override fun markerViewDidLayout(markerView: LuggMapsMarkerView) {
+  override fun markerViewDidLayout(markerView: LuggMarkerView) {
     if (googleMap == null) {
       if (!pendingMarkerViews.contains(markerView)) {
         pendingMarkerViews.add(markerView)
@@ -220,7 +220,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
     }
   }
 
-  override fun markerViewDidUpdate(markerView: LuggMapsMarkerView) {
+  override fun markerViewDidUpdate(markerView: LuggMarkerView) {
     syncMarkerView(markerView)
   }
 
@@ -228,7 +228,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
 
   // region Marker Management
 
-  private fun syncMarkerView(markerView: LuggMapsMarkerView) {
+  private fun syncMarkerView(markerView: LuggMarkerView) {
     if (googleMap == null) {
       if (!pendingMarkerViews.contains(markerView)) {
         pendingMarkerViews.add(markerView)
@@ -262,9 +262,9 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
     pendingMarkerViews.clear()
   }
 
-  private fun addMarkerViewToMap(markerView: LuggMapsMarkerView) {
+  private fun addMarkerViewToMap(markerView: LuggMarkerView) {
     val map = googleMap ?: run {
-      RNLog.w(reactContext, "LuggMaps: addMarkerViewToMap called without a map")
+      RNLog.w(reactContext, "Lugg: addMarkerViewToMap called without a map")
       return
     }
 
@@ -294,7 +294,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
 
   // region Polyline Management
 
-  private fun syncPolylineView(polylineView: LuggMapsPolylineView) {
+  private fun syncPolylineView(polylineView: LuggPolylineView) {
     if (googleMap == null) {
       if (!pendingPolylineViews.contains(polylineView)) {
         pendingPolylineViews.add(polylineView)
@@ -325,7 +325,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
     pendingPolylineViews.clear()
   }
 
-  private fun addPolylineViewToMap(polylineView: LuggMapsPolylineView) {
+  private fun addPolylineViewToMap(polylineView: LuggPolylineView) {
     val map = googleMap ?: return
 
     val options = PolylineOptions()
@@ -354,7 +354,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
     if (value.isNullOrEmpty()) return
 
     if (mapView != null) {
-      RNLog.w(reactContext, "LuggMaps: mapId cannot be changed after map is initialized")
+      RNLog.w(reactContext, "Lugg: mapId cannot be changed after map is initialized")
       return
     }
 
@@ -432,7 +432,7 @@ class LuggMapsGoogleMapView(private val reactContext: ThemedReactContext) :
   // endregion
 
   companion object {
-    private const val TAG = "LuggMaps"
+    private const val TAG = "Lugg"
     const val DEMO_MAP_ID = "DEMO_MAP_ID"
   }
 }

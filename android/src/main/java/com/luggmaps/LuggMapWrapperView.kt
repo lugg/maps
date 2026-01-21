@@ -5,7 +5,7 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.views.view.ReactViewGroup
 
 @SuppressLint("ViewConstructor")
-class LuggMapsWrapperView(context: ThemedReactContext) : ReactViewGroup(context) {
+class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) {
 
   override fun requestLayout() {
     super.requestLayout()

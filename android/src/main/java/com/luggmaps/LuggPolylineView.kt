@@ -8,11 +8,11 @@ import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.StrokeStyle
 import com.google.android.gms.maps.model.StyleSpan
 
-interface LuggMapsPolylineViewDelegate {
-  fun polylineViewDidUpdate(polylineView: LuggMapsPolylineView)
+interface LuggPolylineViewDelegate {
+  fun polylineViewDidUpdate(polylineView: LuggPolylineView)
 }
 
-class LuggMapsPolylineView(context: Context) : ReactViewGroup(context) {
+class LuggPolylineView(context: Context) : ReactViewGroup(context) {
   var coordinates: List<LatLng> = emptyList()
     private set
 
@@ -28,7 +28,7 @@ class LuggMapsPolylineView(context: Context) : ReactViewGroup(context) {
   var cachedSpans: List<StyleSpan>? = null
     private set
 
-  var delegate: LuggMapsPolylineViewDelegate? = null
+  var delegate: LuggPolylineViewDelegate? = null
   var polyline: Polyline? = null
 
   init {

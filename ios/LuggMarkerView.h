@@ -4,15 +4,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class LuggMapsMarkerView;
+@class LuggMarkerView;
 
-@protocol LuggMapsMarkerViewDelegate <NSObject>
+@protocol LuggMarkerViewDelegate <NSObject>
 @optional
-- (void)markerViewDidLayout:(LuggMapsMarkerView *)markerView;
-- (void)markerViewDidUpdate:(LuggMapsMarkerView *)markerView;
+- (void)markerViewDidLayout:(LuggMarkerView *)markerView;
+- (void)markerViewDidUpdate:(LuggMarkerView *)markerView;
 @end
 
-@interface LuggMapsMarkerView : RCTViewComponentView
+@interface LuggMarkerView : RCTViewComponentView
 
 @property(nonatomic, readonly) CLLocationCoordinate2D coordinate;
 @property(nonatomic, readonly, nullable) NSString *title;
@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;
 @property(nonatomic, readonly) UIView *iconView;
-@property(nonatomic, weak, nullable) id<LuggMapsMarkerViewDelegate> delegate;
+@property(nonatomic, weak, nullable) id<LuggMarkerViewDelegate> delegate;
 @property(nonatomic, strong, nullable) NSObject *marker;
 
 @end

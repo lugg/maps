@@ -1,4 +1,4 @@
-#import "LuggMapsWrapperView.h"
+#import "LuggMapWrapperView.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
 #import <react/renderer/components/RNMapsSpec/EventEmitters.h>
@@ -9,28 +9,28 @@
 
 using namespace facebook::react;
 
-@interface LuggMapsWrapperView () <RCTLuggMapsWrapperViewViewProtocol>
+@interface LuggMapWrapperView () <RCTLuggMapWrapperViewViewProtocol>
 @end
 
-@implementation LuggMapsWrapperView
+@implementation LuggMapWrapperView
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
   return concreteComponentDescriptorProvider<
-      LuggMapsWrapperViewComponentDescriptor>();
+      LuggMapWrapperViewComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
     static const auto defaultProps =
-        std::make_shared<const LuggMapsWrapperViewProps>();
+        std::make_shared<const LuggMapWrapperViewProps>();
     _props = defaultProps;
   }
 
   return self;
 }
 
-Class<RCTComponentViewProtocol> LuggMapsWrapperViewCls(void) {
-  return LuggMapsWrapperView.class;
+Class<RCTComponentViewProtocol> LuggMapWrapperViewCls(void) {
+  return LuggMapWrapperView.class;
 }
 
 @end

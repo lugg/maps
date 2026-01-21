@@ -1,7 +1,7 @@
 import { type ConfigPlugin, createRunOncePlugin } from '@expo/config-plugins';
 
-import { withLuggMapsAndroid } from './withMapsAndroid';
-import { withLuggMapsIOS } from './withMapsIOS';
+import { withLuggMapsAndroid } from './withLuggMapsAndroid';
+import { withLuggMapsIOS } from './withLuggMapsIOS';
 
 const pkg = require('../../package.json');
 
