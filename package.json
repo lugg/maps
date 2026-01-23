@@ -7,6 +7,11 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
+      "react-native": "./lib/module/index.js",
+      "web": {
+        "types": "./lib/typescript/src/index.web.d.ts",
+        "default": "./lib/module/index.web.js"
+      },
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
@@ -75,6 +80,7 @@
     "@release-it/conventional-changelog": "^10.0.1",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.2.0",
+    "@vis.gl/react-google-maps": "^1.7.1",
     "commitlint": "^19.8.1",
     "del-cli": "^6.0.0",
     "eslint": "^9.35.0",
@@ -91,8 +97,14 @@
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
+    "@vis.gl/react-google-maps": ">=1.0.0",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@vis.gl/react-google-maps": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@expo/config-plugins": "^9.0.0"

@@ -6,9 +6,15 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { MapView, type MapProvider, type CameraEventPayload } from '@lugg/maps';
+import {
+  MapView,
+  MapProvider,
+  type MapProviderType,
+  type CameraEventPayload,
+} from '@lugg/maps';
 import {
   TrueSheet,
+  TrueSheetProvider,
   type DidPresentEvent,
 } from '@lodev09/react-native-true-sheet';
 
@@ -27,7 +33,7 @@ export function Home() {
   const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
   const locationPermission = useLocationPermission();
-  const [provider, setProvider] = useState<MapProvider>('google');
+  const [provider, setProvider] = useState<MapProviderType>('google');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [sheetHeight, setSheetHeight] = useState(0);
@@ -102,75 +108,85 @@ export function Home() {
     mapRef.current?.fitCoordinates(coordinates);
   };
 
-  return (
-    <View style={styles.container}>
-      {showMap && (
-        <Map
-          ref={mapRef}
-          provider={provider}
-          markers={markers}
-          padding={{
-            top: 0,
-            left: 0,
-            bottom: sheetHeight,
-            right: 0,
-          }}
-          userLocationEnabled={locationPermission}
-          onReady={handleMapReady}
-          onCameraMove={handleCameraMove}
-          onCameraIdle={handleCameraIdle}
-        />
-      )}
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-      <TrueSheet
-        ref={sheetRef}
-        detents={['auto']}
-        dimmed={false}
-        backgroundBlur="system-material-light"
-        dismissible={false}
-        grabber={false}
-        onDidPresent={handleSheetPresent}
-      >
-        {cameraPosition && (
-          <Text style={styles.positionText}>
-            {cameraPosition.coordinate.latitude.toFixed(5)},{' '}
-            {cameraPosition.coordinate.longitude.toFixed(5)} (z
-            {cameraPosition.zoom.toFixed(1)})
-            {isIdle ? ' (idle)' : cameraPosition.gesture ? ' (gesture)' : ''}
-          </Text>
-        )}
-        <View style={styles.sheetContent}>
-          <Button title="Add Marker" onPress={addMarker} />
-          <Button
-            title={`Remove Marker (${markers.length})`}
-            onPress={removeRandomMarker}
-            disabled={markers.length === 0}
-          />
-          <Button
-            title="Clear Markers"
-            onPress={() => setMarkers([])}
-            disabled={markers.length === 0}
-          />
-          <Button title="Move Camera" onPress={moveToRandomMarker} />
-          <Button
-            title="Fit Markers"
-            onPress={fitAllMarkers}
-            disabled={markers.length === 0}
-          />
-          <Button
-            title={showMap ? 'Hide Map' : 'Show Map'}
-            onPress={() => setShowMap((prev) => !prev)}
-          />
-          <Button
-            title={provider === 'google' ? 'Apple Maps' : 'Google Maps'}
-            disabled={Platform.OS === 'android'}
-            onPress={() =>
-              setProvider((p) => (p === 'google' ? 'apple' : 'google'))
-            }
-          />
+  return (
+    <TrueSheetProvider>
+      <MapProvider apiKey={apiKey}>
+        <View style={styles.container}>
+          {showMap && (
+            <Map
+              ref={mapRef}
+              provider={provider}
+              markers={markers}
+              padding={{
+                top: 0,
+                left: 0,
+                bottom: sheetHeight,
+                right: 0,
+              }}
+              userLocationEnabled={locationPermission}
+              onReady={handleMapReady}
+              onCameraMove={handleCameraMove}
+              onCameraIdle={handleCameraIdle}
+            />
+          )}
+
+          <TrueSheet
+            ref={sheetRef}
+            detents={['auto']}
+            dimmed={false}
+            backgroundBlur="system-material-light"
+            dismissible={false}
+            grabber={false}
+            onDidPresent={handleSheetPresent}
+          >
+            {cameraPosition && (
+              <Text style={styles.positionText}>
+                {cameraPosition.coordinate.latitude.toFixed(5)},{' '}
+                {cameraPosition.coordinate.longitude.toFixed(5)} (z
+                {cameraPosition.zoom.toFixed(1)})
+                {isIdle
+                  ? ' (idle)'
+                  : cameraPosition.gesture
+                  ? ' (gesture)'
+                  : ''}
+              </Text>
+            )}
+            <View style={styles.sheetContent}>
+              <Button title="Add Marker" onPress={addMarker} />
+              <Button
+                title={`Remove Marker (${markers.length})`}
+                onPress={removeRandomMarker}
+                disabled={markers.length === 0}
+              />
+              <Button
+                title="Clear Markers"
+                onPress={() => setMarkers([])}
+                disabled={markers.length === 0}
+              />
+              <Button title="Move Camera" onPress={moveToRandomMarker} />
+              <Button
+                title="Fit Markers"
+                onPress={fitAllMarkers}
+                disabled={markers.length === 0}
+              />
+              <Button
+                title={showMap ? 'Hide Map' : 'Show Map'}
+                onPress={() => setShowMap((prev) => !prev)}
+              />
+              <Button
+                title={provider === 'google' ? 'Apple Maps' : 'Google Maps'}
+                disabled={Platform.OS !== 'ios'}
+                onPress={() =>
+                  setProvider((p) => (p === 'google' ? 'apple' : 'google'))
+                }
+              />
+            </View>
+          </TrueSheet>
         </View>
-      </TrueSheet>
-    </View>
+      </MapProvider>
+    </TrueSheetProvider>
   );
 }
 

@@ -1,7 +1,7 @@
-export { MapView } from './MapView';
-export { MapProvider } from './MapProvider';
+export { MapView } from './MapView.web';
+export { MapProvider } from './MapProvider.web';
 export type { MapProviderProps } from './MapProvider.types';
-export * from './components';
+export * from './components/index.web';
 export type {
   MapViewProps,
   MapViewRef,
