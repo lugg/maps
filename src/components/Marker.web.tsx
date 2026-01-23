@@ -2,6 +2,12 @@ import React from 'react';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { MarkerProps } from './Marker';
 
+/**
+ * Converts point to % anchor for web.
+ * e.g. `0.5` to `-50%`
+ */
+const toWebAnchor = (value: number) => `-${value * 100}%`;
+
 export class Marker extends React.Component<MarkerProps> {
   render() {
     const { coordinate, title, anchor, zIndex, children } = this.props;
@@ -11,17 +17,15 @@ export class Marker extends React.Component<MarkerProps> {
       lng: coordinate.longitude,
     };
 
-    const style: React.CSSProperties | undefined = anchor
-      ? {
-          transform: `translate(${(anchor.x - 0.5) * -100}%, ${
-            (anchor.y - 0.5) * -100
-          }%)`,
-        }
-      : undefined;
-
     return (
-      <AdvancedMarker position={position} title={title} zIndex={zIndex}>
-        {children ? <div style={style}>{children}</div> : null}
+      <AdvancedMarker
+        position={position}
+        title={title}
+        zIndex={zIndex}
+        anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
+        anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
+      >
+        {children}
       </AdvancedMarker>
     );
   }

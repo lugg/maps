@@ -1,6 +1,6 @@
 import React from 'react';
-import type { NativeSyntheticEvent } from 'react-native';
-import { View, StyleSheet } from 'react-native';
+import type { NativeSyntheticEvent, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { Map, useMap } from '@vis.gl/react-google-maps';
 import { Marker } from './components/Marker.web';
 import { Polyline } from './components/Polyline.web';
@@ -180,6 +180,7 @@ export class MapView
       zoomEnabled,
       scrollEnabled,
       pitchEnabled,
+      padding,
       onCameraMove,
       onCameraIdle,
       onReady,
@@ -211,27 +212,42 @@ export class MapView
       }
     });
 
+    const mapContainerStyle: ViewStyle = {
+      position: 'absolute',
+      top: padding?.top ?? 0,
+      left: padding?.left ?? 0,
+      right: padding?.right ?? 0,
+      bottom: padding?.bottom ?? 0,
+    };
+
+    const mapStyle: React.CSSProperties = {
+      width: '100%',
+      height: '100%',
+    };
+
     return (
       <View style={style}>
-        <Map
-          mapId={mapId}
-          defaultCenter={defaultCenter}
-          defaultZoom={initialZoom}
-          minZoom={minZoom}
-          maxZoom={maxZoom}
-          gestureHandling={gestureHandling}
-          disableDefaultUI
-          tilt={pitchEnabled === false ? 0 : undefined}
-          style={StyleSheet.absoluteFill}
-        >
-          <MapController
-            onMapReady={this.handleMapReady}
-            onCameraMove={onCameraMove}
-            onCameraIdle={onCameraIdle}
-            onReady={onReady}
-          />
-          {mapChildren}
-        </Map>
+        <View style={mapContainerStyle}>
+          <Map
+            mapId={mapId}
+            defaultCenter={defaultCenter}
+            defaultZoom={initialZoom}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            gestureHandling={gestureHandling}
+            disableDefaultUI
+            tilt={pitchEnabled === false ? 0 : undefined}
+            style={mapStyle}
+          >
+            <MapController
+              onMapReady={this.handleMapReady}
+              onCameraMove={onCameraMove}
+              onCameraIdle={onCameraIdle}
+              onReady={onReady}
+            />
+            {mapChildren}
+          </Map>
+        </View>
         {overlayChildren}
       </View>
     );
