@@ -282,6 +282,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       title = markerView.title
       snippet = markerView.description
       setAnchor(markerView.anchorX, markerView.anchorY)
+      zIndex = markerView.zIndex
       if (!markerView.hasCustomView) {
         iconView = null
       }
@@ -319,6 +320,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
     val marker = map.addMarker(options) as AdvancedMarker
     marker.setAnchor(markerView.anchorX, markerView.anchorY)
+    marker.zIndex = markerView.zIndex
 
     markerView.marker = marker
   }

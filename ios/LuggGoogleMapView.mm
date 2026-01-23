@@ -242,6 +242,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.position = markerView.coordinate;
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
+  marker.zIndex = (int)markerView.zIndex;
   if (markerView.hasCustomView) {
     UIView *iconView = markerView.iconView;
     [iconView removeFromSuperview];
@@ -283,6 +284,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     marker.groundAnchor = markerView.anchor;
   }
 
+  marker.zIndex = (int)markerView.zIndex;
   marker.map = _mapView;
 
   markerView.marker = marker;

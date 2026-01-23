@@ -63,6 +63,11 @@ class LuggMarkerViewManager :
     }
   }
 
+  @ReactProp(name = "zIndex")
+  override fun setZIndex(view: LuggMarkerView, value: Int) {
+    view.setZIndex(value)
+  }
+
   companion object {
     const val NAME = "LuggMarkerView"
   }

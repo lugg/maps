@@ -393,6 +393,12 @@ using namespace luggmaps::events;
   annotation.title = markerView.title;
   annotation.subtitle = markerView.markerDescription;
 
+  MKAnnotationView *annotationView = annotation.annotationView;
+  if (annotationView) {
+    annotationView.layer.zPosition = markerView.zIndex;
+    annotationView.zPriority = markerView.zIndex;
+  }
+
   [self updateAnnotationViewFrame:annotation];
 }
 
@@ -447,6 +453,8 @@ using namespace luggmaps::events;
                                    reuseIdentifier:nil];
   annotationView.canShowCallout = YES;
   annotationView.displayPriority = MKFeatureDisplayPriorityRequired;
+  annotationView.layer.zPosition = markerView.zIndex;
+  annotationView.zPriority = markerView.zIndex;
 
   UIView *iconView = markerView.iconView;
   [iconView removeFromSuperview];

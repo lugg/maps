@@ -17,6 +17,7 @@ using namespace facebook::react;
   NSString *_title;
   NSString *_markerDescription;
   CGPoint _anchor;
+  NSInteger _zIndex;
   BOOL _didLayout;
   UIView *_iconView;
 }
@@ -34,6 +35,7 @@ using namespace facebook::react;
 
     _coordinate = CLLocationCoordinate2DMake(0, 0);
     _anchor = CGPointMake(0.5, 1.0);
+    _zIndex = 0;
     _didLayout = NO;
 
     _iconView = [[UIView alloc] init];
@@ -58,6 +60,7 @@ using namespace facebook::react;
   _markerDescription =
       [NSString stringWithUTF8String:newViewProps.description.c_str()];
   _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  _zIndex = newViewProps.zIndex;
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
@@ -123,6 +126,10 @@ using namespace facebook::react;
 
 - (CGPoint)anchor {
   return _anchor;
+}
+
+- (NSInteger)zIndex {
+  return _zIndex;
 }
 
 - (BOOL)hasCustomView {

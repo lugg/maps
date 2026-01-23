@@ -34,6 +34,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var anchorY: Float = 1.0f
     private set
 
+  var zIndex: Float = 0f
+    private set
+
   var didLayout: Boolean = false
     private set
 
@@ -112,6 +115,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   fun setAnchor(x: Double, y: Double) {
     anchorX = x.toFloat()
     anchorY = y.toFloat()
+  }
+
+  fun setZIndex(zIndex: Int) {
+    this.zIndex = zIndex.toFloat()
   }
 
   fun setName(name: String?) {

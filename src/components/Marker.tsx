@@ -26,6 +26,10 @@ export interface MarkerProps {
    */
   anchor?: Point;
   /**
+   * Z-index for marker ordering. Higher values render on top.
+   */
+  zIndex?: number;
+  /**
    * Custom marker view
    */
   children?: ReactNode;
@@ -33,7 +37,7 @@ export interface MarkerProps {
 
 export class Marker extends React.Component<MarkerProps> {
   render() {
-    const { name, coordinate, title, description, anchor, children } =
+    const { name, coordinate, title, description, anchor, zIndex, children } =
       this.props;
 
     return (
@@ -44,6 +48,7 @@ export class Marker extends React.Component<MarkerProps> {
         title={title}
         description={description}
         anchor={anchor}
+        zIndex={zIndex}
       >
         {children}
       </LuggMarkerViewNativeComponent>
