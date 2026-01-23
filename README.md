@@ -1,9 +1,6 @@
 # @lugg/maps
 
-React Native Fabric maps library for iOS and Android.
-
-- Google Maps (iOS & Android)
-- Apple Maps (iOS only)
+Universal maps for your React Native apps 📍
 
 ## Installation
 
@@ -54,6 +51,22 @@ Add your Google Maps API key to `AndroidManifest.xml`:
     android:name="com.google.android.geo.API_KEY"
     android:value="YOUR_API_KEY" />
 </application>
+```
+
+### Web
+
+Wrap your app with `MapProvider` and pass your Google Maps API key:
+
+```tsx
+import { MapProvider } from '@lugg/maps';
+
+function App() {
+  return (
+    <MapProvider apiKey="YOUR_WEB_API_KEY">
+      {/* Your app */}
+    </MapProvider>
+  );
+}
 ```
 
 ## Usage
