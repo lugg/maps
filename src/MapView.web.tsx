@@ -1,4 +1,13 @@
-import React from 'react';
+import {
+  Children,
+  Component,
+  isValidElement,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import type { NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { Map, useMap } from '@vis.gl/react-google-maps';
@@ -17,7 +26,7 @@ import type { Coordinate } from './types';
 // Map-specific component types that render inside the Google Map
 const MAP_COMPONENT_TYPES = new Set([Marker, Polyline]);
 
-const isMapComponent = (child: React.ReactElement): boolean =>
+const isMapComponent = (child: ReactElement): boolean =>
   MAP_COMPONENT_TYPES.has(child.type as typeof Marker | typeof Polyline);
 
 const createSyntheticEvent = <T,>(nativeEvent: T): NativeSyntheticEvent<T> =>
@@ -44,6 +53,7 @@ interface MapControllerProps {
   onCameraMove?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
   onCameraIdle?: (event: NativeSyntheticEvent<CameraEventPayload>) => void;
   onReady?: () => void;
+  userLocationEnabled?: boolean;
 }
 
 function MapController({
@@ -51,11 +61,14 @@ function MapController({
   onCameraMove,
   onCameraIdle,
   onReady,
+  userLocationEnabled,
 }: MapControllerProps) {
   const map = useMap();
-  const readyFired = React.useRef(false);
+  const readyFired = useRef(false);
+  const userLocationMarker =
+    useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
     onMapReady(map);
 
@@ -65,7 +78,55 @@ function MapController({
     }
   }, [map, onMapReady, onReady]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!map || !userLocationEnabled) {
+      if (userLocationMarker.current) {
+        userLocationMarker.current.map = null;
+        userLocationMarker.current = null;
+      }
+      return;
+    }
+
+    let watchId: number | null = null;
+
+    const updateUserLocation = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+
+      if (!userLocationMarker.current) {
+        const dot = document.createElement('div');
+        dot.style.width = '16px';
+        dot.style.height = '16px';
+        dot.style.backgroundColor = '#4285F4';
+        dot.style.border = '2px solid white';
+        dot.style.borderRadius = '50%';
+        dot.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+
+        userLocationMarker.current =
+          new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: { lat: latitude, lng: longitude },
+            content: dot,
+          });
+      } else {
+        userLocationMarker.current.position = { lat: latitude, lng: longitude };
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(updateUserLocation, () => {});
+    watchId = navigator.geolocation.watchPosition(updateUserLocation, () => {});
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      if (userLocationMarker.current) {
+        userLocationMarker.current.map = null;
+        userLocationMarker.current = null;
+      }
+    };
+  }, [map, userLocationEnabled]);
+
+  useEffect(() => {
     if (!map) return;
 
     const createPayload = (gesture: boolean): CameraEventPayload => {
@@ -109,12 +170,10 @@ function MapController({
   return null;
 }
 
-export class MapView
-  extends React.Component<MapViewProps>
-  implements MapViewRef
-{
+export class MapView extends Component<MapViewProps> implements MapViewRef {
   static defaultProps: Partial<MapViewProps> = {
     provider: 'google',
+    mapId: 'DEMO_MAP_ID',
     initialZoom: 10,
     zoomEnabled: true,
     scrollEnabled: true,
@@ -181,6 +240,7 @@ export class MapView
       scrollEnabled,
       pitchEnabled,
       padding,
+      userLocationEnabled,
       onCameraMove,
       onCameraIdle,
       onReady,
@@ -200,11 +260,11 @@ export class MapView
       : undefined;
 
     // Separate map children (Marker, Polyline) from overlay children (regular Views)
-    const mapChildren: React.ReactNode[] = [];
-    const overlayChildren: React.ReactNode[] = [];
+    const mapChildren: ReactNode[] = [];
+    const overlayChildren: ReactNode[] = [];
 
-    React.Children.forEach(children, (child) => {
-      if (!React.isValidElement(child)) return;
+    Children.forEach(children, (child) => {
+      if (!isValidElement(child)) return;
       if (isMapComponent(child)) {
         mapChildren.push(child);
       } else {
@@ -220,7 +280,7 @@ export class MapView
       bottom: padding?.bottom ?? 0,
     };
 
-    const mapStyle: React.CSSProperties = {
+    const mapStyle: CSSProperties = {
       width: '100%',
       height: '100%',
     };
@@ -244,6 +304,7 @@ export class MapView
               onCameraMove={onCameraMove}
               onCameraIdle={onCameraIdle}
               onReady={onReady}
+              userLocationEnabled={userLocationEnabled}
             />
             {mapChildren}
           </Map>
