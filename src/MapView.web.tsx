@@ -1,6 +1,10 @@
 import React from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Map, useMap } from '@vis.gl/react-google-maps';
+import { Marker } from './components/Marker.web';
+import { Polyline } from './components/Polyline.web';
+
 import type {
   MapViewProps,
   MapViewRef,
@@ -9,6 +13,12 @@ import type {
   CameraEventPayload,
 } from './MapView.types';
 import type { Coordinate } from './types';
+
+// Map-specific component types that render inside the Google Map
+const MAP_COMPONENT_TYPES = new Set([Marker, Polyline]);
+
+const isMapComponent = (child: React.ReactElement): boolean =>
+  MAP_COMPONENT_TYPES.has(child.type as typeof Marker | typeof Polyline);
 
 const createSyntheticEvent = <T,>(nativeEvent: T): NativeSyntheticEvent<T> =>
   ({
@@ -188,34 +198,42 @@ export class MapView
       ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
       : undefined;
 
-    const containerStyle: React.CSSProperties = {
-      width: '100%',
-      height: '100%',
-      ...(typeof style === 'object' && style !== null
-        ? (style as React.CSSProperties)
-        : {}),
-    };
+    // Separate map children (Marker, Polyline) from overlay children (regular Views)
+    const mapChildren: React.ReactNode[] = [];
+    const overlayChildren: React.ReactNode[] = [];
+
+    React.Children.forEach(children, (child) => {
+      if (!React.isValidElement(child)) return;
+      if (isMapComponent(child)) {
+        mapChildren.push(child);
+      } else {
+        overlayChildren.push(child);
+      }
+    });
 
     return (
-      <Map
-        mapId={mapId}
-        defaultCenter={defaultCenter}
-        defaultZoom={initialZoom}
-        minZoom={minZoom}
-        maxZoom={maxZoom}
-        gestureHandling={gestureHandling}
-        disableDefaultUI
-        tilt={pitchEnabled === false ? 0 : undefined}
-        style={containerStyle}
-      >
-        <MapController
-          onMapReady={this.handleMapReady}
-          onCameraMove={onCameraMove}
-          onCameraIdle={onCameraIdle}
-          onReady={onReady}
-        />
-        {children}
-      </Map>
+      <View style={style}>
+        <Map
+          mapId={mapId}
+          defaultCenter={defaultCenter}
+          defaultZoom={initialZoom}
+          minZoom={minZoom}
+          maxZoom={maxZoom}
+          gestureHandling={gestureHandling}
+          disableDefaultUI
+          tilt={pitchEnabled === false ? 0 : undefined}
+          style={StyleSheet.absoluteFill}
+        >
+          <MapController
+            onMapReady={this.handleMapReady}
+            onCameraMove={onCameraMove}
+            onCameraIdle={onCameraIdle}
+            onReady={onReady}
+          />
+          {mapChildren}
+        </Map>
+        {overlayChildren}
+      </View>
     );
   }
 }
