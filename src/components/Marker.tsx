@@ -42,13 +42,12 @@ export class Marker extends React.Component<MarkerProps> {
 
     return (
       <LuggMarkerViewNativeComponent
-        style={styles.marker}
+        style={[{ zIndex }, styles.marker]}
         name={name}
         coordinate={coordinate}
         title={title}
         description={description}
         anchor={anchor}
-        zIndex={zIndex}
       >
         {children}
       </LuggMarkerViewNativeComponent>

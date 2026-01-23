@@ -87,6 +87,7 @@ export const Map = forwardRef<MapView, MapProps>(
         <Marker
           name="inline-marker"
           coordinate={{ latitude: 37.782, longitude: -122.425 }}
+          zIndex={10}
         >
           <View style={styles.customMarker} />
         </Marker>

@@ -13,6 +13,7 @@ using namespace facebook::react;
 @end
 
 @implementation LuggMarkerView {
+  NSString *_name;
   CLLocationCoordinate2D _coordinate;
   NSString *_title;
   NSString *_markerDescription;
@@ -54,13 +55,14 @@ using namespace facebook::react;
   const auto &newViewProps =
       *std::static_pointer_cast<LuggMarkerViewProps const>(props);
 
+  _name = [NSString stringWithUTF8String:newViewProps.name.c_str()];
   _coordinate = CLLocationCoordinate2DMake(newViewProps.coordinate.latitude,
                                            newViewProps.coordinate.longitude);
   _title = [NSString stringWithUTF8String:newViewProps.title.c_str()];
   _markerDescription =
       [NSString stringWithUTF8String:newViewProps.description.c_str()];
   _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
-  _zIndex = newViewProps.zIndex;
+  _zIndex = newViewProps.zIndex.value_or(0);
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
@@ -110,6 +112,10 @@ using namespace facebook::react;
     _didLayout = YES;
     [self.delegate markerViewDidLayout:self];
   }
+}
+
+- (NSString *)name {
+  return _name;
 }
 
 - (CLLocationCoordinate2D)coordinate {
