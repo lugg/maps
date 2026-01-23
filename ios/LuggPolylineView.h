@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) NSArray<UIColor *> *strokeColors;
 @property(nonatomic, readonly) BOOL animated;
 @property(nonatomic, readonly) CGFloat strokeWidth;
+@property(nonatomic, readonly) NSInteger zIndex;
 @property(nonatomic, weak, nullable) id<LuggPolylineViewDelegate> delegate;
 @property(nonatomic, strong, nullable) NSObject *polyline;
 @property(nonatomic, weak, nullable) NSObject *renderer;

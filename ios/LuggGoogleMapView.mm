@@ -307,6 +307,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   GMSPolyline *polyline = (GMSPolyline *)polylineView.polyline;
   polyline.strokeWidth = polylineView.strokeWidth;
+  polyline.zIndex = (int)polylineView.zIndex;
 
   GMSPolylineAnimator *animator =
       [_polylineAnimators objectForKey:polylineView];
@@ -336,6 +337,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   GMSPolyline *polyline = [GMSPolyline polylineWithPath:[GMSMutablePath path]];
   polyline.strokeWidth = polylineView.strokeWidth;
+  polyline.zIndex = (int)polylineView.zIndex;
   polyline.map = _mapView;
   polylineView.polyline = polyline;
 

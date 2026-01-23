@@ -302,7 +302,7 @@ using namespace luggmaps::events;
   free(coords);
 
   polylineView.polyline = polyline;
-  [_mapView addOverlay:polyline];
+  [self insertOverlay:polyline withZIndex:polylineView.zIndex];
 }
 
 - (void)syncPolylineView:(LuggPolylineView *)polylineView {
@@ -341,7 +341,7 @@ using namespace luggmaps::events;
   // If we have an existing renderer, update it in place
   if (renderer && oldPolyline) {
     [_mapView removeOverlay:oldPolyline];
-    [_mapView addOverlay:newPolyline];
+    [self insertOverlay:newPolyline withZIndex:polylineView.zIndex];
     [renderer updatePolyline:newPolyline];
     renderer.lineWidth = polylineView.strokeWidth;
     renderer.strokeColor = polylineView.strokeColors.firstObject;
@@ -355,7 +355,28 @@ using namespace luggmaps::events;
   if (oldPolyline) {
     [_mapView removeOverlay:oldPolyline];
   }
-  [_mapView addOverlay:newPolyline];
+  [self insertOverlay:newPolyline withZIndex:polylineView.zIndex];
+}
+
+- (void)insertOverlay:(id<MKOverlay>)overlay withZIndex:(NSInteger)zIndex {
+  if (zIndex == 0) {
+    [_mapView addOverlay:overlay];
+    return;
+  }
+
+  NSArray<id<MKOverlay>> *overlays = _mapView.overlays;
+  NSInteger insertIndex = overlays.count;
+
+  for (NSInteger i = 0; i < overlays.count; i++) {
+    LuggPolylineView *existingPolylineView =
+        [self findPolylineViewForOverlay:overlays[i]];
+    if (existingPolylineView && existingPolylineView.zIndex > zIndex) {
+      insertIndex = i;
+      break;
+    }
+  }
+
+  [_mapView insertOverlay:overlay atIndex:insertIndex];
 }
 
 - (LuggPolylineView *)findPolylineViewForOverlay:(id<MKOverlay>)overlay {

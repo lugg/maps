@@ -46,7 +46,9 @@ function PolylineImpl({
   strokeColors,
   strokeWidth = 1,
   animated,
+  zIndex,
 }: PolylineProps) {
+  const resolvedZIndex = zIndex ?? (animated ? 1 : 0);
   const map = useMap();
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
   const animationRef = useRef<number>(0);
@@ -62,13 +64,13 @@ function PolylineImpl({
   const hasGradient = colors.length > 1;
 
   // Refs for animation loop access
-  const propsRef = useRef({ map, colors, strokeWidth, hasGradient });
+  const propsRef = useRef({ map, colors, strokeWidth, hasGradient, zIndex: resolvedZIndex });
   const [mapReady, setMapReady] = useState(!!map);
 
   useEffect(() => {
-    propsRef.current = { map, colors, strokeWidth, hasGradient };
+    propsRef.current = { map, colors, strokeWidth, hasGradient, zIndex: resolvedZIndex };
     if (map && !mapReady) setMapReady(true);
-  }, [map, colors, strokeWidth, hasGradient, mapReady]);
+  }, [map, colors, strokeWidth, hasGradient, resolvedZIndex, mapReady]);
 
   const updatePath = useCallback((path: google.maps.LatLngLiteral[]) => {
     const {
@@ -76,6 +78,7 @@ function PolylineImpl({
       colors: currentColors,
       strokeWidth: currentStrokeWidth,
       hasGradient: currentHasGradient,
+      zIndex: currentZIndex,
     } = propsRef.current;
     if (!currentMap || path.length < 2) return;
 
@@ -100,6 +103,7 @@ function PolylineImpl({
             strokeColor: color,
             strokeWeight: currentStrokeWidth,
             strokeOpacity: 1,
+            zIndex: currentZIndex,
             map: currentMap,
           })
         );

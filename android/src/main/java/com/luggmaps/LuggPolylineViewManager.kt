@@ -65,6 +65,12 @@ class LuggPolylineViewManager :
     view.setAnimated(value)
   }
 
+  @ReactProp(name = "zIndex", defaultFloat = 0f)
+  override fun setZIndex(view: LuggPolylineView, value: Float) {
+    super.setZIndex(view, value)
+    view.setZIndex(value)
+  }
+
   companion object {
     const val NAME = "LuggPolylineView"
   }

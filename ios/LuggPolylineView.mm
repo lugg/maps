@@ -18,6 +18,7 @@ using namespace facebook::react;
   NSArray<UIColor *> *_strokeColors;
   BOOL _animated;
   CGFloat _strokeWidth;
+  NSInteger _zIndex;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -71,8 +72,8 @@ using namespace facebook::react;
   }
 
   _animated = newViewProps.animated;
-
   _strokeWidth = newViewProps.strokeWidth > 0 ? newViewProps.strokeWidth : 1.0;
+  _zIndex = newViewProps.zIndex.value_or(0);
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
@@ -99,6 +100,10 @@ using namespace facebook::react;
 
 - (CGFloat)strokeWidth {
   return _strokeWidth;
+}
+
+- (NSInteger)zIndex {
+  return _zIndex;
 }
 
 - (void)prepareForRecycle {

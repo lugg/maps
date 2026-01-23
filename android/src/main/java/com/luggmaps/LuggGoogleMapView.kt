@@ -338,6 +338,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     }
 
     polylineView.polyline?.width = polylineView.strokeWidth.dpToPx()
+    polylineView.polyline?.zIndex = polylineView.zIndex
 
     polylineAnimators[polylineView]?.apply {
       coordinates = polylineView.coordinates
@@ -360,6 +361,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
     val options = PolylineOptions()
       .width(polylineView.strokeWidth.dpToPx())
+      .zIndex(polylineView.zIndex)
 
     val polyline = map.addPolyline(options)
     polylineView.polyline = polyline

@@ -25,6 +25,9 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
   var animated: Boolean = false
     private set
 
+  var zIndex: Float = 0f
+    private set
+
   var cachedSpans: List<StyleSpan>? = null
     private set
 
@@ -53,6 +56,10 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
 
   fun setAnimated(value: Boolean) {
     animated = value
+  }
+
+  fun setZIndex(value: Float) {
+    zIndex = value
   }
 
   fun getOrCreateSpans(): List<StyleSpan> {

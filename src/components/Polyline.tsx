@@ -21,6 +21,10 @@ export interface PolylineProps {
    * Animate the polyline with a snake effect
    */
   animated?: boolean;
+  /**
+   * Z-index for layering polylines
+   */
+  zIndex?: number;
 }
 
 export class Polyline extends React.Component<PolylineProps> {
@@ -30,11 +34,12 @@ export class Polyline extends React.Component<PolylineProps> {
       strokeColors,
       strokeWidth,
       animated = false,
+      zIndex,
     } = this.props;
 
     return (
       <LuggPolylineViewNativeComponent
-        style={styles.polyline}
+        style={[{ zIndex }, styles.polyline]}
         coordinates={coordinates}
         strokeColors={strokeColors}
         strokeWidth={strokeWidth}

@@ -72,11 +72,18 @@ export const Route = ({ markerCoordinates }: RouteProps) => {
   if (smoothed.length < 2) return null;
 
   return (
-    <Polyline
-      strokeColors={['#B321E0', '#3744FF']}
-      coordinates={smoothed}
-      strokeWidth={6}
-      animated
-    />
+    <>
+      <Polyline
+        strokeColors={['#B0B0B0']}
+        coordinates={smoothed}
+        strokeWidth={6}
+      />
+      <Polyline
+        strokeColors={['#B321E0', '#3744FF']}
+        coordinates={smoothed}
+        strokeWidth={6}
+        animated
+      />
+    </>
   );
 };
