@@ -49,6 +49,7 @@ function PolylineImpl({
   const map = useMap();
   const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
   const animationRef = React.useRef<number | null>(null);
+  const singlePolylineRef = React.useRef<google.maps.Polyline | null>(null);
 
   const colors = React.useMemo(
     () =>
@@ -60,60 +61,95 @@ function PolylineImpl({
 
   const hasGradient = colors.length > 1;
 
+  // Store current values in refs for use in animation loop
+  const mapRef = React.useRef(map);
+  const colorsRef = React.useRef(colors);
+  const strokeWidthRef = React.useRef(strokeWidth);
+  const hasGradientRef = React.useRef(hasGradient);
+  const [mapReady, setMapReady] = React.useState(!!map);
+
+  React.useEffect(() => {
+    mapRef.current = map;
+    if (map && !mapReady) setMapReady(true);
+  }, [map, mapReady]);
+
+  React.useEffect(() => {
+    colorsRef.current = colors;
+  }, [colors]);
+
+  React.useEffect(() => {
+    strokeWidthRef.current = strokeWidth;
+  }, [strokeWidth]);
+
+  React.useEffect(() => {
+    hasGradientRef.current = hasGradient;
+  }, [hasGradient]);
+
   const clearPolylines = React.useCallback(() => {
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
   }, []);
 
-  // Create/update gradient segments
-  const createGradientSegments = React.useCallback(
+  const updateGradientSegments = React.useCallback(
     (path: google.maps.LatLngLiteral[]) => {
-      if (!map || path.length < 2) return;
+      const currentMap = mapRef.current;
+      const currentColors = colorsRef.current;
+      const currentStrokeWidth = strokeWidthRef.current;
 
-      clearPolylines();
+      if (!currentMap || path.length < 2) return;
 
-      for (let i = 0; i < path.length - 1; i++) {
+      const neededSegments = path.length - 1;
+      const existingSegments = polylinesRef.current.length;
+
+      // Update existing segments
+      for (let i = 0; i < Math.min(neededSegments, existingSegments); i++) {
         const position = i / (path.length - 1);
-        const color = getGradientColor(colors, position);
+        const color = getGradientColor(currentColors, position);
+        const segment = polylinesRef.current[i]!;
+
+        segment.setPath([path[i]!, path[i + 1]!]);
+        segment.setOptions({ strokeColor: color });
+      }
+
+      // Add new segments if needed
+      for (let i = existingSegments; i < neededSegments; i++) {
+        const position = i / (path.length - 1);
+        const color = getGradientColor(currentColors, position);
 
         const segment = new google.maps.Polyline({
           path: [path[i]!, path[i + 1]!],
           strokeColor: color,
-          strokeWeight: strokeWidth ?? 1,
+          strokeWeight: currentStrokeWidth ?? 1,
           strokeOpacity: 1,
-          map,
+          map: currentMap,
         });
 
         polylinesRef.current.push(segment);
       }
+
+      // Remove extra segments if needed
+      for (let i = neededSegments; i < existingSegments; i++) {
+        polylinesRef.current[i]?.setMap(null);
+      }
+      polylinesRef.current.length = neededSegments;
     },
-    [map, colors, strokeWidth, clearPolylines]
+    []
   );
 
-  // Single polyline for solid color
-  const singlePolylineRef = React.useRef<google.maps.Polyline | null>(null);
-
+  // Cleanup on unmount only
   React.useEffect(() => {
-    if (!map) return;
-
-    if (!hasGradient && !singlePolylineRef.current) {
-      singlePolylineRef.current = new google.maps.Polyline({
-        strokeColor: colors[0],
-        strokeWeight: strokeWidth ?? 1,
-        strokeOpacity: 1,
-        map,
-      });
-    }
-
     return () => {
       clearPolylines();
       singlePolylineRef.current?.setMap(null);
       singlePolylineRef.current = null;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [map, hasGradient, colors, strokeWidth, clearPolylines]);
+  }, [clearPolylines]);
 
   React.useEffect(() => {
-    if (!map || coordinates.length === 0) return;
+    if (!mapRef.current || coordinates.length === 0) return;
 
     const fullPath = coordinates.map((coord) => ({
       lat: coord.latitude,
@@ -125,9 +161,19 @@ function PolylineImpl({
       animationRef.current = null;
     }
 
+    // Ensure single polyline exists for non-gradient
+    if (!hasGradientRef.current && !singlePolylineRef.current) {
+      singlePolylineRef.current = new google.maps.Polyline({
+        strokeColor: colorsRef.current[0],
+        strokeWeight: strokeWidthRef.current ?? 1,
+        strokeOpacity: 1,
+        map: mapRef.current,
+      });
+    }
+
     if (!animated) {
       if (hasGradient) {
-        createGradientSegments(fullPath);
+        updateGradientSegments(fullPath);
       } else {
         singlePolylineRef.current?.setPath(fullPath);
       }
@@ -195,8 +241,8 @@ function PolylineImpl({
         }
       }
 
-      if (hasGradient) {
-        createGradientSegments(partialPath);
+      if (hasGradientRef.current) {
+        updateGradientSegments(partialPath);
       } else {
         singlePolylineRef.current?.setPath(partialPath);
       }
@@ -212,7 +258,7 @@ function PolylineImpl({
         animationRef.current = null;
       }
     };
-  }, [coordinates, animated, hasGradient, createGradientSegments, map]);
+  }, [coordinates, animated, hasGradient, updateGradientSegments, mapReady]);
 
   return null;
 }
