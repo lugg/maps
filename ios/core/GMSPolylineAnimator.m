@@ -4,6 +4,8 @@
 @implementation GMSPolylineAnimator {
   CADisplayLink *_displayLink;
   CGFloat _animationProgress;
+  NSArray<NSNumber *> *_cumulativeDistances;
+  CGFloat _totalLength;
 }
 
 - (void)dealloc {
@@ -28,9 +30,26 @@
   if (_displayLink) {
     return;
   }
+  [self computeCumulativeDistances];
   _animationProgress = 0;
   _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(animationTick:)];
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+}
+
+- (void)computeCumulativeDistances {
+  NSMutableArray<NSNumber *> *distances = [NSMutableArray array];
+  CGFloat total = 0;
+  [distances addObject:@(0)];
+
+  for (NSUInteger i = 1; i < self.coordinates.count; i++) {
+    CLLocation *prev = self.coordinates[i - 1];
+    CLLocation *curr = self.coordinates[i];
+    total += [prev distanceFromLocation:curr];
+    [distances addObject:@(total)];
+  }
+
+  _cumulativeDistances = [distances copy];
+  _totalLength = total;
 }
 
 - (void)stopAnimation {
@@ -39,7 +58,7 @@
 }
 
 - (void)animationTick:(CADisplayLink *)displayLink {
-  CGFloat speed = displayLink.duration / 1.75;
+  CGFloat speed = displayLink.duration / 1.0;
   _animationProgress += speed;
 
   if (_animationProgress >= 2.15) {
@@ -71,63 +90,86 @@
   }
 }
 
+- (NSUInteger)indexForDistance:(CGFloat)distance {
+  for (NSUInteger i = 1; i < _cumulativeDistances.count; i++) {
+    if (_cumulativeDistances[i].doubleValue >= distance) {
+      return i - 1;
+    }
+  }
+  return _cumulativeDistances.count - 2;
+}
+
+- (CLLocationCoordinate2D)coordinateAtDistance:(CGFloat)distance {
+  if (distance <= 0) {
+    return self.coordinates.firstObject.coordinate;
+  }
+  if (distance >= _totalLength) {
+    return self.coordinates.lastObject.coordinate;
+  }
+
+  NSUInteger idx = [self indexForDistance:distance];
+  CGFloat segStart = _cumulativeDistances[idx].doubleValue;
+  CGFloat segEnd = _cumulativeDistances[idx + 1].doubleValue;
+  CGFloat segLength = segEnd - segStart;
+
+  CGFloat t = (segLength > 0) ? (distance - segStart) / segLength : 0;
+  CLLocationCoordinate2D c1 = self.coordinates[idx].coordinate;
+  CLLocationCoordinate2D c2 = self.coordinates[idx + 1].coordinate;
+
+  return CLLocationCoordinate2DMake(c1.latitude + (c2.latitude - c1.latitude) * t,
+                                    c1.longitude + (c2.longitude - c1.longitude) * t);
+}
+
 - (void)updateAnimatedPolyline {
-  if (!_polyline || self.coordinates.count < 2) {
+  if (!_polyline || self.coordinates.count < 2 || _totalLength <= 0) {
     return;
   }
 
-  NSUInteger segmentCount = self.coordinates.count - 1;
   CGFloat progress = MIN(_animationProgress, 2.0);
-  CGFloat headPos, tailPos;
+  CGFloat headDist, tailDist;
 
   if (progress <= 1.0) {
-    tailPos = 0;
-    headPos = progress * segmentCount;
+    tailDist = 0;
+    headDist = progress * _totalLength;
   } else {
     CGFloat shrinkProgress = progress - 1.0;
-    tailPos = shrinkProgress * segmentCount;
-    headPos = segmentCount;
+    tailDist = shrinkProgress * _totalLength;
+    headDist = _totalLength;
   }
 
-  if (headPos <= tailPos) {
+  if (headDist <= tailDist) {
     _polyline.path = [GMSMutablePath path];
     return;
   }
 
-  NSUInteger startIndex = (NSUInteger)floor(tailPos);
-  NSUInteger endIndex = (NSUInteger)ceil(headPos);
-  CGFloat visibleLength = headPos - tailPos;
+  CGFloat visibleLength = headDist - tailDist;
+  NSUInteger startIndex = [self indexForDistance:tailDist];
+  NSUInteger endIndex = [self indexForDistance:headDist];
 
   GMSMutablePath *path = [GMSMutablePath path];
   NSMutableArray<GMSStyleSpan *> *spans = [NSMutableArray array];
 
-  for (NSUInteger i = startIndex; i <= endIndex && i < self.coordinates.count; i++) {
-    CLLocationCoordinate2D coord = self.coordinates[i].coordinate;
+  CLLocationCoordinate2D startCoord = [self coordinateAtDistance:tailDist];
+  [path addCoordinate:startCoord];
 
-    if (i == startIndex && tailPos > (CGFloat)startIndex) {
-      CGFloat t = tailPos - (CGFloat)startIndex;
-      CLLocationCoordinate2D nextCoord = self.coordinates[i + 1].coordinate;
-      coord.latitude = coord.latitude + (nextCoord.latitude - coord.latitude) * t;
-      coord.longitude = coord.longitude + (nextCoord.longitude - coord.longitude) * t;
-    }
+  for (NSUInteger i = startIndex + 1; i <= endIndex; i++) {
+    [path addCoordinate:self.coordinates[i].coordinate];
+  }
 
-    if (i == endIndex && headPos < (CGFloat)endIndex && i > 0) {
-      CGFloat t = headPos - (CGFloat)(endIndex - 1);
-      CLLocationCoordinate2D prevCoord = self.coordinates[i - 1].coordinate;
-      coord.latitude = prevCoord.latitude + (coord.latitude - prevCoord.latitude) * t;
-      coord.longitude = prevCoord.longitude + (coord.longitude - prevCoord.longitude) * t;
-    }
+  CLLocationCoordinate2D endCoord = [self coordinateAtDistance:headDist];
+  CLLocationCoordinate2D lastAdded =
+      (endIndex < self.coordinates.count) ? self.coordinates[endIndex].coordinate : endCoord;
+  if (endCoord.latitude != lastAdded.latitude || endCoord.longitude != lastAdded.longitude) {
+    [path addCoordinate:endCoord];
+  }
 
-    [path addCoordinate:coord];
-
-    if (i < endIndex && i < segmentCount) {
-      CGFloat segStartPos = MAX((CGFloat)i, tailPos);
-      CGFloat segEndPos = MIN((CGFloat)(i + 1), headPos);
-      CGFloat gradientMid = ((segStartPos + segEndPos) / 2.0 - tailPos) / visibleLength;
-      UIColor *color = [self colorAtGradientPosition:gradientMid];
-      GMSStrokeStyle *style = [GMSStrokeStyle solidColor:color];
-      [spans addObject:[GMSStyleSpan spanWithStyle:style]];
-    }
+  NSUInteger pathCount = path.count;
+  for (NSUInteger i = 0; i < pathCount - 1; i++) {
+    CGFloat segMidDist = tailDist + visibleLength * ((CGFloat)i + 0.5) / (CGFloat)(pathCount - 1);
+    CGFloat gradientPos = (segMidDist - tailDist) / visibleLength;
+    UIColor *color = [self colorAtGradientPosition:gradientPos];
+    GMSStrokeStyle *style = [GMSStrokeStyle solidColor:color];
+    [spans addObject:[GMSStyleSpan spanWithStyle:style]];
   }
 
   _polyline.path = path;

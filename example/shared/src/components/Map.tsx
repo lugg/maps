@@ -6,6 +6,7 @@ import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
 import { MarkerImage } from './MarkerImage';
 import type { MarkerData } from './index';
+import { Route } from './Route';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
@@ -89,6 +90,7 @@ export const Map = forwardRef<MapView, MapProps>(
             animated
           />
         )}
+        <Route />
         <Marker
           name="inline-marker"
           coordinate={{ latitude: 37.782, longitude: -122.425 }}

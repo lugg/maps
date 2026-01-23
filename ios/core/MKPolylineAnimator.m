@@ -4,7 +4,9 @@
 @implementation MKPolylineAnimator {
   MKPolyline *_polyline;
   CADisplayLink *_displayLink;
-  CGFloat _animationProgress; // 0→1 grow, 1→2 shrink
+  CGFloat _animationProgress;
+  NSArray<NSNumber *> *_cumulativeDistances;
+  CGFloat _totalLength;
 }
 
 - (id)initWithPolyline:(MKPolyline *)polyline {
@@ -38,9 +40,26 @@
   if (_displayLink) {
     return;
   }
+  [self computeCumulativeDistances];
   _animationProgress = 0;
   _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(animationTick:)];
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+}
+
+- (void)computeCumulativeDistances {
+  NSMutableArray<NSNumber *> *distances = [NSMutableArray array];
+  CGFloat total = 0;
+  [distances addObject:@(0)];
+
+  for (NSUInteger i = 1; i < _polyline.pointCount; i++) {
+    MKMapPoint p1 = _polyline.points[i - 1];
+    MKMapPoint p2 = _polyline.points[i];
+    total += MKMetersBetweenMapPoints(p1, p2);
+    [distances addObject:@(total)];
+  }
+
+  _cumulativeDistances = [distances copy];
+  _totalLength = total;
 }
 
 - (void)stopAnimation {
@@ -48,13 +67,20 @@
   _displayLink = nil;
 }
 
+- (NSUInteger)indexForDistance:(CGFloat)distance {
+  for (NSUInteger i = 1; i < _cumulativeDistances.count; i++) {
+    if (_cumulativeDistances[i].doubleValue >= distance) {
+      return i - 1;
+    }
+  }
+  return _cumulativeDistances.count - 2;
+}
+
 - (void)animationTick:(CADisplayLink *)displayLink {
-  // ~1.75s per phase (grow or shrink), matching JS duration
-  CGFloat speed = displayLink.duration / 1.75;
+  CGFloat speed = displayLink.duration / 1.0;
   _animationProgress += speed;
 
-  // 0→1 grow, 1→2 shrink, then reset with small pause
-  if (_animationProgress >= 2.15) { // 2.0 + 0.15 pause (~300ms at this speed)
+  if (_animationProgress >= 2.15) {
     _animationProgress = 0;
   }
 
@@ -135,62 +161,64 @@
   }
 
   // Snake animation: grow from start, then shrink from start
-  if (_animated && _polyline.pointCount > 1) {
+  if (_animated && _polyline.pointCount > 1 && _totalLength > 0) {
     CGFloat progress = MIN(_animationProgress, 2.0);
-    CGFloat headPos, tailPos;
+    CGFloat headDist, tailDist;
 
     if (progress <= 1.0) {
-      // Phase 1: grow from start to end
-      tailPos = 0;
-      headPos = progress * segmentCount;
+      tailDist = 0;
+      headDist = progress * _totalLength;
     } else {
-      // Phase 2: shrink from start
       CGFloat shrinkProgress = progress - 1.0;
-      tailPos = shrinkProgress * segmentCount;
-      headPos = segmentCount;
+      tailDist = shrinkProgress * _totalLength;
+      headDist = _totalLength;
     }
 
-    if (headPos <= tailPos) {
+    if (headDist <= tailDist) {
       return;
     }
 
-    NSUInteger startIndex = (NSUInteger)floor(tailPos);
-    NSUInteger endIndex = (NSUInteger)ceil(headPos);
-    CGFloat visibleLength = headPos - tailPos;
+    CGFloat visibleLength = headDist - tailDist;
+    NSUInteger startIndex = [self indexForDistance:tailDist];
+    NSUInteger endIndex = [self indexForDistance:headDist];
 
-    for (NSUInteger i = startIndex; i < endIndex && i < segmentCount; i++) {
+    for (NSUInteger i = startIndex; i <= endIndex && i < segmentCount; i++) {
+      CGFloat segStartDist = _cumulativeDistances[i].doubleValue;
+      CGFloat segEndDist = _cumulativeDistances[i + 1].doubleValue;
+
+      if (segEndDist <= tailDist || segStartDist >= headDist) {
+        continue;
+      }
+
       CGPoint segStart = [self pointForMapPoint:_polyline.points[i]];
       CGPoint segEnd = [self pointForMapPoint:_polyline.points[i + 1]];
 
       CGPoint drawStart = segStart;
       CGPoint drawEnd = segEnd;
-      CGFloat segStartPos = (CGFloat)i;
-      CGFloat segEndPos = (CGFloat)(i + 1);
+      CGFloat drawStartDist = segStartDist;
+      CGFloat drawEndDist = segEndDist;
+      CGFloat segLength = segEndDist - segStartDist;
 
-      // Interpolate tail (partial segment at start)
-      if (segStartPos < tailPos) {
-        CGFloat t = tailPos - segStartPos;
+      if (segStartDist < tailDist && segLength > 0) {
+        CGFloat t = (tailDist - segStartDist) / segLength;
         drawStart.x = segStart.x + (segEnd.x - segStart.x) * t;
         drawStart.y = segStart.y + (segEnd.y - segStart.y) * t;
-        segStartPos = tailPos;
+        drawStartDist = tailDist;
       }
 
-      // Interpolate head (partial segment at end)
-      if (segEndPos > headPos) {
-        CGFloat t = headPos - (CGFloat)i;
+      if (segEndDist > headDist && segLength > 0) {
+        CGFloat t = (headDist - segStartDist) / segLength;
         drawEnd.x = segStart.x + (segEnd.x - segStart.x) * t;
         drawEnd.y = segStart.y + (segEnd.y - segStart.y) * t;
-        segEndPos = headPos;
+        drawEndDist = headDist;
       }
 
-      // Calculate gradient position (0-1) within visible portion
-      CGFloat gradientStart = (segStartPos - tailPos) / visibleLength;
-      CGFloat gradientEnd = (segEndPos - tailPos) / visibleLength;
+      CGFloat gradientStart = (drawStartDist - tailDist) / visibleLength;
+      CGFloat gradientEnd = (drawEndDist - tailDist) / visibleLength;
 
       UIColor *startColor = [self colorAtGradientPosition:gradientStart];
       UIColor *endColor = [self colorAtGradientPosition:gradientEnd];
 
-      // Draw gradient line segment
       CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
       NSArray *colors = @[(__bridge id)startColor.CGColor, (__bridge id)endColor.CGColor];
       CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (__bridge CFArrayRef)colors, NULL);

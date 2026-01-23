@@ -2,13 +2,13 @@ package com.luggmaps.core
 
 import android.animation.ValueAnimator
 import android.graphics.Color
+import android.location.Location
 import android.view.animation.LinearInterpolator
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.StrokeStyle
 import com.google.android.gms.maps.model.StyleSpan
 import kotlin.math.floor
-import kotlin.math.max
 import kotlin.math.min
 
 class PolylineAnimator {
@@ -31,6 +31,8 @@ class PolylineAnimator {
 
   private var animator: ValueAnimator? = null
   private var animationProgress: Float = 0f
+  private var cumulativeDistances: FloatArray = floatArrayOf()
+  private var totalLength: Float = 0f
 
   fun update() {
     if (animated) return
@@ -50,8 +52,10 @@ class PolylineAnimator {
   private fun startAnimation() {
     if (animator != null) return
 
+    computeCumulativeDistances()
+
     animator = ValueAnimator.ofFloat(0f, 2.15f).apply {
-      duration = 3650 // ~1.75s per phase * 2 + pause
+      duration = 2150
       repeatCount = ValueAnimator.INFINITE
       interpolator = LinearInterpolator()
       addUpdateListener { animation ->
@@ -62,6 +66,58 @@ class PolylineAnimator {
     }
   }
 
+  private fun computeCumulativeDistances() {
+    if (coordinates.size < 2) {
+      cumulativeDistances = floatArrayOf(0f)
+      totalLength = 0f
+      return
+    }
+
+    val distances = FloatArray(coordinates.size)
+    distances[0] = 0f
+    var total = 0f
+
+    for (i in 1 until coordinates.size) {
+      val prev = coordinates[i - 1]
+      val curr = coordinates[i]
+      val results = FloatArray(1)
+      Location.distanceBetween(prev.latitude, prev.longitude, curr.latitude, curr.longitude, results)
+      total += results[0]
+      distances[i] = total
+    }
+
+    cumulativeDistances = distances
+    totalLength = total
+  }
+
+  private fun indexForDistance(distance: Float): Int {
+    for (i in 1 until cumulativeDistances.size) {
+      if (cumulativeDistances[i] >= distance) {
+        return i - 1
+      }
+    }
+    return (cumulativeDistances.size - 2).coerceAtLeast(0)
+  }
+
+  private fun coordinateAtDistance(distance: Float): LatLng {
+    if (distance <= 0f) return coordinates.first()
+    if (distance >= totalLength) return coordinates.last()
+
+    val idx = indexForDistance(distance)
+    val segStart = cumulativeDistances[idx]
+    val segEnd = cumulativeDistances[idx + 1]
+    val segLength = segEnd - segStart
+
+    val t = if (segLength > 0) (distance - segStart) / segLength else 0f
+    val c1 = coordinates[idx]
+    val c2 = coordinates[idx + 1]
+
+    return LatLng(
+      c1.latitude + (c2.latitude - c1.latitude) * t,
+      c1.longitude + (c2.longitude - c1.longitude) * t
+    )
+  }
+
   private fun stopAnimation() {
     animator?.cancel()
     animator = null
@@ -69,71 +125,55 @@ class PolylineAnimator {
 
   private fun updateAnimatedPolyline() {
     val poly = polyline ?: return
-    if (coordinates.size < 2) {
+    if (coordinates.size < 2 || totalLength <= 0f) {
       poly.points = coordinates
       return
     }
 
-    val segmentCount = coordinates.size - 1
     val progress = min(animationProgress, 2f)
 
-    val headPos: Float
-    val tailPos: Float
+    val headDist: Float
+    val tailDist: Float
 
     if (progress <= 1f) {
-      tailPos = 0f
-      headPos = progress * segmentCount
+      tailDist = 0f
+      headDist = progress * totalLength
     } else {
       val shrinkProgress = progress - 1f
-      tailPos = shrinkProgress * segmentCount
-      headPos = segmentCount.toFloat()
+      tailDist = shrinkProgress * totalLength
+      headDist = totalLength
     }
 
-    if (headPos <= tailPos || coordinates.isEmpty()) {
+    if (headDist <= tailDist) {
       poly.setSpans(emptyList())
       poly.points = listOf(coordinates.firstOrNull() ?: LatLng(0.0, 0.0))
       return
     }
 
-    val startIndex = floor(tailPos).toInt()
-    val endIndex = kotlin.math.ceil(headPos.toDouble()).toInt()
-    val visibleLength = headPos - tailPos
+    val visibleLength = headDist - tailDist
+    val startIndex = indexForDistance(tailDist)
+    val endIndex = indexForDistance(headDist)
 
     val points = mutableListOf<LatLng>()
     val spans = mutableListOf<StyleSpan>()
 
-    for (i in startIndex..minOf(endIndex, coordinates.size - 1)) {
-      var coord = coordinates[i]
+    points.add(coordinateAtDistance(tailDist))
 
-      // Interpolate tail
-      if (i == startIndex && tailPos > startIndex.toFloat() && i + 1 < coordinates.size) {
-        val t = tailPos - startIndex
-        val next = coordinates[i + 1]
-        coord = LatLng(
-          coord.latitude + (next.latitude - coord.latitude) * t,
-          coord.longitude + (next.longitude - coord.longitude) * t
-        )
-      }
+    for (i in (startIndex + 1)..endIndex) {
+      points.add(coordinates[i])
+    }
 
-      // Interpolate head
-      if (i == endIndex && headPos < endIndex.toFloat() && i > 0) {
-        val t = headPos - (endIndex - 1)
-        val prev = coordinates[i - 1]
-        coord = LatLng(
-          prev.latitude + (coordinates[i].latitude - prev.latitude) * t,
-          prev.longitude + (coordinates[i].longitude - prev.longitude) * t
-        )
-      }
+    val endCoord = coordinateAtDistance(headDist)
+    val lastAdded = points.lastOrNull()
+    if (lastAdded == null || endCoord.latitude != lastAdded.latitude || endCoord.longitude != lastAdded.longitude) {
+      points.add(endCoord)
+    }
 
-      points.add(coord)
-
-      if (i < endIndex && i < segmentCount) {
-        val segStartPos = max(i.toFloat(), tailPos)
-        val segEndPos = min((i + 1).toFloat(), headPos)
-        val gradientMid = ((segStartPos + segEndPos) / 2f - tailPos) / visibleLength
-        val color = colorAtGradientPosition(gradientMid)
-        spans.add(StyleSpan(StrokeStyle.colorBuilder(color).build()))
-      }
+    for (i in 0 until (points.size - 1)) {
+      val segMidDist = tailDist + visibleLength * (i + 0.5f) / (points.size - 1)
+      val gradientPos = (segMidDist - tailDist) / visibleLength
+      val color = colorAtGradientPosition(gradientPos)
+      spans.add(StyleSpan(StrokeStyle.colorBuilder(color).build()))
     }
 
     poly.points = points
