@@ -6,7 +6,18 @@ export function useLocationPermission() {
 
   useEffect(() => {
     const request = async () => {
-      if (Platform.OS === 'web' || Platform.OS === 'ios') {
+      if (Platform.OS === 'web') {
+        const result = await navigator.permissions.query({
+          name: 'geolocation',
+        });
+        setGranted(result.state === 'granted' || result.state === 'prompt');
+        result.addEventListener('change', () => {
+          setGranted(result.state === 'granted');
+        });
+        return;
+      }
+
+      if (Platform.OS === 'ios') {
         setGranted(true);
         return;
       }
