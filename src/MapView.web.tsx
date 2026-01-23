@@ -89,8 +89,9 @@ function MapController({
 
     let watchId: number | null = null;
 
-    const updateUserLocation = (position: GeolocationPosition) => {
+    const updateLocation = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
+      const pos = { lat: latitude, lng: longitude };
 
       if (!userLocationMarker.current) {
         const dot = document.createElement('div');
@@ -104,16 +105,16 @@ function MapController({
         userLocationMarker.current =
           new google.maps.marker.AdvancedMarkerElement({
             map,
-            position: { lat: latitude, lng: longitude },
+            position: pos,
             content: dot,
           });
       } else {
-        userLocationMarker.current.position = { lat: latitude, lng: longitude };
+        userLocationMarker.current.position = pos;
       }
     };
 
-    navigator.geolocation.getCurrentPosition(updateUserLocation, () => {});
-    watchId = navigator.geolocation.watchPosition(updateUserLocation, () => {});
+    navigator.geolocation.getCurrentPosition(updateLocation, () => {});
+    watchId = navigator.geolocation.watchPosition(updateLocation, () => {});
 
     return () => {
       if (watchId !== null) {

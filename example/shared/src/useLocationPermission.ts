@@ -6,7 +6,7 @@ export function useLocationPermission() {
 
   useEffect(() => {
     const request = async () => {
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === 'web' || Platform.OS === 'ios') {
         setGranted(true);
         return;
       }
