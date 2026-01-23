@@ -242,14 +242,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.position = markerView.coordinate;
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
-  marker.groundAnchor = markerView.anchor;
-
   if (markerView.hasCustomView) {
     UIView *iconView = markerView.iconView;
     [iconView removeFromSuperview];
     marker.iconView = iconView;
+    marker.groundAnchor = markerView.anchor;
   } else {
     marker.iconView = nil;
+    marker.groundAnchor = CGPointMake(0.5, 1);
   }
 }
 
@@ -280,9 +280,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   if (markerView.hasCustomView) {
     marker.iconView = iconView;
+    marker.groundAnchor = markerView.anchor;
   }
 
-  marker.groundAnchor = markerView.anchor;
   marker.map = _mapView;
 
   markerView.marker = marker;

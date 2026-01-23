@@ -62,15 +62,15 @@ const renderMarker = (marker: MarkerData) => {
           coordinate={coordinate}
           title={title}
           description={description}
-          anchor={anchor}
         />
       );
   }
 };
 
 export const Map = forwardRef<MapView, MapProps>(
-  ({ markers, ...props }, ref) => {
+  ({ markers, padding, ...props }, ref) => {
     const polylineCoordinates = markers.map((m) => m.coordinate);
+    const bottomOffset = padding?.bottom ?? 0;
 
     return (
       <MapView
@@ -79,6 +79,7 @@ export const Map = forwardRef<MapView, MapProps>(
         mapId="6939261d95ee48fd57332474"
         initialCoordinate={{ latitude: 37.78, longitude: -122.43 }}
         initialZoom={14}
+        padding={padding}
         {...props}
       >
         {markers.map(renderMarker)}
@@ -89,7 +90,12 @@ export const Map = forwardRef<MapView, MapProps>(
         >
           <View style={styles.customMarker} />
         </Marker>
-        <View style={styles.centerPin} />
+        <View
+          style={[
+            styles.centerPin,
+            { transform: [{ translateY: -bottomOffset / 2 }] },
+          ]}
+        />
       </MapView>
     );
   }

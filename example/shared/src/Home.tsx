@@ -61,7 +61,9 @@ export function Home() {
     sheetRef.current?.present();
   }, []);
 
-  const addRandomMarker = () => {
+  const addMarker = () => {
+    if (!cameraPosition) return;
+
     const type = randomFrom(MARKER_TYPES);
     const id = Date.now().toString();
 
@@ -70,10 +72,7 @@ export function Home() {
       {
         id,
         name: `marker-${id}`,
-        coordinate: {
-          latitude: 37.77 + Math.random() * 0.03,
-          longitude: -122.45 + Math.random() * 0.05,
-        },
+        coordinate: cameraPosition.coordinate,
         type,
         anchor: { x: 0.5, y: type === 'icon' ? 1 : 0.5 },
         text: randomLetter(),
@@ -141,7 +140,7 @@ export function Home() {
           </Text>
         )}
         <View style={styles.sheetContent}>
-          <Button title="Add Marker" onPress={addRandomMarker} />
+          <Button title="Add Marker" onPress={addMarker} />
           <Button
             title={`Remove Marker (${markers.length})`}
             onPress={removeRandomMarker}
