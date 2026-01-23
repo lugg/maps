@@ -14,6 +14,12 @@ import kotlin.math.min
 class PolylineAnimator {
   var polyline: Polyline? = null
   var coordinates: List<LatLng> = emptyList()
+    set(value) {
+      field = value
+      if (animated && animator != null) {
+        computeCumulativeDistances()
+      }
+    }
   var strokeColors: List<Int> = listOf(Color.BLACK)
   var strokeWidth: Float = 1f
 

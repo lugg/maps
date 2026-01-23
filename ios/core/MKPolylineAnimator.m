@@ -93,6 +93,9 @@
   _polyline = polyline;
   [self invalidatePath];
   [self createPath];
+  if (_animated) {
+    [self computeCumulativeDistances];
+  }
   [self setNeedsDisplay];
 }
 

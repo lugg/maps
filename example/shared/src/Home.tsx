@@ -100,9 +100,7 @@ export function Home() {
 
   const fitAllMarkers = () => {
     const coordinates = markers.map((m) => m.coordinate);
-    mapRef.current?.fitCoordinates(coordinates, {
-      padding: { top: 40, left: 40, bottom: 40, right: 40 },
-    });
+    mapRef.current?.fitCoordinates(coordinates);
   };
 
   return (

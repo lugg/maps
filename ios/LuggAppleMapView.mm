@@ -316,6 +316,9 @@ using namespace luggmaps::events;
   // Build new polyline from coordinates
   NSArray<CLLocation *> *coordinates = polylineView.coordinates;
   if (coordinates.count == 0) {
+    if (renderer) {
+      renderer.animated = NO;
+    }
     if (oldPolyline) {
       [_mapView removeOverlay:oldPolyline];
       polylineView.polyline = nil;
@@ -337,6 +340,8 @@ using namespace luggmaps::events;
 
   // If we have an existing renderer, update it in place
   if (renderer && oldPolyline) {
+    [_mapView removeOverlay:oldPolyline];
+    [_mapView addOverlay:newPolyline];
     [renderer updatePolyline:newPolyline];
     renderer.lineWidth = polylineView.strokeWidth;
     renderer.strokeColor = polylineView.strokeColors.firstObject;

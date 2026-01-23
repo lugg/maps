@@ -1,63 +1,82 @@
-import { Polyline } from '@lugg/maps';
+import { useMemo } from 'react';
+import { Polyline, type Coordinate } from '@lugg/maps';
 
-const coordinates = [
-  { latitude: 37.785, longitude: -122.44 },
-  { latitude: 37.7848, longitude: -122.4395 },
-  { latitude: 37.7846, longitude: -122.439 },
-  { latitude: 37.7844, longitude: -122.4385 },
-  { latitude: 37.7842, longitude: -122.438 },
-  { latitude: 37.784, longitude: -122.4375 },
-  { latitude: 37.7838, longitude: -122.437 },
-  { latitude: 37.7836, longitude: -122.4365 },
-  { latitude: 37.7834, longitude: -122.436 },
-  { latitude: 37.7832, longitude: -122.4355 },
-  { latitude: 37.783, longitude: -122.435 },
-  { latitude: 37.7828, longitude: -122.4345 },
-  { latitude: 37.7826, longitude: -122.434 },
-  { latitude: 37.7824, longitude: -122.4335 },
-  { latitude: 37.7822, longitude: -122.433 },
-  { latitude: 37.782, longitude: -122.4325 },
-  { latitude: 37.7818, longitude: -122.432 },
-  { latitude: 37.7816, longitude: -122.4315 },
-  { latitude: 37.7814, longitude: -122.431 },
-  { latitude: 37.7812, longitude: -122.4305 },
-  { latitude: 37.781, longitude: -122.43 },
-  { latitude: 37.7808, longitude: -122.4295 },
-  { latitude: 37.7806, longitude: -122.429 },
-  { latitude: 37.7804, longitude: -122.4285 },
-  { latitude: 37.7802, longitude: -122.428 },
-  { latitude: 37.78, longitude: -122.4275 },
-  { latitude: 37.7798, longitude: -122.427 },
-  { latitude: 37.7796, longitude: -122.4265 },
-  { latitude: 37.7794, longitude: -122.426 },
-  { latitude: 37.7792, longitude: -122.4255 },
-  { latitude: 37.779, longitude: -122.425 },
-  { latitude: 37.7788, longitude: -122.4245 },
-  { latitude: 37.7786, longitude: -122.424 },
-  { latitude: 37.7784, longitude: -122.4235 },
-  { latitude: 37.7782, longitude: -122.423 },
-  { latitude: 37.778, longitude: -122.4225 },
-  { latitude: 37.7778, longitude: -122.422 },
-  { latitude: 37.7776, longitude: -122.4215 },
-  { latitude: 37.7774, longitude: -122.421 },
-  { latitude: 37.7772, longitude: -122.4205 },
-  { latitude: 37.777, longitude: -122.42 },
-  { latitude: 37.7772, longitude: -122.4195 },
-  { latitude: 37.7774, longitude: -122.419 },
-  { latitude: 37.7776, longitude: -122.4185 },
-  { latitude: 37.7778, longitude: -122.418 },
-  { latitude: 37.778, longitude: -122.4175 },
-  { latitude: 37.7782, longitude: -122.417 },
-  { latitude: 37.7784, longitude: -122.4165 },
-  { latitude: 37.7786, longitude: -122.416 },
-  { latitude: 37.7788, longitude: -122.4155 },
-];
+interface RouteProps {
+  markerCoordinates: Coordinate[];
+}
 
-export const Route = () => (
-  <Polyline
-    strokeColors={['#FF5733', '#FFBD33']}
-    coordinates={coordinates}
-    strokeWidth={6}
-    animated
-  />
-);
+const catmullRom = (
+  p0: Coordinate,
+  p1: Coordinate,
+  p2: Coordinate,
+  p3: Coordinate,
+  t: number
+): Coordinate => {
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  return {
+    latitude:
+      0.5 *
+      (2 * p1.latitude +
+        (-p0.latitude + p2.latitude) * t +
+        (2 * p0.latitude - 5 * p1.latitude + 4 * p2.latitude - p3.latitude) *
+          t2 +
+        (-p0.latitude + 3 * p1.latitude - 3 * p2.latitude + p3.latitude) * t3),
+    longitude:
+      0.5 *
+      (2 * p1.longitude +
+        (-p0.longitude + p2.longitude) * t +
+        (2 * p0.longitude -
+          5 * p1.longitude +
+          4 * p2.longitude -
+          p3.longitude) *
+          t2 +
+        (-p0.longitude + 3 * p1.longitude - 3 * p2.longitude + p3.longitude) *
+          t3),
+  };
+};
+
+const smoothCoordinates = (
+  coords: Coordinate[],
+  segments = 10
+): Coordinate[] => {
+  const first = coords[0];
+  const last = coords.at(-1);
+  if (coords.length < 3 || !first || !last) return coords;
+
+  const clamp = (i: number) => Math.max(0, Math.min(i, coords.length - 1));
+  const result: Coordinate[] = [];
+
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[clamp(i - 1)] ?? first;
+    const p1 = coords[clamp(i)] ?? first;
+    const p2 = coords[clamp(i + 1)] ?? first;
+    const p3 = coords[clamp(i + 2)] ?? first;
+
+    for (let j = 0; j < segments; j++) {
+      result.push(catmullRom(p0, p1, p2, p3, j / segments));
+    }
+  }
+
+  result.push(last);
+  return result;
+};
+
+export const Route = ({ markerCoordinates }: RouteProps) => {
+  const smoothed = useMemo(
+    () => smoothCoordinates(markerCoordinates),
+    [markerCoordinates]
+  );
+
+  if (smoothed.length < 2) return null;
+
+  return (
+    <Polyline
+      strokeColors={['#B321E0', '#3744FF']}
+      coordinates={smoothed}
+      strokeWidth={6}
+      animated
+    />
+  );
+};

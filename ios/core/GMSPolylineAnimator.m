@@ -12,6 +12,13 @@
   [self stopAnimation];
 }
 
+- (void)setCoordinates:(NSArray<CLLocation *> *)coordinates {
+  [super setCoordinates:coordinates];
+  if (_animated && _displayLink) {
+    [self computeCumulativeDistances];
+  }
+}
+
 - (void)setAnimated:(BOOL)animated {
   if (_animated == animated) {
     return;
