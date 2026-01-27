@@ -121,9 +121,9 @@ export function Home() {
               markers={markers}
               padding={{
                 top: 0,
-                left: 0,
+                left: 40,
+                right: 40,
                 bottom: sheetHeight,
-                right: 0,
               }}
               userLocationEnabled={locationPermission}
               onReady={handleMapReady}

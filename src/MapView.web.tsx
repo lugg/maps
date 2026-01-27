@@ -7,8 +7,8 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import type { NativeSyntheticEvent } from 'react-native';
-import { View } from 'react-native';
+import type { NativeSyntheticEvent, ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Map, useMap } from '@vis.gl/react-google-maps';
 import { Marker } from './components/Marker.web';
 import { MapIdContext } from './MapProvider.web';
@@ -227,7 +227,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
     : undefined;
 
-  const mapStyle: CSSProperties = {
+  const paddingStyle: ViewStyle = {
     paddingTop: padding?.top ?? 0,
     paddingLeft: padding?.left ?? 0,
     paddingRight: padding?.right ?? 0,
@@ -237,21 +237,23 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   return (
     <MapIdContext.Provider value={id}>
       <View style={style}>
-        <Map
-          id={id}
-          mapId={mapId}
-          defaultCenter={defaultCenter}
-          defaultZoom={initialZoom}
-          minZoom={minZoom}
-          maxZoom={maxZoom}
-          gestureHandling={gestureHandling}
-          disableDefaultUI
-          tilt={pitchEnabled === false ? 0 : undefined}
-          style={mapStyle}
-        >
-          <UserLocationMarker enabled={userLocationEnabled} />
-          {children}
-        </Map>
+        <View style={[StyleSheet.absoluteFill, paddingStyle]}>
+          <Map
+            id={id}
+            mapId={mapId}
+            defaultCenter={defaultCenter}
+            defaultZoom={initialZoom}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            gestureHandling={gestureHandling}
+            disableDefaultUI
+            isFractionalZoomEnabled
+            tilt={pitchEnabled === false ? 0 : undefined}
+          >
+            <UserLocationMarker enabled={userLocationEnabled} />
+            {children}
+          </Map>
+        </View>
       </View>
     </MapIdContext.Provider>
   );
