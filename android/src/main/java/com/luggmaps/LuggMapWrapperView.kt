@@ -26,14 +26,14 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
     bottom: Int
   ) {
     super.onLayout(changed, left, top, right, bottom)
-    val width = right - left
-    val height = bottom - top
+    val w = right - left
+    val h = bottom - top
     getChildAt(0)?.let {
       it.measure(
-        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+        MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
+        MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY)
       )
-      it.layout(0, 0, width, height)
+      it.layout(0, 0, w, h)
     }
   }
 }

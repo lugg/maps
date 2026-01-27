@@ -40,6 +40,10 @@ class PolylineAnimator {
   private var cumulativeDistances: FloatArray = floatArrayOf()
   private var totalLength: Float = 0f
 
+  // Reusable collections to avoid per-frame allocations
+  private val reusablePoints = ArrayList<LatLng>()
+  private val reusableSpans = ArrayList<StyleSpan>()
+
   fun update() {
     if (animated) return
 
@@ -97,12 +101,19 @@ class PolylineAnimator {
   }
 
   private fun indexForDistance(distance: Float): Int {
-    for (i in 1 until cumulativeDistances.size) {
-      if (cumulativeDistances[i] >= distance) {
-        return i - 1
+    var left = 0
+    var right = cumulativeDistances.size - 1
+
+    while (left < right) {
+      val mid = (left + right + 1) / 2
+      if (cumulativeDistances[mid] <= distance) {
+        left = mid
+      } else {
+        right = mid - 1
       }
     }
-    return (cumulativeDistances.size - 2).coerceAtLeast(0)
+
+    return left.coerceAtMost(cumulativeDistances.size - 2).coerceAtLeast(0)
   }
 
   private fun coordinateAtDistance(distance: Float): LatLng {
@@ -117,6 +128,9 @@ class PolylineAnimator {
     val t = if (segLength > 0) (distance - segStart) / segLength else 0f
     val c1 = coordinates[idx]
     val c2 = coordinates[idx + 1]
+
+    // Reuse existing coordinate if no interpolation needed
+    if (t == 0f) return c1
 
     return LatLng(
       c1.latitude + (c2.latitude - c1.latitude) * t,
@@ -160,31 +174,32 @@ class PolylineAnimator {
     val startIndex = indexForDistance(tailDist)
     val endIndex = indexForDistance(headDist)
 
-    val points = mutableListOf<LatLng>()
-    val spans = mutableListOf<StyleSpan>()
+    reusablePoints.clear()
+    reusableSpans.clear()
 
-    points.add(coordinateAtDistance(tailDist))
+    reusablePoints.add(coordinateAtDistance(tailDist))
 
     for (i in (startIndex + 1)..endIndex) {
-      points.add(coordinates[i])
+      reusablePoints.add(coordinates[i])
     }
 
     val endCoord = coordinateAtDistance(headDist)
-    val lastAdded = points.lastOrNull()
+    val lastAdded = reusablePoints.lastOrNull()
     if (lastAdded == null || endCoord.latitude != lastAdded.latitude || endCoord.longitude != lastAdded.longitude) {
-      points.add(endCoord)
+      reusablePoints.add(endCoord)
     }
 
-    for (i in 0 until (points.size - 1)) {
-      val segMidDist = tailDist + visibleLength * (i + 0.5f) / (points.size - 1)
+    val pointCount = reusablePoints.size
+    for (i in 0 until (pointCount - 1)) {
+      val segMidDist = tailDist + visibleLength * (i + 0.5f) / (pointCount - 1)
       val gradientPos = (segMidDist - tailDist) / visibleLength
       val color = colorAtGradientPosition(gradientPos)
-      spans.add(StyleSpan(StrokeStyle.colorBuilder(color).build()))
+      reusableSpans.add(StyleSpan(StrokeStyle.colorBuilder(color).build()))
     }
 
-    poly.points = points
-    if (spans.isNotEmpty()) {
-      poly.setSpans(spans)
+    poly.points = reusablePoints
+    if (reusableSpans.isNotEmpty()) {
+      poly.setSpans(reusableSpans)
     }
   }
 

@@ -54,8 +54,8 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   private var isMapReady = false
   private var isDragging = false
   private var mapId: String = DEMO_MAP_ID
-  private val pendingMarkerViews = mutableListOf<LuggMarkerView>()
-  private val pendingPolylineViews = mutableListOf<LuggPolylineView>()
+  private val pendingMarkerViews = mutableSetOf<LuggMarkerView>()
+  private val pendingPolylineViews = mutableSetOf<LuggPolylineView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
 
   // Initial camera settings
@@ -236,9 +236,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   override fun markerViewDidLayout(markerView: LuggMarkerView) {
     if (googleMap == null) {
-      if (!pendingMarkerViews.contains(markerView)) {
-        pendingMarkerViews.add(markerView)
-      }
+      pendingMarkerViews.add(markerView)
       return
     }
 
@@ -261,9 +259,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   private fun syncMarkerView(markerView: LuggMarkerView) {
     if (googleMap == null) {
-      if (!pendingMarkerViews.contains(markerView)) {
-        pendingMarkerViews.add(markerView)
-      }
+      pendingMarkerViews.add(markerView)
       return
     }
 
@@ -326,9 +322,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   private fun syncPolylineView(polylineView: LuggPolylineView) {
     if (googleMap == null) {
-      if (!pendingPolylineViews.contains(polylineView)) {
-        pendingPolylineViews.add(polylineView)
-      }
+      pendingPolylineViews.add(polylineView)
       return
     }
 
