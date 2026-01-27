@@ -1,12 +1,39 @@
 #import "MKPolylineAnimator.h"
 #import <QuartzCore/QuartzCore.h>
 
+@interface MKDisplayLinkProxy : NSObject
+@property(nonatomic, weak) id target;
+@property(nonatomic, assign) SEL selector;
+@end
+
+@implementation MKDisplayLinkProxy
+- (instancetype)initWithTarget:(id)target selector:(SEL)selector {
+  if (self = [super init]) {
+    _target = target;
+    _selector = selector;
+  }
+  return self;
+}
+- (void)tick:(CADisplayLink *)displayLink {
+  if (_target) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    [_target performSelector:_selector withObject:displayLink];
+#pragma clang diagnostic pop
+  } else {
+    [displayLink invalidate];
+  }
+}
+@end
+
 @implementation MKPolylineAnimator {
   MKPolyline *_polyline;
   CADisplayLink *_displayLink;
+  MKDisplayLinkProxy *_displayLinkProxy;
   CGFloat _animationProgress;
   NSArray<NSNumber *> *_cumulativeDistances;
   CGFloat _totalLength;
+  CGColorSpaceRef _colorSpace;
 }
 
 - (id)initWithPolyline:(MKPolyline *)polyline {
@@ -14,6 +41,7 @@
   if (self) {
     _polyline = polyline;
     _animationProgress = 0;
+    _colorSpace = CGColorSpaceCreateDeviceRGB();
     [self createPath];
   }
   return self;
@@ -21,6 +49,10 @@
 
 - (void)dealloc {
   [self stopAnimation];
+  if (_colorSpace) {
+    CGColorSpaceRelease(_colorSpace);
+    _colorSpace = NULL;
+  }
 }
 
 - (void)setAnimated:(BOOL)animated {
@@ -42,7 +74,8 @@
   }
   [self computeCumulativeDistances];
   _animationProgress = 0;
-  _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(animationTick:)];
+  _displayLinkProxy = [[MKDisplayLinkProxy alloc] initWithTarget:self selector:@selector(animationTick:)];
+  _displayLink = [CADisplayLink displayLinkWithTarget:_displayLinkProxy selector:@selector(tick:)];
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
@@ -65,15 +98,23 @@
 - (void)stopAnimation {
   [_displayLink invalidate];
   _displayLink = nil;
+  _displayLinkProxy = nil;
 }
 
 - (NSUInteger)indexForDistance:(CGFloat)distance {
-  for (NSUInteger i = 1; i < _cumulativeDistances.count; i++) {
-    if (_cumulativeDistances[i].doubleValue >= distance) {
-      return i - 1;
+  NSUInteger left = 0;
+  NSUInteger right = _cumulativeDistances.count - 1;
+
+  while (left < right) {
+    NSUInteger mid = (left + right + 1) / 2;
+    if (_cumulativeDistances[mid].doubleValue <= distance) {
+      left = mid;
+    } else {
+      right = mid - 1;
     }
   }
-  return _cumulativeDistances.count - 2;
+
+  return MIN(left, _cumulativeDistances.count - 2);
 }
 
 - (void)animationTick:(CADisplayLink *)displayLink {
@@ -222,9 +263,8 @@
       UIColor *startColor = [self colorAtGradientPosition:gradientStart];
       UIColor *endColor = [self colorAtGradientPosition:gradientEnd];
 
-      CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
       NSArray *colors = @[(__bridge id)startColor.CGColor, (__bridge id)endColor.CGColor];
-      CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (__bridge CFArrayRef)colors, NULL);
+      CGGradientRef gradient = CGGradientCreateWithColors(_colorSpace, (__bridge CFArrayRef)colors, NULL);
 
       CGContextSaveGState(context);
       CGContextBeginPath(context);
@@ -237,7 +277,6 @@
 
       CGContextRestoreGState(context);
       CGGradientRelease(gradient);
-      CGColorSpaceRelease(colorSpace);
     }
     return;
   }
@@ -254,9 +293,8 @@
       UIColor *startColor = [self colorAtGradientPosition:gradientStart];
       UIColor *endColor = [self colorAtGradientPosition:gradientEnd];
 
-      CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
       NSArray *colors = @[(__bridge id)startColor.CGColor, (__bridge id)endColor.CGColor];
-      CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (__bridge CFArrayRef)colors, NULL);
+      CGGradientRef gradient = CGGradientCreateWithColors(_colorSpace, (__bridge CFArrayRef)colors, NULL);
 
       CGContextSaveGState(context);
       CGContextBeginPath(context);
@@ -269,7 +307,6 @@
 
       CGContextRestoreGState(context);
       CGGradientRelease(gradient);
-      CGColorSpaceRelease(colorSpace);
     }
     return;
   }

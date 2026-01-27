@@ -44,6 +44,7 @@ using namespace luggmaps::events;
   BOOL _isDragging;
   double _minZoom;
   double _maxZoom;
+  NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -56,6 +57,7 @@ using namespace luggmaps::events;
     static const auto defaultProps =
         std::make_shared<const LuggAppleMapViewProps>();
     _props = defaultProps;
+    _overlayToPolylineMap = [NSMapTable strongToWeakObjectsMapTable];
   }
 
   return self;
@@ -111,6 +113,7 @@ using namespace luggmaps::events;
     polylineView.delegate = nil;
     MKPolyline *polyline = (MKPolyline *)polylineView.polyline;
     if (polyline) {
+      [_overlayToPolylineMap removeObjectForKey:polyline];
       [_mapView removeOverlay:polyline];
       polylineView.polyline = nil;
     }
@@ -302,6 +305,7 @@ using namespace luggmaps::events;
   free(coords);
 
   polylineView.polyline = polyline;
+  [_overlayToPolylineMap setObject:polylineView forKey:polyline];
   [self insertOverlay:polyline withZIndex:polylineView.zIndex];
 }
 
@@ -320,6 +324,7 @@ using namespace luggmaps::events;
       renderer.animated = NO;
     }
     if (oldPolyline) {
+      [_overlayToPolylineMap removeObjectForKey:oldPolyline];
       [_mapView removeOverlay:oldPolyline];
       polylineView.polyline = nil;
       polylineView.renderer = nil;
@@ -337,9 +342,11 @@ using namespace luggmaps::events;
   free(coords);
 
   polylineView.polyline = newPolyline;
+  [_overlayToPolylineMap setObject:polylineView forKey:newPolyline];
 
   // If we have an existing renderer, update it in place
   if (renderer && oldPolyline) {
+    [_overlayToPolylineMap removeObjectForKey:oldPolyline];
     [_mapView removeOverlay:oldPolyline];
     [self insertOverlay:newPolyline withZIndex:polylineView.zIndex];
     [renderer updatePolyline:newPolyline];
@@ -353,6 +360,7 @@ using namespace luggmaps::events;
 
   // Otherwise do full add
   if (oldPolyline) {
+    [_overlayToPolylineMap removeObjectForKey:oldPolyline];
     [_mapView removeOverlay:oldPolyline];
   }
   [self insertOverlay:newPolyline withZIndex:polylineView.zIndex];
@@ -380,15 +388,7 @@ using namespace luggmaps::events;
 }
 
 - (LuggPolylineView *)findPolylineViewForOverlay:(id<MKOverlay>)overlay {
-  for (UIView *subview in self.subviews) {
-    if ([subview isKindOfClass:[LuggPolylineView class]]) {
-      LuggPolylineView *polylineView = (LuggPolylineView *)subview;
-      if (polylineView.polyline == overlay) {
-        return polylineView;
-      }
-    }
-  }
-  return nil;
+  return [_overlayToPolylineMap objectForKey:overlay];
 }
 
 #pragma mark - MarkerViewDelegate
