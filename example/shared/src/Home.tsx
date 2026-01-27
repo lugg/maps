@@ -15,7 +15,7 @@ import {
 import {
   TrueSheet,
   TrueSheetProvider,
-  type DidPresentEvent,
+  type PositionChangeEvent,
 } from '@lodev09/react-native-true-sheet';
 
 import { Button, Map } from './components';
@@ -56,8 +56,8 @@ export function Home() {
     []
   );
 
-  const handleSheetPresent = useCallback(
-    (event: DidPresentEvent) => {
+  const handleSheetPositionChange = useCallback(
+    (event: PositionChangeEvent) => {
       setSheetHeight(screenHeight - event.nativeEvent.position);
     },
     [screenHeight]
@@ -134,12 +134,12 @@ export function Home() {
 
           <TrueSheet
             ref={sheetRef}
-            detents={['auto']}
+            detents={['auto', 1]}
             dimmed={false}
             backgroundBlur="system-material-light"
             dismissible={false}
-            grabber={false}
-            onDidPresent={handleSheetPresent}
+            grabber
+            onPositionChange={handleSheetPositionChange}
           >
             {cameraPosition && (
               <Text style={styles.positionText}>

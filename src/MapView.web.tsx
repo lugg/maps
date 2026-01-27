@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useId,
   useImperativeHandle,
@@ -7,8 +8,8 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import type { NativeSyntheticEvent, ViewStyle } from 'react-native';
-import { View, StyleSheet } from 'react-native';
+import type { NativeSyntheticEvent } from 'react-native';
+import { View } from 'react-native';
 import {
   Map,
   useMap,
@@ -116,9 +117,46 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
 
   const id = useId();
   const map = useMap(id);
+  const containerRef = useRef<View>(null);
   const readyFired = useRef(false);
   const isDragging = useRef(false);
   const wasGesture = useRef(false);
+  const prevPadding = useRef(padding);
+
+  const offsetCenter = useCallback(
+    (
+      coord: Coordinate,
+      zoom: number,
+      paddingOverride?: typeof padding,
+      reverse = false
+    ) => {
+      const p = paddingOverride ?? padding;
+      const div = map?.getDiv();
+      if (!p || !div) {
+        return { lat: coord.latitude, lng: coord.longitude };
+      }
+
+      const dir = reverse ? -1 : 1;
+      const scale = 256 * Math.pow(2, zoom);
+      const offsetX = (dir * ((p.right ?? 0) - (p.left ?? 0))) / 2;
+      const offsetY = (dir * ((p.bottom ?? 0) - (p.top ?? 0))) / 2;
+
+      const latRad = (coord.latitude * Math.PI) / 180;
+      const x = ((coord.longitude + 180) / 360) * scale + offsetX;
+      const y =
+        ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) /
+          2) *
+          scale +
+        offsetY;
+
+      const lng = (x / scale) * 360 - 180;
+      const lat =
+        (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / scale))) * 180) / Math.PI;
+
+      return { lat, lng };
+    },
+    [map, padding]
+  );
 
   useImperativeHandle(
     ref,
@@ -127,10 +165,11 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         if (!map) return;
 
         const { zoom, duration = -1 } = options;
-        const center = { lat: coordinate.latitude, lng: coordinate.longitude };
+        const targetZoom = zoom ?? map.getZoom() ?? initialZoom;
+        const center = offsetCenter(coordinate, targetZoom, undefined, false);
 
         if (duration === 0) {
-          map.moveCamera({ center, zoom });
+          map.moveCamera({ center, zoom: targetZoom });
         } else {
           const currentZoom = map.getZoom();
           const zoomChanged = zoom !== undefined && zoom !== currentZoom;
@@ -162,14 +201,14 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         });
 
         map.fitBounds(bounds, {
-          top: fitPadding?.top ?? 0,
-          left: fitPadding?.left ?? 0,
-          bottom: fitPadding?.bottom ?? 0,
-          right: fitPadding?.right ?? 0,
+          top: (padding?.top ?? 0) + (fitPadding?.top ?? 0),
+          left: (padding?.left ?? 0) + (fitPadding?.left ?? 0),
+          bottom: (padding?.bottom ?? 0) + (fitPadding?.bottom ?? 0),
+          right: (padding?.right ?? 0) + (fitPadding?.right ?? 0),
         });
       },
     }),
-    [map, initialZoom]
+    [map, initialZoom, padding, offsetCenter]
   );
 
   useEffect(() => {
@@ -178,6 +217,38 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       onReady?.();
     }
   }, [map, onReady]);
+
+  useEffect(() => {
+    if (!map || !padding) return;
+
+    const prev = prevPadding.current;
+    const paddingChanged =
+      prev?.top !== padding.top ||
+      prev?.left !== padding.left ||
+      prev?.bottom !== padding.bottom ||
+      prev?.right !== padding.right;
+
+    if (paddingChanged) {
+      const center = map.getCenter();
+      const zoom = map.getZoom() ?? initialZoom;
+      if (center) {
+        const logicalCenter = offsetCenter(
+          { latitude: center.lat(), longitude: center.lng() },
+          zoom,
+          prev,
+          true
+        );
+        const newCenter = offsetCenter(
+          { latitude: logicalCenter.lat, longitude: logicalCenter.lng },
+          zoom,
+          padding,
+          false
+        );
+        map.panTo(newCenter);
+      }
+      prevPadding.current = padding;
+    }
+  }, [map, padding, initialZoom, offsetCenter]);
 
   const handleDragStart = () => {
     isDragging.current = true;
@@ -189,10 +260,16 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   };
 
   const handleCameraChanged = (event: MapCameraChangedEvent) => {
+    const logicalCenter = offsetCenter(
+      { latitude: event.detail.center.lat, longitude: event.detail.center.lng },
+      event.detail.zoom,
+      undefined,
+      true
+    );
     const payload: CameraEventPayload = {
       coordinate: {
-        latitude: event.detail.center.lat,
-        longitude: event.detail.center.lng,
+        latitude: logicalCenter.lat,
+        longitude: logicalCenter.lng,
       },
       zoom: event.detail.zoom,
       gesture: isDragging.current,
@@ -202,12 +279,19 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
 
   const handleIdle = (event: MapEvent) => {
     const center = event.map.getCenter();
+    const zoom = event.map.getZoom() ?? 0;
+    const logicalCenter = offsetCenter(
+      { latitude: center?.lat() ?? 0, longitude: center?.lng() ?? 0 },
+      zoom,
+      undefined,
+      true
+    );
     const payload: CameraEventPayload = {
       coordinate: {
-        latitude: center?.lat() ?? 0,
-        longitude: center?.lng() ?? 0,
+        latitude: logicalCenter.lat,
+        longitude: logicalCenter.lng,
       },
-      zoom: event.map.getZoom() ?? 0,
+      zoom,
       gesture: wasGesture.current,
     };
     onCameraIdle?.(createSyntheticEvent(payload));
@@ -225,37 +309,28 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
     : undefined;
 
-  const paddingStyle: ViewStyle = {
-    paddingTop: padding?.top ?? 0,
-    paddingLeft: padding?.left ?? 0,
-    paddingRight: padding?.right ?? 0,
-    paddingBottom: padding?.bottom ?? 0,
-  };
-
   return (
     <MapIdContext.Provider value={id}>
-      <View style={style}>
-        <View style={[StyleSheet.absoluteFill, paddingStyle]}>
-          <Map
-            id={id}
-            mapId={mapId}
-            defaultCenter={defaultCenter}
-            defaultZoom={initialZoom}
-            minZoom={minZoom}
-            maxZoom={maxZoom}
-            gestureHandling={gestureHandling}
-            disableDefaultUI
-            isFractionalZoomEnabled
-            tilt={pitchEnabled === false ? 0 : undefined}
-            onDragstart={handleDragStart}
-            onDragend={handleDragEnd}
-            onCameraChanged={handleCameraChanged}
-            onIdle={handleIdle}
-          >
-            <UserLocationMarker enabled={userLocationEnabled} />
-            {children}
-          </Map>
-        </View>
+      <View ref={containerRef} style={style}>
+        <Map
+          id={id}
+          mapId={mapId}
+          defaultCenter={defaultCenter}
+          defaultZoom={initialZoom}
+          minZoom={minZoom}
+          maxZoom={maxZoom}
+          gestureHandling={gestureHandling}
+          disableDefaultUI
+          isFractionalZoomEnabled
+          tilt={pitchEnabled === false ? 0 : undefined}
+          onDragstart={handleDragStart}
+          onDragend={handleDragEnd}
+          onCameraChanged={handleCameraChanged}
+          onIdle={handleIdle}
+        >
+          <UserLocationMarker enabled={userLocationEnabled} />
+          {children}
+        </Map>
       </View>
     </MapIdContext.Provider>
   );
