@@ -5,6 +5,7 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -16,7 +17,7 @@ import { View } from 'react-native';
 import { Map, useMap } from '@vis.gl/react-google-maps';
 import { Marker } from './components/Marker.web';
 import { Polyline } from './components/Polyline.web';
-import { MapIdContext } from './MapIdContext.web';
+import { MapIdContext } from './MapProvider.web';
 
 import type {
   MapViewProps,
@@ -102,7 +103,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   ref
 ) {
   const {
-    mapId = 'DEMO_MAP_ID',
+    mapId = google.maps.Map.DEMO_MAP_ID,
     initialCoordinate,
     initialZoom = 10,
     minZoom,
@@ -230,24 +231,28 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     scrollEnabled === false && zoomEnabled === false
       ? 'none'
       : scrollEnabled === false
-      ? 'none'
+      ? 'cooperative'
       : 'auto';
 
   const defaultCenter = initialCoordinate
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
     : undefined;
 
-  const mapChildren: ReactNode[] = [];
-  const overlayChildren: ReactNode[] = [];
+  const { mapChildren, overlayChildren } = useMemo(() => {
+    const mapNodes: ReactNode[] = [];
+    const overlayNodes: ReactNode[] = [];
 
-  Children.forEach(children, (child) => {
-    if (!isValidElement(child)) return;
-    if (isMapComponent(child)) {
-      mapChildren.push(child);
-    } else {
-      overlayChildren.push(child);
-    }
-  });
+    Children.forEach(children, (child) => {
+      if (!isValidElement(child)) return;
+      if (isMapComponent(child)) {
+        mapNodes.push(child);
+      } else {
+        overlayNodes.push(child);
+      }
+    });
+
+    return { mapChildren: mapNodes, overlayChildren: overlayNodes };
+  }, [children]);
 
   const mapContainerStyle: ViewStyle = {
     position: 'absolute',
@@ -263,27 +268,27 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   };
 
   return (
-    <View style={style}>
-      <View style={mapContainerStyle}>
-        <Map
-          id={id}
-          mapId={mapId}
-          defaultCenter={defaultCenter}
-          defaultZoom={initialZoom}
-          minZoom={minZoom}
-          maxZoom={maxZoom}
-          gestureHandling={gestureHandling}
-          disableDefaultUI
-          tilt={pitchEnabled === false ? 0 : undefined}
-          style={mapStyle}
-        >
-          <MapIdContext.Provider value={id}>
+    <MapIdContext.Provider value={id}>
+      <View style={style}>
+        <View style={mapContainerStyle}>
+          <Map
+            id={id}
+            mapId={mapId}
+            defaultCenter={defaultCenter}
+            defaultZoom={initialZoom}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            gestureHandling={gestureHandling}
+            disableDefaultUI
+            tilt={pitchEnabled === false ? 0 : undefined}
+            style={mapStyle}
+          >
             <UserLocationMarker enabled={userLocationEnabled} />
             {mapChildren}
-          </MapIdContext.Provider>
-        </Map>
+          </Map>
+        </View>
+        {overlayChildren}
       </View>
-      {overlayChildren}
-    </View>
+    </MapIdContext.Provider>
   );
 });

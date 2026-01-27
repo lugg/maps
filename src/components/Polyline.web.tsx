@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
-import { useMapId } from '../MapIdContext.web';
+import { useMapId } from '../MapProvider.web';
 import type { PolylineProps } from './Polyline';
 
 const ANIMATION_DURATION = 1500;
