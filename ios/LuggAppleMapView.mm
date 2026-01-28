@@ -256,6 +256,22 @@ using namespace luggmaps::events;
 
 #pragma mark - Annotation Helpers
 
+- (UIImage *)createIconImage:(LuggMarkerView *)markerView {
+  UIView *iconView = markerView.iconView;
+  CGSize size = iconView.bounds.size;
+  if (size.width <= 0 || size.height <= 0) {
+    return nil;
+  }
+
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = [UIScreen mainScreen].scale;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    [iconView.layer renderInContext:context.CGContext];
+  }];
+}
+
 - (void)updateAnnotationViewFrame:(AppleMarkerAnnotation *)annotation {
   MKAnnotationView *annotationView = annotation.annotationView;
   LuggMarkerView *markerView = annotation.markerView;
@@ -267,7 +283,12 @@ using namespace luggmaps::events;
   UIView *iconView = markerView.iconView;
   CGRect frame = iconView.frame;
   if (frame.size.width > 0 && frame.size.height > 0) {
-    annotationView.frame = frame;
+    if (markerView.rasterize) {
+      annotationView.image = [self createIconImage:markerView];
+      annotationView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+    } else {
+      annotationView.frame = frame;
+    }
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =
@@ -478,15 +499,18 @@ using namespace luggmaps::events;
   annotationView.zPriority = markerView.zIndex;
 
   UIView *iconView = markerView.iconView;
-  [iconView removeFromSuperview];
-  [annotationView addSubview:iconView];
-
-  // Set frame and centerOffset based on iconView
   CGRect frame = iconView.frame;
-  if (frame.size.width > 0 && frame.size.height > 0) {
-    annotationView.frame =
-        CGRectMake(0, 0, frame.size.width, frame.size.height);
+
+  if (markerView.rasterize) {
+    annotationView.image = [self createIconImage:markerView];
+  } else {
+    [iconView removeFromSuperview];
+    [annotationView addSubview:iconView];
     iconView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+  }
+
+  if (frame.size.width > 0 && frame.size.height > 0) {
+    annotationView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =

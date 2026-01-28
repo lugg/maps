@@ -1,6 +1,6 @@
 import { codegenNativeComponent } from 'react-native';
 import type { ViewProps, HostComponent } from 'react-native';
-import type { Double } from 'react-native/Libraries/Types/CodegenTypes';
+import type { Double, WithDefault } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Coordinate {
   latitude: Double;
@@ -18,6 +18,7 @@ export interface NativeProps extends ViewProps {
   title?: string;
   description?: string;
   anchor?: Point;
+  rasterize?: WithDefault<boolean, true>;
 }
 
 export default codegenNativeComponent<NativeProps>(

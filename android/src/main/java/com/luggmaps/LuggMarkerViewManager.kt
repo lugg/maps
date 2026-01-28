@@ -69,6 +69,11 @@ class LuggMarkerViewManager :
     view.setZIndex(zIndex)
   }
 
+  @ReactProp(name = "rasterize", defaultBoolean = true)
+  override fun setRasterize(view: LuggMarkerView, value: Boolean) {
+    view.setRasterize(value)
+  }
+
   companion object {
     const val NAME = "LuggMarkerView"
   }

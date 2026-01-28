@@ -225,6 +225,22 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - Marker Management
 
+- (UIImage *)createIconImage:(LuggMarkerView *)markerView {
+  UIView *iconView = markerView.iconView;
+  CGSize size = iconView.bounds.size;
+  if (size.width <= 0 || size.height <= 0) {
+    return nil;
+  }
+
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = [UIScreen mainScreen].scale;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    [iconView.layer renderInContext:context.CGContext];
+  }];
+}
+
 - (void)syncMarkerView:(LuggMarkerView *)markerView caller:(NSString *)caller {
   if (!_mapView) {
     if (![_pendingMarkerViews containsObject:markerView]) {
@@ -244,14 +260,20 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.snippet = markerView.markerDescription;
   marker.zIndex = (int)markerView.zIndex;
   if (markerView.hasCustomView) {
-    UIView *iconView = markerView.iconView;
-    if (marker.iconView != iconView) {
-      [iconView removeFromSuperview];
-      marker.iconView = iconView;
+    if (markerView.rasterize) {
+      marker.iconView = nil;
+      marker.icon = [self createIconImage:markerView];
+    } else {
+      UIView *iconView = markerView.iconView;
+      if (marker.iconView != iconView) {
+        [iconView removeFromSuperview];
+        marker.iconView = iconView;
+      }
     }
     marker.groundAnchor = markerView.anchor;
   } else {
     marker.iconView = nil;
+    marker.icon = nil;
     marker.groundAnchor = CGPointMake(0.5, 1);
   }
 }
@@ -273,16 +295,19 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
   }
 
-  UIView *iconView = markerView.iconView;
-  [iconView removeFromSuperview];
-
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
 
   if (markerView.hasCustomView) {
-    marker.iconView = iconView;
+    if (markerView.rasterize) {
+      marker.icon = [self createIconImage:markerView];
+    } else {
+      UIView *iconView = markerView.iconView;
+      [iconView removeFromSuperview];
+      marker.iconView = iconView;
+    }
     marker.groundAnchor = markerView.anchor;
   }
 

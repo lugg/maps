@@ -30,6 +30,12 @@ export interface MarkerProps {
    */
   zIndex?: number;
   /**
+   * Rasterize custom marker view to bitmap for better performance.
+   * Set to false if you need live view updates (e.g., animations).
+   * @default true
+   */
+  rasterize?: boolean;
+  /**
    * Custom marker view
    */
   children?: ReactNode;
@@ -37,8 +43,16 @@ export interface MarkerProps {
 
 export class Marker extends React.Component<MarkerProps> {
   render() {
-    const { name, coordinate, title, description, anchor, zIndex, children } =
-      this.props;
+    const {
+      name,
+      coordinate,
+      title,
+      description,
+      anchor,
+      zIndex,
+      rasterize = true,
+      children,
+    } = this.props;
 
     return (
       <LuggMarkerViewNativeComponent
@@ -48,6 +62,7 @@ export class Marker extends React.Component<MarkerProps> {
         title={title}
         description={description}
         anchor={anchor}
+        rasterize={rasterize}
       >
         {children}
       </LuggMarkerViewNativeComponent>
