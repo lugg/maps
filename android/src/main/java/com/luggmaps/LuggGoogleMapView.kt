@@ -291,7 +291,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   private fun addMarkerViewToMap(markerView: LuggMarkerView) {
     val map = googleMap ?: run {
-      RNLog.w(reactContext, "Lugg: addMarkerViewToMap called without a map")
+      RNLog.w(reactContext, "LuggMaps: addMarkerViewToMap called without a map")
       return
     }
 
@@ -380,7 +380,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     if (value.isNullOrEmpty()) return
 
     if (mapView != null) {
-      RNLog.w(reactContext, "Lugg: mapId cannot be changed after map is initialized")
+      RNLog.w(reactContext, "LuggMaps: mapId cannot be changed after map is initialized")
       return
     }
 
@@ -450,7 +450,8 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   fun moveCamera(latitude: Double, longitude: Double, zoom: Double, duration: Int) {
     val map = googleMap ?: return
     val position = LatLng(latitude, longitude)
-    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, zoom.toFloat())
+    val targetZoom = if (zoom > 0) zoom.toFloat() else map.cameraPosition.zoom
+    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, targetZoom)
     when {
       duration < 0 -> map.animateCamera(cameraUpdate)
       duration > 0 -> map.animateCamera(cameraUpdate, duration, null)

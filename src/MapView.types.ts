@@ -7,7 +7,7 @@ import type { MapProvider, Coordinate, EdgeInsets } from './types';
  * @default duration -1
  */
 export interface MoveCameraOptions {
-  zoom: number;
+  zoom?: number;
   duration?: number;
 }
 
@@ -24,7 +24,7 @@ export interface FitCoordinatesOptions {
  * MapView ref methods
  */
 export interface MapViewRef {
-  moveCamera(coordinate: Coordinate, options: MoveCameraOptions): void;
+  moveCamera(coordinate: Coordinate, options?: MoveCameraOptions): void;
   fitCoordinates(
     coordinates: Coordinate[],
     options?: FitCoordinatesOptions

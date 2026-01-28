@@ -36,11 +36,11 @@ export class MapView
     return isApple ? AppleMapCommands : GoogleMapCommands;
   }
 
-  moveCamera(coordinate: Coordinate, options: MoveCameraOptions) {
+  moveCamera(coordinate: Coordinate, options?: MoveCameraOptions) {
     const ref = this.nativeRef.current;
     if (!ref) return;
 
-    const { zoom, duration = -1 } = options;
+    const { zoom = 0, duration = -1 } = options ?? {};
     this.nativeCommands.moveCamera(
       ref,
       coordinate.latitude,

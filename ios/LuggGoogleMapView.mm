@@ -398,10 +398,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
   }
 
+  float targetZoom = zoom > 0 ? (float)zoom : _mapView.camera.zoom;
   GMSCameraPosition *camera =
       [GMSCameraPosition cameraWithLatitude:latitude
                                   longitude:longitude
-                                       zoom:(float)zoom];
+                                       zoom:targetZoom];
   if (duration < 0) {
     [_mapView animateToCameraPosition:camera];
   } else if (duration > 0) {

@@ -537,16 +537,18 @@ using namespace luggmaps::events;
     return;
   }
 
+  double targetZoom = zoom > 0 ? zoom : _mapView.zoomLevel;
+
   if (duration < 0) {
     [self setCameraWithLatitude:latitude
                       longitude:longitude
-                           zoom:zoom
+                           zoom:targetZoom
                        animated:YES];
   } else if (duration > 0) {
     CLLocationCoordinate2D center =
         CLLocationCoordinate2DMake(latitude, longitude);
     MKCoordinateRegion region = [_mapView regionForCenterCoordinate:center
-                                                          zoomLevel:zoom];
+                                                          zoomLevel:targetZoom];
     [UIView animateWithDuration:duration / 1000.0
                      animations:^{
                        [self->_mapView setRegion:region animated:NO];
@@ -554,7 +556,7 @@ using namespace luggmaps::events;
   } else {
     [self setCameraWithLatitude:latitude
                       longitude:longitude
-                           zoom:zoom
+                           zoom:targetZoom
                        animated:NO];
   }
 }

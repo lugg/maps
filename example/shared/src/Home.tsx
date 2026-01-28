@@ -102,14 +102,19 @@ export function Home({ vehicleImages }: HomeProps) {
   const moveToRandomMarker = () => {
     if (markers.length === 0) return;
     const marker = randomFrom(markers);
-    mapRef.current?.moveCamera(marker.coordinate, {
-      zoom: 14,
-    });
+    mapRef.current?.moveCamera(marker.coordinate);
   };
 
   const fitAllMarkers = () => {
     const coordinates = markers.map((m) => m.coordinate);
-    mapRef.current?.fitCoordinates(coordinates);
+    mapRef.current?.fitCoordinates(coordinates, {
+      padding: {
+        top: 60,
+        left: 40,
+        right: 40,
+        bottom: 40,
+      },
+    });
   };
 
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
