@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, weak, nullable) id<LuggMarkerViewDelegate> delegate;
 @property(nonatomic, strong, nullable) NSObject *marker;
 
+- (nullable UIImage *)createIconImage;
+
 @end
 
 NS_ASSUME_NONNULL_END

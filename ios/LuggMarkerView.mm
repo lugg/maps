@@ -157,6 +157,21 @@ using namespace facebook::react;
   return _iconView;
 }
 
+- (UIImage *)createIconImage {
+  CGSize size = _iconView.bounds.size;
+  if (size.width <= 0 || size.height <= 0) {
+    return nil;
+  }
+
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = [UIScreen mainScreen].scale;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    [self->_iconView.layer renderInContext:context.CGContext];
+  }];
+}
+
 - (void)prepareForRecycle {
   [super prepareForRecycle];
   _didLayout = NO;

@@ -225,22 +225,6 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - Marker Management
 
-- (UIImage *)createIconImage:(LuggMarkerView *)markerView {
-  UIView *iconView = markerView.iconView;
-  CGSize size = iconView.bounds.size;
-  if (size.width <= 0 || size.height <= 0) {
-    return nil;
-  }
-
-  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
-  format.scale = [UIScreen mainScreen].scale;
-  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
-
-  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
-    [iconView.layer renderInContext:context.CGContext];
-  }];
-}
-
 - (void)syncMarkerView:(LuggMarkerView *)markerView caller:(NSString *)caller {
   if (!_mapView) {
     if (![_pendingMarkerViews containsObject:markerView]) {
@@ -262,7 +246,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (markerView.hasCustomView) {
     if (markerView.rasterize) {
       marker.iconView = nil;
-      marker.icon = [self createIconImage:markerView];
+      marker.icon = [markerView createIconImage];
     } else {
       UIView *iconView = markerView.iconView;
       if (marker.iconView != iconView) {
@@ -302,7 +286,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   if (markerView.hasCustomView) {
     if (markerView.rasterize) {
-      marker.icon = [self createIconImage:markerView];
+      marker.icon = [markerView createIconImage];
     } else {
       UIView *iconView = markerView.iconView;
       [iconView removeFromSuperview];

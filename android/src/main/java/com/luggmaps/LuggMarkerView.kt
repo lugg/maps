@@ -68,7 +68,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     return Pair(maxWidth, maxHeight)
   }
 
-  fun createIconBitmap(): BitmapDescriptor? {
+  private fun createIconBitmap(): BitmapDescriptor? {
     val (width, height) = measureIconViewBounds()
     if (width <= 0 || height <= 0) return null
 
@@ -78,7 +78,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     return BitmapDescriptorFactory.fromBitmap(bitmap)
   }
 
-  fun createIconViewWrapper(): View {
+  private fun createIconViewWrapper(): View {
     val (width, height) = measureIconViewBounds()
 
     (iconView.parent as? ViewGroup)?.removeView(iconView)
@@ -90,6 +90,42 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
       override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         setMeasuredDimension(width, height)
+      }
+    }
+  }
+
+  fun applyIconToMarker() {
+    val m = marker ?: return
+    if (!hasCustomView) return
+
+    if (rasterize) {
+      m.iconView = null
+      createIconBitmap()?.let { m.setIcon(it) }
+    } else {
+      m.iconView = createIconViewWrapper()
+    }
+  }
+
+  fun updateIcon(onAddMarker: () -> Unit) {
+    if (!hasCustomView) return
+    if (isPendingUpdate) return
+    isPendingUpdate = true
+
+    if (rasterize) {
+      post {
+        isPendingUpdate = false
+        if (marker == null) {
+          onAddMarker()
+        } else {
+          applyIconToMarker()
+        }
+      }
+    } else {
+      marker?.remove()
+      marker = null
+      post {
+        isPendingUpdate = false
+        onAddMarker()
       }
     }
   }
