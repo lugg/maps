@@ -241,9 +241,12 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     }
 
     if (markerView.hasCustomView) {
+      if (markerView.isPendingUpdate) return
+      markerView.isPendingUpdate = true
       markerView.marker?.remove()
       markerView.marker = null
       markerView.post {
+        markerView.isPendingUpdate = false
         addMarkerViewToMap(markerView)
       }
     } else {

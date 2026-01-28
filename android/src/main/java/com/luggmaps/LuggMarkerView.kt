@@ -39,6 +39,8 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var didLayout: Boolean = false
     private set
 
+  var isPendingUpdate: Boolean = false
+
   val hasCustomView: Boolean
     get() = iconView.childCount > 0
 
