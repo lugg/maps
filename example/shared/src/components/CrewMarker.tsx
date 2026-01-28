@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Platform,
@@ -8,17 +8,13 @@ import {
 } from 'react-native';
 import { Marker, type Coordinate } from '@lugg/maps';
 import Animated, {
-  Extrapolation,
-  interpolate,
+  Easing,
   type SharedValue,
-  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { getDistance, getRhumbLineBearing } from 'geolib';
-
-const AnimatedMarker = Animated.createAnimatedComponent(Marker);
+import { getRhumbLineBearing } from 'geolib';
 
 export interface VehicleImages {
   driving: ImageSourcePropType;
@@ -28,152 +24,48 @@ export interface VehicleImages {
 const CONTAINER_SIZE = 156;
 const TRUCK_SIZE = 96;
 const DEFAULT_ANCHOR = { x: 0.5, y: 0.5 };
-const ANIMATION_DURATION = 5000;
-const SKIP_ANIMATION_DISTANCE = 500;
+const SEGMENT_DURATION = 2000;
 
 interface CrewMarkerProps {
-  location?: Coordinate;
-  directions: Coordinate[];
+  route: Coordinate[];
   loaded?: boolean;
-  latitudeDelta?: number;
   images: VehicleImages;
+  speed?: number;
+  zoom?: number;
 }
 
-const findClosestPointOnLine = (
-  point: Coordinate,
-  start: Coordinate,
-  end: Coordinate
-): Coordinate => {
-  const lineLength = getDistance(start, end);
-  if (lineLength === 0) return start;
+const getBearing = (from: Coordinate, to: Coordinate, currentBearing = 0) => {
+  // getRhumbLineBearing returns 0° = North, 90° = East, etc.
+  let newBearing = getRhumbLineBearing(from, to);
 
-  const t =
-    ((point.longitude - start.longitude) * (end.longitude - start.longitude) +
-      (point.latitude - start.latitude) * (end.latitude - start.latitude)) /
-    ((end.longitude - start.longitude) ** 2 +
-      (end.latitude - start.latitude) ** 2);
-
-  const clampedT = Math.max(0, Math.min(1, t));
-
-  return {
-    latitude: start.latitude + clampedT * (end.latitude - start.latitude),
-    longitude: start.longitude + clampedT * (end.longitude - start.longitude),
-  };
-};
-
-const getBearing = (directions: Coordinate[], currentBearing = 0) => {
-  if (directions.length < 2) return 0;
-
-  const truckPosition = directions[0]!;
-  let closestSegment: [Coordinate, Coordinate] = [
-    directions[0]!,
-    directions[1]!,
-  ];
-  let minDistance = Number.POSITIVE_INFINITY;
-
-  for (let i = 0; i < directions.length - 1; i++) {
-    const start = directions[i]!;
-    const distance = getDistance(truckPosition, start);
-
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestSegment = [start, directions[i + 1]!];
-    }
-  }
-
-  let newBearing = getRhumbLineBearing(closestSegment[0], closestSegment[1]);
-
-  if (newBearing - currentBearing > 180) {
+  // Normalize bearing difference to avoid spinning the wrong way
+  while (newBearing - currentBearing > 180) {
     newBearing -= 360;
-  } else if (newBearing - currentBearing < -180) {
+  }
+  while (newBearing - currentBearing < -180) {
     newBearing += 360;
   }
 
   return newBearing;
 };
 
-const getZIndex = (coordinates?: Coordinate) => {
-  if (!coordinates) return 10;
-  return Math.round((90 - coordinates.latitude) * 10000);
-};
-
-const useAnimatedCoordinates = (latitude: number, longitude: number) => {
-  const latitudeAnimated = useSharedValue(latitude);
-  const longitudeAnimated = useSharedValue(longitude);
-  const prevLat = useSharedValue(latitude);
-  const prevLng = useSharedValue(longitude);
-
-  const animatedCoordinates = useAnimatedProps(() => ({
-    coordinate: {
-      latitude: latitudeAnimated.value,
-      longitude: longitudeAnimated.value,
-    },
-  }));
-
-  useEffect(() => {
-    const distance = getDistance(
-      { latitude: prevLat.value, longitude: prevLng.value },
-      { latitude, longitude }
-    );
-
-    if (distance > SKIP_ANIMATION_DISTANCE) {
-      latitudeAnimated.value = latitude;
-      longitudeAnimated.value = longitude;
-    } else {
-      latitudeAnimated.value = withTiming(latitude, {
-        duration: ANIMATION_DURATION,
-      });
-      longitudeAnimated.value = withTiming(longitude, {
-        duration: ANIMATION_DURATION,
-      });
-    }
-
-    prevLat.value = latitude;
-    prevLng.value = longitude;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latitude, longitude]);
-
-  return animatedCoordinates;
+const getZIndex = (coordinate?: Coordinate) => {
+  if (!coordinate) return 10;
+  return Math.round((90 - coordinate.latitude) * 10000);
 };
 
 interface VehicleIconProps {
   bearing: SharedValue<number>;
   loaded: boolean;
-  latitudeDelta: number;
   images: VehicleImages;
 }
 
-const VehicleIcon = ({
-  bearing,
-  loaded,
-  latitudeDelta,
-  images,
-}: VehicleIconProps) => {
+const VehicleIcon = ({ bearing, loaded, images }: VehicleIconProps) => {
   const vehicleImage = loaded ? images.loaded : images.driving;
-  const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${bearing.value * 360}deg` },
-      { scale: scale.value },
-    ],
+    transform: [{ rotate: `${bearing.value}deg` }],
   }));
-
-  useEffect(() => {
-    if (latitudeDelta > 0.003) {
-      scale.value = withTiming(
-        interpolate(
-          latitudeDelta,
-          [0.003, 0.02],
-          [1, 0.6],
-          Extrapolation.CLAMP
-        ),
-        { duration: 300 }
-      );
-    } else {
-      scale.value = withTiming(1, { duration: 300 });
-    }
-  }, [latitudeDelta, scale]);
 
   return (
     <View style={styles.root}>
@@ -188,72 +80,93 @@ const VehicleIcon = ({
   );
 };
 
+const BASE_ZOOM = 14;
+
 export function CrewMarker({
-  location,
-  directions,
+  route,
   loaded = false,
-  latitudeDelta = 0.01,
   images,
+  speed = 1,
+  zoom = BASE_ZOOM,
 }: CrewMarkerProps) {
-  const [truckAngle, setTruckAngle] = useState(0);
-  const truckAngleAnimation = useSharedValue(
-    getBearing(directions, truckAngle) / 360
+  const [currentPosition, setCurrentPosition] = useState<Coordinate | null>(
+    route[0] ?? null
   );
-  const [lastKnownLocation, setLastKnownLocation] = useState(location);
+  const bearingValue = useSharedValue(0);
+  const animationRef = useRef<NodeJS.Timeout | null>(null);
+  const currentBearingRef = useRef(0);
+  const segmentIndexRef = useRef(0);
 
   useEffect(() => {
-    if (location) setLastKnownLocation(location);
-  }, [location]);
+    if (route.length < 2) return;
 
-  const projectedPosition = useMemo(() => {
-    if (!location || directions.length < 2) return lastKnownLocation;
+    // Reset to start
+    segmentIndexRef.current = 0;
+    setCurrentPosition(route[0]!);
 
-    let closestPoint = location;
-    let minDistance = Number.POSITIVE_INFINITY;
-
-    for (let i = 0; i < directions.length - 1; i++) {
-      const start = directions[i]!;
-      const end = directions[i + 1]!;
-      const projectedPoint = findClosestPointOnLine(location, start, end);
-      const distance = getDistance(location, projectedPoint);
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = projectedPoint;
+    const animateSegment = (index: number) => {
+      if (index >= route.length - 1) {
+        // Loop back to start
+        segmentIndexRef.current = 0;
+        animateSegment(0);
+        return;
       }
-    }
 
-    return closestPoint;
-  }, [location, directions, lastKnownLocation]);
+      const from = route[index]!;
+      const to = route[index + 1]!;
 
-  useEffect(() => {
-    const newBearing = getBearing(directions, truckAngle);
-    setTruckAngle(newBearing);
-    truckAngleAnimation.value = withTiming(newBearing / 360, {
-      duration: ANIMATION_DURATION,
-    });
-  }, [directions, truckAngle, truckAngleAnimation]);
+      const newBearing = getBearing(from, to, currentBearingRef.current);
+      currentBearingRef.current = newBearing;
+      bearingValue.value = withTiming(newBearing, {
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+      });
 
-  const latitude = projectedPosition?.latitude ?? 0;
-  const longitude = projectedPosition?.longitude ?? 0;
-  const animatedCoordinates = useAnimatedCoordinates(latitude, longitude);
+      const zoomScale = Math.pow(2, zoom - BASE_ZOOM);
+      const duration = (SEGMENT_DURATION / speed) * zoomScale;
+      const steps = 60;
+      const stepDuration = duration / steps;
+      let step = 0;
 
-  if (!projectedPosition) return null;
+      const animate = () => {
+        step++;
+        const progress = step / steps;
+
+        const lat = from.latitude + (to.latitude - from.latitude) * progress;
+        const lng = from.longitude + (to.longitude - from.longitude) * progress;
+        setCurrentPosition({ latitude: lat, longitude: lng });
+
+        if (progress >= 1) {
+          segmentIndexRef.current = index + 1;
+          animateSegment(index + 1);
+          return;
+        }
+
+        animationRef.current = setTimeout(animate, stepDuration);
+      };
+
+      animationRef.current = setTimeout(animate, stepDuration);
+    };
+
+    animateSegment(0);
+
+    return () => {
+      if (animationRef.current) {
+        clearTimeout(animationRef.current);
+      }
+    };
+  }, [route, speed, zoom, bearingValue]);
+
+  if (!currentPosition) return null;
 
   return (
-    <AnimatedMarker
+    <Marker
       anchor={DEFAULT_ANCHOR}
-      coordinate={{ latitude, longitude }}
-      zIndex={getZIndex(projectedPosition)}
-      animatedProps={animatedCoordinates}
+      coordinate={currentPosition}
+      zIndex={getZIndex(currentPosition)}
     >
-      <VehicleIcon
-        bearing={truckAngleAnimation}
-        loaded={loaded}
-        latitudeDelta={latitudeDelta}
-        images={images}
-      />
-    </AnimatedMarker>
+      <VehicleIcon bearing={bearingValue} loaded={loaded} images={images} />
+    </Marker>
   );
 }
 

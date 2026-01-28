@@ -5,7 +5,7 @@ interface RouteProps {
   markerCoordinates: Coordinate[];
 }
 
-const catmullRom = (
+export const catmullRom = (
   p0: Coordinate,
   p1: Coordinate,
   p2: Coordinate,
@@ -37,7 +37,7 @@ const catmullRom = (
   };
 };
 
-const smoothCoordinates = (
+export const smoothCoordinates = (
   coords: Coordinate[],
   segments = 10
 ): Coordinate[] => {
