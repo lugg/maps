@@ -2,7 +2,7 @@ package com.luggmaps
 
 import android.content.Context
 import android.view.View
-import androidx.core.view.isNotEmpty
+import android.view.ViewGroup
 import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.AdvancedMarker
 
@@ -40,19 +40,38 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     private set
 
   val hasCustomView: Boolean
-    get() = iconView.isNotEmpty()
+    get() = iconView.childCount > 0
 
-  val iconView: ReactViewGroup = object : ReactViewGroup(context) {
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-      var maxWidth = 0
-      var maxHeight = 0
-      for (i in 0 until childCount) {
-        val child = getChildAt(i)
-        if (child.width > maxWidth) maxWidth = child.width
-        if (child.height > maxHeight) maxHeight = child.height
+  val iconView: ReactViewGroup = ReactViewGroup(context)
+
+  private fun measureIconViewBounds(): Pair<Int, Int> {
+    var maxWidth = 0
+    var maxHeight = 0
+    for (i in 0 until iconView.childCount) {
+      val child = iconView.getChildAt(i)
+      val childRight = child.left + child.width
+      val childBottom = child.top + child.height
+      if (childRight > maxWidth) maxWidth = childRight
+      if (childBottom > maxHeight) maxHeight = childBottom
+    }
+    return Pair(maxWidth, maxHeight)
+  }
+
+  fun createIconViewWrapper(): View {
+    val (width, height) = measureIconViewBounds()
+
+    // Remove iconView from any existing parent
+    (iconView.parent as? ViewGroup)?.removeView(iconView)
+
+    // Create a new wrapper with fixed size
+    return object : ReactViewGroup(context) {
+      init {
+        addView(iconView)
       }
 
-      setMeasuredDimension(maxWidth, maxHeight)
+      override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        setMeasuredDimension(width, height)
+      }
     }
   }
 
@@ -92,6 +111,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     bottom: Int
   ) {
     super.onLayout(changed, left, top, right, bottom)
+
     if (changed && !didLayout) {
       didLayout = true
       delegate?.markerViewDidLayout(this)
@@ -134,7 +154,4 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     iconView.removeAllViews()
   }
 
-  companion object {
-    private const val TAG = "Lugg"
-  }
 }
