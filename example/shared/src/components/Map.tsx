@@ -1,6 +1,11 @@
 import { forwardRef, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { MapView, Marker, type MapViewProps, type CameraEventPayload } from '@lugg/maps';
+import {
+  MapView,
+  Marker,
+  type MapViewProps,
+  type CameraEventPayload,
+} from '@lugg/maps';
 import type { NativeSyntheticEvent } from 'react-native';
 
 import { MarkerIcon } from './MarkerIcon';
@@ -102,19 +107,18 @@ export const Map = forwardRef<MapView, MapProps>(
           {...props}
         >
           {markers.map(renderMarker)}
-          <Route markerCoordinates={polylineCoordinates} />
+          <Route coordinates={smoothedRoute} />
           <CrewMarker
             route={smoothedRoute}
             images={vehicleImages}
             zoom={zoom}
           />
-          <Marker
+          <MarkerText
             name="inline-marker"
             coordinate={{ latitude: 37.782, longitude: -122.425 }}
-            zIndex={10}
-          >
-            <View style={styles.customMarker} />
-          </Marker>
+            text="LO"
+            color="#34A853"
+          />
         </MapView>
         <View
           style={[

@@ -3,7 +3,6 @@ import {
   Image,
   Platform,
   StyleSheet,
-  View,
   type ImageSourcePropType,
 } from 'react-native';
 import { Marker, type Coordinate } from '@lugg/maps';
@@ -21,9 +20,13 @@ export interface VehicleImages {
   loaded: ImageSourcePropType;
 }
 
-const CONTAINER_SIZE = 156;
-const TRUCK_SIZE = 96;
-const DEFAULT_ANCHOR = { x: 0.5, y: 0.5 };
+const IMAGE_WIDTH = 45;
+const IMAGE_HEIGHT = 80;
+// Container must be square and large enough to fit rotated image (diagonal)
+const CONTAINER_SIZE = Math.ceil(
+  Math.sqrt(IMAGE_WIDTH * IMAGE_WIDTH + IMAGE_HEIGHT * IMAGE_HEIGHT)
+);
+const DEFAULT_ANCHOR = { x: 0.5, y: 0.4 };
 const SEGMENT_DURATION = 2000;
 
 interface CrewMarkerProps {
@@ -68,15 +71,9 @@ const VehicleIcon = ({ bearing, loaded, images }: VehicleIconProps) => {
   }));
 
   return (
-    <View style={styles.root}>
-      <Animated.View style={[animatedStyle, styles.truckContainer]}>
-        <Image
-          source={vehicleImage}
-          style={styles.image}
-          resizeMode="contain"
-        />
-      </Animated.View>
-    </View>
+    <Animated.View style={[styles.root, animatedStyle]}>
+      <Image source={vehicleImage} style={styles.image} resizeMode="contain" />
+    </Animated.View>
   );
 };
 
@@ -177,15 +174,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  truckContainer: {
-    width: TRUCK_SIZE,
-    height: TRUCK_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   image: {
-    width: 45,
-    height: 80,
+    width: IMAGE_WIDTH,
+    height: IMAGE_HEIGHT,
     ...(Platform.OS !== 'web' && {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },

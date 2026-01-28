@@ -20,22 +20,8 @@ export const MARKER_TYPES: MarkerData['type'][] = [
   'custom',
 ];
 
+// Sorted to create a logical route path (southwest to northeast loop)
 export const INITIAL_MARKERS: MarkerData[] = [
-  {
-    id: '1',
-    name: 'sf-marker',
-    coordinate: { latitude: 37.78, longitude: -122.43 },
-    type: 'basic',
-    title: 'San Francisco',
-    description: 'The Golden Gate City',
-  },
-  {
-    id: '2',
-    name: 'marker-2',
-    coordinate: { latitude: 37.785, longitude: -122.42 },
-    type: 'basic',
-    anchor: { x: 0.5, y: 1 },
-  },
   {
     id: '3',
     name: 'marker-3',
@@ -50,24 +36,47 @@ export const INITIAL_MARKERS: MarkerData[] = [
     anchor: { x: 0.5, y: 1 },
   },
   {
-    id: '5',
-    name: 'marker-5',
-    coordinate: { latitude: 37.79, longitude: -122.435 },
+    id: '7',
+    name: 'marker-text-a',
+    coordinate: { latitude: 37.772, longitude: -122.425 },
+    type: 'text',
+    text: 'A',
+  },
+  {
+    id: '1',
+    name: 'sf-marker',
+    coordinate: { latitude: 37.78, longitude: -122.43 },
+    type: 'basic',
+    title: 'San Francisco',
+    description: 'The Golden Gate City',
+  },
+  {
+    id: '10',
+    name: 'marker-simple',
+    coordinate: { latitude: 37.784, longitude: -122.423 },
+    type: 'custom',
+    anchor: { x: 0.5, y: 0.5 },
+    color: 'red',
+  },
+  {
+    id: '2',
+    name: 'marker-2',
+    coordinate: { latitude: 37.785, longitude: -122.42 },
     type: 'basic',
     anchor: { x: 0.5, y: 1 },
+  },
+  {
+    id: '9',
+    name: 'marker-image',
+    coordinate: { latitude: 37.782, longitude: -122.415 },
+    type: 'image',
+    imageUrl: 'https://i.pravatar.cc/100',
   },
   {
     id: '6',
     name: 'marker-icon',
     coordinate: { latitude: 37.788, longitude: -122.41 },
     type: 'icon',
-  },
-  {
-    id: '7',
-    name: 'marker-text-a',
-    coordinate: { latitude: 37.772, longitude: -122.425 },
-    type: 'text',
-    text: 'A',
   },
   {
     id: '8',
@@ -78,18 +87,10 @@ export const INITIAL_MARKERS: MarkerData[] = [
     color: '#4285F4',
   },
   {
-    id: '9',
-    name: 'marker-image',
-    coordinate: { latitude: 37.782, longitude: -122.415 },
-    type: 'image',
-    imageUrl: 'https://i.pravatar.cc/100',
-  },
-  {
-    id: '10',
-    name: 'marker-simple',
-    coordinate: { latitude: 37.784, longitude: -122.423 },
-    type: 'custom',
-    anchor: { x: 0.5, y: 0.5 },
-    color: 'red',
+    id: '5',
+    name: 'marker-5',
+    coordinate: { latitude: 37.79, longitude: -122.435 },
+    type: 'basic',
+    anchor: { x: 0.5, y: 1 },
   },
 ];

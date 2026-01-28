@@ -1,9 +1,4 @@
-import { useMemo } from 'react';
 import { Polyline, type Coordinate } from '@lugg/maps';
-
-interface RouteProps {
-  markerCoordinates: Coordinate[];
-}
 
 export const catmullRom = (
   p0: Coordinate,
@@ -63,24 +58,23 @@ export const smoothCoordinates = (
   return result;
 };
 
-export const Route = ({ markerCoordinates }: RouteProps) => {
-  const smoothed = useMemo(
-    () => smoothCoordinates(markerCoordinates),
-    [markerCoordinates]
-  );
+interface SmoothedRouteProps {
+  coordinates: Coordinate[];
+}
 
-  if (smoothed.length < 2) return null;
+export const Route = ({ coordinates }: SmoothedRouteProps) => {
+  if (coordinates.length < 2) return null;
 
   return (
     <>
       <Polyline
         strokeColors={['#B0B0B0']}
-        coordinates={smoothed}
+        coordinates={coordinates}
         strokeWidth={6}
       />
       <Polyline
         strokeColors={['#B321E0', '#3744FF']}
-        coordinates={smoothed}
+        coordinates={coordinates}
         strokeWidth={6}
         animated
       />
