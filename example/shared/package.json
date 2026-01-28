@@ -16,5 +16,8 @@
     "@types/react": "*",
     "react-native-reanimated": "*",
     "react-native-svg": "*"
+  },
+  "dependencies": {
+    "geolib": "^3.3.4"
   }
 }

@@ -1,15 +1,17 @@
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MapView, Marker, type MapViewProps } from '@lugg/maps';
 
 import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
 import { MarkerImage } from './MarkerImage';
+import { CrewMarker, type VehicleImages } from './CrewMarker';
 import type { MarkerData } from './index';
 import { Route } from './Route';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
+  vehicleImages: VehicleImages;
 }
 
 const renderMarker = (marker: MarkerData) => {
@@ -68,9 +70,28 @@ const renderMarker = (marker: MarkerData) => {
 };
 
 export const Map = forwardRef<MapView, MapProps>(
-  ({ markers, padding, ...props }, ref) => {
-    const polylineCoordinates = markers.map((m) => m.coordinate);
+  ({ markers, padding, vehicleImages, ...props }, ref) => {
+    const polylineCoordinates = useMemo(
+      () => markers.map((m) => m.coordinate),
+      [markers]
+    );
     const bottomOffset = padding?.bottom ?? 0;
+
+    const [crewLocation, setCrewLocation] = useState(polylineCoordinates[0]);
+    const [routeIndex, setRouteIndex] = useState(0);
+
+    useEffect(() => {
+      if (polylineCoordinates.length === 0) return;
+
+      const interval = setInterval(() => {
+        setRouteIndex((prev) => {
+          const next = (prev + 1) % polylineCoordinates.length;
+          setCrewLocation(polylineCoordinates[next]);
+          return next;
+        });
+      }, 5000);
+      return () => clearInterval(interval);
+    }, [polylineCoordinates]);
 
     return (
       <View style={styles.container}>
@@ -85,6 +106,12 @@ export const Map = forwardRef<MapView, MapProps>(
         >
           {markers.map(renderMarker)}
           <Route markerCoordinates={polylineCoordinates} />
+          <CrewMarker
+            location={crewLocation}
+            directions={polylineCoordinates.slice(routeIndex)}
+            loaded={routeIndex > 2}
+            images={vehicleImages}
+          />
           <Marker
             name="inline-marker"
             coordinate={{ latitude: 37.782, longitude: -122.425 }}

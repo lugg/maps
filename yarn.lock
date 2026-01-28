@@ -3446,6 +3446,7 @@ __metadata:
   dependencies:
     "@lodev09/react-native-true-sheet": "npm:*"
     "@types/react": "npm:*"
+    geolib: "npm:^3.3.4"
     react-native-reanimated: "npm:*"
     react-native-svg: "npm:*"
   peerDependencies:
@@ -8303,6 +8304,13 @@ __metadata:
   version: 1.0.0-beta.2
   resolution: "gensync@npm:1.0.0-beta.2"
   checksum: 10c0/782aba6cba65b1bb5af3b095d96249d20edbe8df32dbf4696fd49be2583faf676173bf4809386588828e4dd76a3354fcbeb577bab1c833ccd9fc4577f26103f8
+  languageName: node
+  linkType: hard
+
+"geolib@npm:^3.3.4":
+  version: 3.3.4
+  resolution: "geolib@npm:3.3.4"
+  checksum: 10c0/7e18b28c825ad1bd1e4d4166a991659caaf5c779b73818b8dd00c2d6c60b59b208116c22cb1f93830c03571ac498f09586e77173e223bf56615ddace22d8de51
   languageName: node
   linkType: hard
 
