@@ -45,6 +45,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var rotate: Float = 0f
     private set
 
+  var scale: Float = 1f
+    private set
+
   var rasterize: Boolean = true
     private set
 
@@ -73,16 +76,26 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     val (width, height) = measureIconViewBounds()
     if (width <= 0 || height <= 0) return null
 
-    val bitmap = createBitmap(width, height)
+    val scaledWidth = (width * scale).toInt()
+    val scaledHeight = (height * scale).toInt()
+
+    val bitmap = createBitmap(scaledWidth, scaledHeight)
     val canvas = Canvas(bitmap)
+    canvas.scale(scale, scale)
     iconView.draw(canvas)
     return BitmapDescriptorFactory.fromBitmap(bitmap)
   }
 
   private fun createIconViewWrapper(): View {
     val (width, height) = measureIconViewBounds()
+    val scaledWidth = (width * scale).toInt()
+    val scaledHeight = (height * scale).toInt()
 
     (iconView.parent as? ViewGroup)?.removeView(iconView)
+    iconView.scaleX = scale
+    iconView.scaleY = scale
+    iconView.pivotX = 0f
+    iconView.pivotY = 0f
 
     return object : ReactViewGroup(context) {
       init {
@@ -90,7 +103,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
       }
 
       override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        setMeasuredDimension(width, height)
+        setMeasuredDimension(scaledWidth, scaledHeight)
       }
     }
   }
@@ -191,6 +204,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun setRotate(rotate: Float) {
     this.rotate = rotate
+  }
+
+  fun setScale(scale: Float) {
+    this.scale = scale
   }
 
   fun setRasterize(rasterize: Boolean) {

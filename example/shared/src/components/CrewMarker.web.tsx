@@ -28,6 +28,17 @@ const getBearing = (from: Coordinate, to: Coordinate, currentBearing = 0) => {
 };
 
 const BASE_ZOOM = 14;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 1.5;
+const SCALE_MIN_ZOOM = 10;
+const SCALE_MAX_ZOOM = 18;
+
+const getScaleForZoom = (zoom: number) => {
+  if (zoom <= SCALE_MIN_ZOOM) return MIN_SCALE;
+  if (zoom >= SCALE_MAX_ZOOM) return MAX_SCALE;
+  const t = (zoom - SCALE_MIN_ZOOM) / (SCALE_MAX_ZOOM - SCALE_MIN_ZOOM);
+  return MIN_SCALE + t * (MAX_SCALE - MIN_SCALE);
+};
 
 export function CrewMarker({
   route,
@@ -39,6 +50,7 @@ export function CrewMarker({
     route[0] ?? { latitude: 0, longitude: 0 }
   );
   const [rotate, setRotate] = useState(0);
+  const scale = getScaleForZoom(zoom);
 
   const currentBearingRef = useRef(0);
   const segmentIndexRef = useRef(0);
@@ -111,6 +123,7 @@ export function CrewMarker({
       anchor={DEFAULT_ANCHOR}
       zIndex={zIndex}
       rotate={rotate}
+      scale={scale}
     >
       <PickupIcon loaded={loaded} />
     </Marker>

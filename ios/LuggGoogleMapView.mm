@@ -257,13 +257,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (markerView.hasCustomView) {
     if (markerView.rasterize) {
       marker.iconView = nil;
-      marker.icon = [markerView createIconImage];
+      marker.icon = [markerView createScaledIconImage];
     } else {
       UIView *iconView = markerView.iconView;
       if (marker.iconView != iconView) {
         [iconView removeFromSuperview];
         marker.iconView = iconView;
       }
+      iconView.transform = CGAffineTransformMakeScale(markerView.scale, markerView.scale);
     }
     marker.groundAnchor = markerView.anchor;
   } else {
@@ -297,10 +298,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   if (markerView.hasCustomView) {
     if (markerView.rasterize) {
-      marker.icon = [markerView createIconImage];
+      marker.icon = [markerView createScaledIconImage];
     } else {
       UIView *iconView = markerView.iconView;
       [iconView removeFromSuperview];
+      iconView.transform = CGAffineTransformMakeScale(markerView.scale, markerView.scale);
       marker.iconView = iconView;
     }
     marker.groundAnchor = markerView.anchor;

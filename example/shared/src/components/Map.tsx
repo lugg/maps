@@ -77,7 +77,7 @@ const renderMarker = (marker: MarkerData) => {
 const INITIAL_ZOOM = 14;
 
 export const Map = forwardRef<MapView, MapProps>(
-  ({ markers, padding, ...props }, ref) => {
+  ({ markers, padding, onCameraIdle, onCameraMove, ...props }, ref) => {
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
     const polylineCoordinates = useMemo(
       () => markers.map((m) => m.coordinate),
@@ -90,7 +90,12 @@ export const Map = forwardRef<MapView, MapProps>(
     const bottomOffset = padding?.bottom ?? 0;
 
     const handleCameraMove = (e: NativeSyntheticEvent<CameraEventPayload>) => {
+      onCameraMove?.(e);
+    };
+
+    const handleCameraIdle = (e: NativeSyntheticEvent<CameraEventPayload>) => {
       setZoom(e.nativeEvent.zoom);
+      onCameraIdle?.(e);
     };
 
     return (
@@ -103,6 +108,7 @@ export const Map = forwardRef<MapView, MapProps>(
           initialZoom={INITIAL_ZOOM}
           padding={padding}
           onCameraMove={handleCameraMove}
+          onCameraIdle={handleCameraIdle}
           {...props}
         >
           {markers.map(renderMarker)}

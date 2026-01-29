@@ -271,20 +271,24 @@ using namespace luggmaps::events;
   CGRect frame = iconView.frame;
   if (frame.size.width > 0 && frame.size.height > 0) {
     if (markerView.rasterize) {
-      annotationView.image = [markerView createIconImage];
+      annotationView.image = [markerView createScaledIconImage];
     }
+    CGFloat scale = markerView.scale;
     annotationView.bounds =
-        CGRectMake(0, 0, frame.size.width, frame.size.height);
+        CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =
-        CGPointMake(frame.size.width * (anchor.x - 0.5),
-                    -frame.size.height * (anchor.y - 0.5));
+        CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
+                    -frame.size.height * scale * (anchor.y - 0.5));
   }
 
-  // Apply rotation after setting bounds
-  annotationView.transform =
-      CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+  // Apply rotation and scale after setting bounds
+  CGAffineTransform transform = CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+  if (!markerView.rasterize) {
+    transform = CGAffineTransformScale(transform, markerView.scale, markerView.scale);
+  }
+  annotationView.transform = transform;
 }
 
 #pragma mark - PolylineViewDelegate
@@ -429,8 +433,6 @@ using namespace luggmaps::events;
   if (annotationView) {
     annotationView.layer.zPosition = markerView.zIndex;
     annotationView.zPriority = markerView.zIndex;
-    annotationView.transform =
-        CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
   }
 
   [self updateAnnotationViewFrame:annotation];
@@ -510,9 +512,10 @@ using namespace luggmaps::events;
 
   UIView *iconView = markerView.iconView;
   CGRect frame = iconView.frame;
+  CGFloat scale = markerView.scale;
 
   if (markerView.rasterize) {
-    annotationView.image = [markerView createIconImage];
+    annotationView.image = [markerView createScaledIconImage];
   } else {
     [iconView removeFromSuperview];
     [annotationView addSubview:iconView];
@@ -521,15 +524,18 @@ using namespace luggmaps::events;
 
   if (frame.size.width > 0 && frame.size.height > 0) {
     annotationView.bounds =
-        CGRectMake(0, 0, frame.size.width, frame.size.height);
+        CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =
-        CGPointMake(frame.size.width * (anchor.x - 0.5),
-                    -frame.size.height * (anchor.y - 0.5));
+        CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
+                    -frame.size.height * scale * (anchor.y - 0.5));
 
-    annotationView.transform =
-        CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+    CGAffineTransform transform = CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+    if (!markerView.rasterize) {
+      transform = CGAffineTransformScale(transform, scale, scale);
+    }
+    annotationView.transform = transform;
   }
 
   markerAnnotation.annotationView = annotationView;

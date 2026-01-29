@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) CGPoint anchor;
 @property(nonatomic, readonly) NSInteger zIndex;
 @property(nonatomic, readonly) CLLocationDegrees rotate;
+@property(nonatomic, readonly) CGFloat scale;
 @property(nonatomic, readonly) BOOL rasterize;
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;
@@ -29,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, nullable) NSObject *marker;
 
 - (nullable UIImage *)createIconImage;
+- (nullable UIImage *)createScaledIconImage;
 
 @end
 
