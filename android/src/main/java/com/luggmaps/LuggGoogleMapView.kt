@@ -279,6 +279,11 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       zIndex = markerView.zIndex
       rotation = markerView.rotate
     }
+
+    if (markerView.hasCustomView && markerView.scaleChanged) {
+      markerView.applyScaleToMarker()
+      markerView.clearScaleChanged()
+    }
   }
 
   private fun processPendingMarkers() {

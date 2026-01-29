@@ -48,6 +48,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var scale: Float = 1f
     private set
 
+  var scaleChanged: Boolean = false
+    private set
+
   var rasterize: Boolean = true
     private set
 
@@ -113,10 +116,23 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     if (!hasCustomView) return
 
     if (rasterize) {
-      m.iconView = null
       createIconBitmap()?.let { m.setIcon(it) }
     } else {
       m.iconView = createIconViewWrapper()
+    }
+  }
+
+  fun applyScaleToMarker() {
+    val m = marker ?: return
+    if (!hasCustomView) return
+
+    if (rasterize) {
+      post {
+        createIconBitmap()?.let { m.setIcon(it) }
+      }
+    } else {
+      iconView.scaleX = scale
+      iconView.scaleY = scale
     }
   }
 
@@ -207,7 +223,12 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   }
 
   fun setScale(scale: Float) {
+    scaleChanged = this.scale != scale
     this.scale = scale
+  }
+
+  fun clearScaleChanged() {
+    scaleChanged = false
   }
 
   fun setRasterize(rasterize: Boolean) {
