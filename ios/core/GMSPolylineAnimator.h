@@ -7,5 +7,7 @@
 @property(nonatomic, assign) BOOL animated;
 
 - (void)update;
+- (void)pause;
+- (void)resume;
 
 @end

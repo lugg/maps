@@ -101,6 +101,14 @@
   _displayLinkProxy = nil;
 }
 
+- (void)pause {
+  _displayLink.paused = YES;
+}
+
+- (void)resume {
+  _displayLink.paused = NO;
+}
+
 - (NSUInteger)indexForDistance:(CGFloat)distance {
   NSUInteger left = 0;
   NSUInteger right = _cumulativeDistances.count - 1;

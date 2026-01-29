@@ -92,6 +92,14 @@
   _displayLinkProxy = nil;
 }
 
+- (void)pause {
+  _displayLink.paused = YES;
+}
+
+- (void)resume {
+  _displayLink.paused = NO;
+}
+
 - (void)animationTick:(CADisplayLink *)displayLink {
   CGFloat speed = displayLink.duration / 1.0;
   _animationProgress += speed;

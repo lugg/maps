@@ -189,6 +189,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)mapView:(GMSMapView *)mapView willMove:(BOOL)gesture {
   _isDragging = gesture;
+  if (_isDragging) {
+    for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
+      [animator pause];
+    }
+  }
 }
 
 - (void)mapView:(GMSMapView *)mapView
@@ -202,6 +207,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     idleAtCameraPosition:(GMSCameraPosition *)position {
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
+  if (wasDragging) {
+    for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
+      [animator resume];
+    }
+  }
   CameraIdleEvent{position.target.latitude, position.target.longitude,
                   position.zoom, static_cast<bool>(wasDragging)}
       .emit<LuggGoogleMapViewEventEmitter>(_eventEmitter);

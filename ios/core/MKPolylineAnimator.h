@@ -8,5 +8,7 @@
 @property(nonatomic, assign) BOOL animated;
 
 - (void)updatePolyline:(MKPolyline *)polyline;
+- (void)pause;
+- (void)resume;
 
 @end

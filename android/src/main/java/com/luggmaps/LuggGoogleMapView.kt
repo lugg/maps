@@ -173,6 +173,9 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   override fun onCameraMoveStarted(reason: Int) {
     isDragging = reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE
+    if (isDragging) {
+      polylineAnimators.values.forEach { it.pause() }
+    }
   }
 
   override fun onCameraMove() {
@@ -185,6 +188,9 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     val map = googleMap ?: return
     val position = map.cameraPosition
     eventDelegate?.onCameraIdle(this, position.target.latitude, position.target.longitude, position.zoom, isDragging)
+    if (isDragging) {
+      polylineAnimators.values.forEach { it.resume() }
+    }
     isDragging = false
   }
 

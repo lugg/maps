@@ -143,6 +143,14 @@ class PolylineAnimator {
     animator = null
   }
 
+  fun pause() {
+    animator?.pause()
+  }
+
+  fun resume() {
+    animator?.resume()
+  }
+
   private fun updateAnimatedPolyline() {
     val poly = polyline ?: return
     if (coordinates.size < 2 || totalLength <= 0f) {

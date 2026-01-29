@@ -433,6 +433,14 @@ using namespace luggmaps::events;
 
 - (void)mapView:(MKMapView *)mapView regionWillChangeAnimated:(BOOL)animated {
   _isDragging = [self isUserInteracting:mapView];
+  if (_isDragging) {
+    for (UIView *subview in self.subviews) {
+      if ([subview isKindOfClass:[LuggPolylineView class]]) {
+        MKPolylineAnimator *renderer = (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
+        [renderer pause];
+      }
+    }
+  }
 }
 
 - (BOOL)isUserInteracting:(MKMapView *)mapView {
@@ -456,6 +464,14 @@ using namespace luggmaps::events;
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
+  if (wasDragging) {
+    for (UIView *subview in self.subviews) {
+      if ([subview isKindOfClass:[LuggPolylineView class]]) {
+        MKPolylineAnimator *renderer = (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
+        [renderer resume];
+      }
+    }
+  }
   CameraIdleEvent{mapView.centerCoordinate.latitude,
                   mapView.centerCoordinate.longitude, mapView.zoomLevel,
                   static_cast<bool>(wasDragging)}
