@@ -1,11 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet } from 'react-native';
 import { Marker, type Coordinate } from '@lugg/maps';
 import Animated, {
   Easing,
-  type SharedValue,
   useAnimatedProps,
-  useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withTiming,
@@ -16,13 +13,7 @@ import { PickupIcon } from './PickupIcon';
 
 const AnimatedMarker = Animated.createAnimatedComponent(Marker);
 
-const IMAGE_WIDTH = 45;
-const IMAGE_HEIGHT = 80;
-// Container must be square and large enough to fit rotated image (diagonal)
-const CONTAINER_SIZE = Math.ceil(
-  Math.sqrt(IMAGE_WIDTH * IMAGE_WIDTH + IMAGE_HEIGHT * IMAGE_HEIGHT)
-);
-const DEFAULT_ANCHOR = { x: 0.5, y: 0.4 };
+const DEFAULT_ANCHOR = { x: 0.5, y: 0.5 };
 const SEGMENT_DURATION = 2000;
 
 interface CrewMarkerProps {
@@ -45,23 +36,6 @@ const getBearing = (from: Coordinate, to: Coordinate, currentBearing = 0) => {
   }
 
   return newBearing;
-};
-
-interface VehicleIconProps {
-  bearing: SharedValue<number>;
-  loaded: boolean;
-}
-
-const VehicleIcon = ({ bearing, loaded }: VehicleIconProps) => {
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${bearing.value}deg` }],
-  }));
-
-  return (
-    <Animated.View style={[styles.root, animatedStyle]}>
-      <PickupIcon loaded={loaded} />
-    </Animated.View>
-  );
 };
 
 const BASE_ZOOM = 14;
@@ -89,6 +63,7 @@ export function CrewMarker({
       longitude: longitude.value,
     },
     zIndex: zIndex.value,
+    rotate: bearingValue.value,
   }));
 
   useEffect(() => {
@@ -144,18 +119,8 @@ export function CrewMarker({
       coordinate={route[0]}
       anchor={DEFAULT_ANCHOR}
       animatedProps={animatedProps}
-      rasterize={false}
     >
-      <VehicleIcon bearing={bearingValue} loaded={loaded} />
+      <PickupIcon loaded={loaded} />
     </AnimatedMarker>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    width: CONTAINER_SIZE,
-    height: CONTAINER_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

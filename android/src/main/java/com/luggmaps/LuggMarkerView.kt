@@ -42,6 +42,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var zIndex: Float = 0f
     private set
 
+  var rotate: Float = 0f
+    private set
+
   var rasterize: Boolean = true
     private set
 
@@ -184,6 +187,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun setZIndex(zIndex: Float) {
     this.zIndex = zIndex
+  }
+
+  fun setRotate(rotate: Float) {
+    this.rotate = rotate
   }
 
   fun setRasterize(rasterize: Boolean) {

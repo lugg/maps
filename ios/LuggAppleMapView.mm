@@ -264,22 +264,27 @@ using namespace luggmaps::events;
     return;
   }
 
+  // Reset transform before updating bounds
+  annotationView.transform = CGAffineTransformIdentity;
+
   UIView *iconView = markerView.iconView;
   CGRect frame = iconView.frame;
   if (frame.size.width > 0 && frame.size.height > 0) {
     if (markerView.rasterize) {
       annotationView.image = [markerView createIconImage];
-      annotationView.frame =
-          CGRectMake(0, 0, frame.size.width, frame.size.height);
-    } else {
-      annotationView.frame = frame;
     }
+    annotationView.bounds =
+        CGRectMake(0, 0, frame.size.width, frame.size.height);
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =
         CGPointMake(frame.size.width * (anchor.x - 0.5),
                     -frame.size.height * (anchor.y - 0.5));
   }
+
+  // Apply rotation after setting bounds
+  annotationView.transform =
+      CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
 }
 
 #pragma mark - PolylineViewDelegate
@@ -424,6 +429,8 @@ using namespace luggmaps::events;
   if (annotationView) {
     annotationView.layer.zPosition = markerView.zIndex;
     annotationView.zPriority = markerView.zIndex;
+    annotationView.transform =
+        CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
   }
 
   [self updateAnnotationViewFrame:annotation];
@@ -513,13 +520,16 @@ using namespace luggmaps::events;
   }
 
   if (frame.size.width > 0 && frame.size.height > 0) {
-    annotationView.frame =
+    annotationView.bounds =
         CGRectMake(0, 0, frame.size.width, frame.size.height);
 
     CGPoint anchor = markerView.anchor;
     annotationView.centerOffset =
         CGPointMake(frame.size.width * (anchor.x - 0.5),
                     -frame.size.height * (anchor.y - 0.5));
+
+    annotationView.transform =
+        CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
   }
 
   markerAnnotation.annotationView = annotationView;

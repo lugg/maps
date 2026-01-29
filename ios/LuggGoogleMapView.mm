@@ -253,6 +253,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
   marker.zIndex = (int)markerView.zIndex;
+  marker.rotation = markerView.rotate;
   if (markerView.hasCustomView) {
     if (markerView.rasterize) {
       marker.iconView = nil;
@@ -306,6 +307,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
 
   marker.zIndex = (int)markerView.zIndex;
+  marker.rotation = markerView.rotate;
   marker.map = _mapView;
 
   markerView.marker = marker;

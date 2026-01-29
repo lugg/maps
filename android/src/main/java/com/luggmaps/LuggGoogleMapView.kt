@@ -277,6 +277,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       snippet = markerView.description
       setAnchor(markerView.anchorX, markerView.anchorY)
       zIndex = markerView.zIndex
+      rotation = markerView.rotate
     }
   }
 
@@ -303,6 +304,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     val marker = map.addMarker(options) as AdvancedMarker
     marker.setAnchor(markerView.anchorX, markerView.anchorY)
     marker.zIndex = markerView.zIndex
+    marker.rotation = markerView.rotate
 
     markerView.marker = marker
     markerView.applyIconToMarker()

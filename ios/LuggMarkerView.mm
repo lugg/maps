@@ -19,6 +19,7 @@ using namespace facebook::react;
   NSString *_markerDescription;
   CGPoint _anchor;
   NSInteger _zIndex;
+  CLLocationDegrees _rotate;
   BOOL _rasterize;
   BOOL _didLayout;
   UIView *_iconView;
@@ -38,6 +39,7 @@ using namespace facebook::react;
     _coordinate = CLLocationCoordinate2DMake(0, 0);
     _anchor = CGPointMake(0.5, 1.0);
     _zIndex = 0;
+    _rotate = 0;
     _rasterize = YES;
     _didLayout = NO;
 
@@ -65,6 +67,7 @@ using namespace facebook::react;
       [NSString stringWithUTF8String:newViewProps.description.c_str()];
   _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
   _zIndex = newViewProps.zIndex.value_or(0);
+  _rotate = newViewProps.rotate;
   _rasterize = newViewProps.rasterize;
 }
 
@@ -139,6 +142,10 @@ using namespace facebook::react;
 
 - (NSInteger)zIndex {
   return _zIndex;
+}
+
+- (CLLocationDegrees)rotate {
+  return _rotate;
 }
 
 - (BOOL)rasterize {

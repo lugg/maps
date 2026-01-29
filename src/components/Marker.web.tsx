@@ -8,6 +8,7 @@ export function Marker({
   title,
   anchor,
   zIndex,
+  rotate,
   children,
 }: MarkerProps) {
   return (
@@ -17,6 +18,7 @@ export function Marker({
       zIndex={zIndex}
       anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
       anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
+      style={rotate ? { transform: `rotate(${rotate}deg)` } : undefined}
     >
       {children}
     </AdvancedMarker>
