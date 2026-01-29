@@ -208,11 +208,18 @@ using namespace facebook::react;
   }];
 }
 
+- (void)resetIconViewTransform {
+  _iconView.transform = CGAffineTransformIdentity;
+  _iconView.layer.anchorPoint = CGPointMake(0.5, 0.5);
+  _iconView.frame = CGRectMake(0, 0, _iconView.bounds.size.width, _iconView.bounds.size.height);
+}
+
 - (void)prepareForRecycle {
   [super prepareForRecycle];
   _didLayout = NO;
   self.marker = nil;
   self.delegate = nil;
+  [self resetIconViewTransform];
   for (UIView *subview in _iconView.subviews) {
     [subview removeFromSuperview];
   }

@@ -89,6 +89,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
       marker.map = nil;
       markerView.marker = nil;
     }
+    [markerView resetIconViewTransform];
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
     LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
     [_polylineAnimators removeObjectForKey:polylineView];

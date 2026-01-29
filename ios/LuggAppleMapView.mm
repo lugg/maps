@@ -103,11 +103,13 @@ using namespace luggmaps::events;
         (AppleMarkerAnnotation *)markerView.marker;
 
     if (annotation) {
+      annotation.annotationView.transform = CGAffineTransformIdentity;
       annotation.markerView = nil;
       annotation.annotationView = nil;
       [_mapView removeAnnotation:annotation];
       markerView.marker = nil;
     }
+    [markerView resetIconViewTransform];
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
     LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
     polylineView.delegate = nil;

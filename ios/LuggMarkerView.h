@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable UIImage *)createIconImage;
 - (nullable UIImage *)createScaledIconImage;
+- (void)resetIconViewTransform;
 
 @end
 
