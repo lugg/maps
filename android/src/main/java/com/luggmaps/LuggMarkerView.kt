@@ -128,16 +128,15 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     val m = marker ?: return
     if (!hasCustomView) return
 
-    if (rasterize) {
-      scaleUpdateRunnable?.let { removeCallbacks(it) }
-      scaleUpdateRunnable = Runnable {
+    scaleUpdateRunnable?.let { removeCallbacks(it) }
+    scaleUpdateRunnable = Runnable {
+      if (rasterize) {
         createIconBitmap()?.let { m.setIcon(it) }
+      } else {
+        m.iconView = createIconViewWrapper()
       }
-      post(scaleUpdateRunnable)
-    } else {
-      iconView.scaleX = scale
-      iconView.scaleY = scale
     }
+    post(scaleUpdateRunnable)
   }
 
   fun updateIcon(onAddMarker: () -> Unit) {
