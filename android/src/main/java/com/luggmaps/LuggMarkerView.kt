@@ -18,6 +18,8 @@ interface LuggMarkerViewDelegate {
 }
 
 class LuggMarkerView(context: Context) : ReactViewGroup(context) {
+  private var scaleUpdateRunnable: Runnable? = null
+
   var name: String? = null
     private set
 
@@ -127,9 +129,11 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     if (!hasCustomView) return
 
     if (rasterize) {
-      post {
+      scaleUpdateRunnable?.let { removeCallbacks(it) }
+      scaleUpdateRunnable = Runnable {
         createIconBitmap()?.let { m.setIcon(it) }
       }
+      post(scaleUpdateRunnable)
     } else {
       iconView.scaleX = scale
       iconView.scaleY = scale
@@ -244,6 +248,8 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   }
 
   fun onDropViewInstance() {
+    scaleUpdateRunnable?.let { removeCallbacks(it) }
+    scaleUpdateRunnable = null
     didLayout = false
     delegate = null
     iconView.removeAllViews()
