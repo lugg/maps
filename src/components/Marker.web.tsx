@@ -23,7 +23,9 @@ export function Marker({
       zIndex={zIndex}
       anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
       anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
-      style={transforms.length > 0 ? { transform: transforms.join(' ') } : undefined}
+      style={
+        transforms.length > 0 ? { transform: transforms.join(' ') } : undefined
+      }
     >
       {children}
     </AdvancedMarker>

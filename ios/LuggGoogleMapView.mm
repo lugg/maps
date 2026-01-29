@@ -235,6 +235,35 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - Marker Management
 
+- (void)applyMarkerStyle:(LuggMarkerView *)markerView
+                  marker:(GMSAdvancedMarker *)marker {
+  if (markerView.hasCustomView) {
+    if (markerView.rasterize) {
+      marker.iconView = nil;
+      marker.icon = [markerView createScaledIconImage];
+      marker.rotation = markerView.rotate;
+    } else {
+      UIView *iconView = markerView.iconView;
+      if (marker.iconView != iconView) {
+        [iconView removeFromSuperview];
+        marker.iconView = iconView;
+      }
+      CGFloat scale = markerView.scale;
+      CGFloat radians = markerView.rotate * M_PI / 180.0;
+      iconView.transform = CGAffineTransformConcat(
+          CGAffineTransformMakeScale(scale, scale),
+          CGAffineTransformMakeRotation(radians));
+      marker.rotation = 0;
+    }
+    marker.groundAnchor = markerView.anchor;
+  } else {
+    marker.iconView = nil;
+    marker.icon = nil;
+    marker.rotation = markerView.rotate;
+    marker.groundAnchor = CGPointMake(0.5, 1);
+  }
+}
+
 - (void)syncMarkerView:(LuggMarkerView *)markerView caller:(NSString *)caller {
   if (!_mapView) {
     if (![_pendingMarkerViews containsObject:markerView]) {
@@ -253,25 +282,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
   marker.zIndex = (int)markerView.zIndex;
-  marker.rotation = markerView.rotate;
-  if (markerView.hasCustomView) {
-    if (markerView.rasterize) {
-      marker.iconView = nil;
-      marker.icon = [markerView createScaledIconImage];
-    } else {
-      UIView *iconView = markerView.iconView;
-      if (marker.iconView != iconView) {
-        [iconView removeFromSuperview];
-        marker.iconView = iconView;
-      }
-      iconView.transform = CGAffineTransformMakeScale(markerView.scale, markerView.scale);
-    }
-    marker.groundAnchor = markerView.anchor;
-  } else {
-    marker.iconView = nil;
-    marker.icon = nil;
-    marker.groundAnchor = CGPointMake(0.5, 1);
-  }
+  [self applyMarkerStyle:markerView marker:marker];
 }
 
 - (void)processPendingMarkers {
@@ -295,23 +306,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.position = markerView.coordinate;
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
-
-  if (markerView.hasCustomView) {
-    if (markerView.rasterize) {
-      marker.icon = [markerView createScaledIconImage];
-    } else {
-      UIView *iconView = markerView.iconView;
-      [iconView removeFromSuperview];
-      iconView.transform = CGAffineTransformMakeScale(markerView.scale, markerView.scale);
-      marker.iconView = iconView;
-    }
-    marker.groundAnchor = markerView.anchor;
-  }
-
   marker.zIndex = (int)markerView.zIndex;
-  marker.rotation = markerView.rotate;
-  marker.map = _mapView;
 
+  [self applyMarkerStyle:markerView marker:marker];
+
+  marker.map = _mapView;
   markerView.marker = marker;
 }
 

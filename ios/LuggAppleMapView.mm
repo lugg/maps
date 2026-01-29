@@ -256,6 +256,38 @@ using namespace luggmaps::events;
 
 #pragma mark - Annotation Helpers
 
+- (void)applyMarkerStyle:(LuggMarkerView *)markerView
+          annotationView:(MKAnnotationView *)annotationView {
+  annotationView.transform = CGAffineTransformIdentity;
+
+  UIView *iconView = markerView.iconView;
+  CGRect frame = iconView.frame;
+  if (frame.size.width <= 0 || frame.size.height <= 0) return;
+
+  CGFloat scale = markerView.scale;
+  CGPoint anchor = markerView.anchor;
+
+  if (markerView.rasterize) {
+    annotationView.image = [markerView createScaledIconImage];
+  } else {
+    iconView.layer.anchorPoint = anchor;
+    iconView.transform = CGAffineTransformMakeScale(scale, scale);
+    iconView.frame = CGRectMake(
+        frame.size.width * (0.5 - anchor.x) * (scale - 1),
+        frame.size.height * (0.5 - anchor.y) * (scale - 1),
+        frame.size.width,
+        frame.size.height);
+  }
+
+  annotationView.bounds =
+      CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
+  annotationView.centerOffset =
+      CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
+                  -frame.size.height * scale * (anchor.y - 0.5));
+  annotationView.transform =
+      CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+}
+
 - (void)updateAnnotationViewFrame:(AppleMarkerAnnotation *)annotation {
   MKAnnotationView *annotationView = annotation.annotationView;
   LuggMarkerView *markerView = annotation.markerView;
@@ -264,31 +296,7 @@ using namespace luggmaps::events;
     return;
   }
 
-  // Reset transform before updating bounds
-  annotationView.transform = CGAffineTransformIdentity;
-
-  UIView *iconView = markerView.iconView;
-  CGRect frame = iconView.frame;
-  if (frame.size.width > 0 && frame.size.height > 0) {
-    if (markerView.rasterize) {
-      annotationView.image = [markerView createScaledIconImage];
-    }
-    CGFloat scale = markerView.scale;
-    annotationView.bounds =
-        CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
-
-    CGPoint anchor = markerView.anchor;
-    annotationView.centerOffset =
-        CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
-                    -frame.size.height * scale * (anchor.y - 0.5));
-  }
-
-  // Apply rotation and scale after setting bounds
-  CGAffineTransform transform = CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
-  if (!markerView.rasterize) {
-    transform = CGAffineTransformScale(transform, markerView.scale, markerView.scale);
-  }
-  annotationView.transform = transform;
+  [self applyMarkerStyle:markerView annotationView:annotationView];
 }
 
 #pragma mark - PolylineViewDelegate
@@ -510,34 +518,13 @@ using namespace luggmaps::events;
   annotationView.layer.zPosition = markerView.zIndex;
   annotationView.zPriority = markerView.zIndex;
 
-  UIView *iconView = markerView.iconView;
-  CGRect frame = iconView.frame;
-  CGFloat scale = markerView.scale;
-
-  if (markerView.rasterize) {
-    annotationView.image = [markerView createScaledIconImage];
-  } else {
+  if (!markerView.rasterize) {
+    UIView *iconView = markerView.iconView;
     [iconView removeFromSuperview];
     [annotationView addSubview:iconView];
-    iconView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
   }
 
-  if (frame.size.width > 0 && frame.size.height > 0) {
-    annotationView.bounds =
-        CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
-
-    CGPoint anchor = markerView.anchor;
-    annotationView.centerOffset =
-        CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
-                    -frame.size.height * scale * (anchor.y - 0.5));
-
-    CGAffineTransform transform = CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
-    if (!markerView.rasterize) {
-      transform = CGAffineTransformScale(transform, scale, scale);
-    }
-    annotationView.transform = transform;
-  }
-
+  [self applyMarkerStyle:markerView annotationView:annotationView];
   markerAnnotation.annotationView = annotationView;
 
   return annotationView;

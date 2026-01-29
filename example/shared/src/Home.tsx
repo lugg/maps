@@ -33,7 +33,7 @@ export function Home() {
   const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
   const locationPermission = useLocationPermission();
-  const [provider, setProvider] = useState<MapProviderType>('google');
+  const [provider, setProvider] = useState<MapProviderType>('apple');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [sheetHeight, setSheetHeight] = useState(0);
