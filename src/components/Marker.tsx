@@ -42,6 +42,7 @@ export interface MarkerProps {
   /**
    * Rasterize custom marker view to bitmap for better performance.
    * Set to false if you need live view updates (e.g., animations).
+   * @platform ios, android
    * @default true
    */
   rasterize?: boolean;

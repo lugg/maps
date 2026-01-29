@@ -35,6 +35,10 @@ import { MapView, Marker } from '@lugg/maps';
 | `title` | `string` | - | Callout title |
 | `description` | `string` | - | Callout description |
 | `anchor` | `Point` | - | Anchor point for custom views |
+| `zIndex` | `number` | - | Z-index for marker ordering. Higher values render on top |
+| `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
+| `scale` | `number` | `1` | Scale factor for the marker |
+| `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android only) |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Custom Markers
