@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMap } from '@vis.gl/react-google-maps';
-import { useMapId } from '../MapProvider.web';
+import { useMapContext } from '../MapProvider.web';
 import type { PolylineProps } from './Polyline';
 
 const ANIMATION_DURATION = 1500;
@@ -43,10 +42,10 @@ export function Polyline({
   zIndex,
 }: PolylineProps) {
   const resolvedZIndex = zIndex ?? (animated ? 1 : 0);
-  const mapId = useMapId();
-  const map = useMap(mapId);
+  const { map, isDragging } = useMapContext();
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
   const animationRef = useRef<number>(0);
+  const isPausedRef = useRef(false);
 
   const colors = useMemo(
     () =>
@@ -133,6 +132,11 @@ export function Polyline({
     };
   }, []);
 
+  // Pause/resume animation during drag
+  useEffect(() => {
+    isPausedRef.current = isDragging;
+  }, [isDragging]);
+
   // Main effect
   useEffect(() => {
     if (!propsRef.current.map || coordinates.length === 0) return;
@@ -153,6 +157,11 @@ export function Polyline({
     const cycleDuration = ANIMATION_DURATION * 2;
 
     const animate = (time: number) => {
+      if (isPausedRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       const progress = (time % cycleDuration) / ANIMATION_DURATION;
       const startIdx = progress <= 1 ? 0 : (progress - 1) * totalPoints;
       const endIdx = progress <= 1 ? progress * totalPoints : totalPoints;

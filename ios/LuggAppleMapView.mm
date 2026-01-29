@@ -436,7 +436,8 @@ using namespace luggmaps::events;
   if (_isDragging) {
     for (UIView *subview in self.subviews) {
       if ([subview isKindOfClass:[LuggPolylineView class]]) {
-        MKPolylineAnimator *renderer = (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
+        MKPolylineAnimator *renderer =
+            (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
         [renderer pause];
       }
     }
@@ -467,7 +468,8 @@ using namespace luggmaps::events;
   if (wasDragging) {
     for (UIView *subview in self.subviews) {
       if ([subview isKindOfClass:[LuggPolylineView class]]) {
-        MKPolylineAnimator *renderer = (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
+        MKPolylineAnimator *renderer =
+            (MKPolylineAnimator *)((LuggPolylineView *)subview).renderer;
         [renderer resume];
       }
     }

@@ -17,7 +17,7 @@ import {
   type MapEvent,
 } from '@vis.gl/react-google-maps';
 import { Marker } from './components/Marker.web';
-import { MapIdContext } from './MapProvider.web';
+import { MapContext } from './MapProvider.web';
 
 import type {
   MapViewProps,
@@ -119,7 +119,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   const map = useMap(id);
   const containerRef = useRef<View>(null);
   const readyFired = useRef(false);
-  const isDragging = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const wasGesture = useRef(false);
   const prevPadding = useRef(padding);
 
@@ -161,18 +161,18 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   useImperativeHandle(
     ref,
     () => ({
-      moveCamera(coordinate: Coordinate, options: MoveCameraOptions) {
+      moveCamera(coordinate: Coordinate, options?: MoveCameraOptions) {
         if (!map) return;
 
-        const { zoom, duration = -1 } = options;
-        const targetZoom = zoom ?? map.getZoom() ?? initialZoom;
+        const { zoom = 0, duration = -1 } = options ?? {};
+        const targetZoom = zoom || map.getZoom() || initialZoom;
         const center = offsetCenter(coordinate, targetZoom, undefined, false);
 
         if (duration === 0) {
           map.moveCamera({ center, zoom: targetZoom });
         } else {
           const currentZoom = map.getZoom();
-          const zoomChanged = zoom !== undefined && zoom !== currentZoom;
+          const zoomChanged = zoom !== 0 && zoom !== currentZoom;
 
           if (zoomChanged) {
             map.setZoom(zoom);
@@ -251,12 +251,12 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   }, [map, padding, initialZoom, offsetCenter]);
 
   const handleDragStart = () => {
-    isDragging.current = true;
+    setIsDragging(true);
     wasGesture.current = true;
   };
 
   const handleDragEnd = () => {
-    isDragging.current = false;
+    setIsDragging(false);
   };
 
   const handleCameraChanged = (event: MapCameraChangedEvent) => {
@@ -272,7 +272,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         longitude: logicalCenter.lng,
       },
       zoom: event.detail.zoom,
-      gesture: isDragging.current,
+      gesture: isDragging,
     };
     onCameraMove?.(createSyntheticEvent(payload));
   };
@@ -310,7 +310,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     : undefined;
 
   return (
-    <MapIdContext.Provider value={id}>
+    <MapContext.Provider value={{ map, isDragging }}>
       <View ref={containerRef} style={style}>
         <Map
           id={id}
@@ -332,6 +332,6 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           {children}
         </Map>
       </View>
-    </MapIdContext.Provider>
+    </MapContext.Provider>
   );
 });
