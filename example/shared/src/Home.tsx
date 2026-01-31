@@ -139,11 +139,10 @@ export function Home() {
 
           <TrueSheet
             ref={sheetRef}
-            detents={['auto', 1]}
+            detents={[0.1, 'auto', 1]}
             dimmed={false}
             backgroundBlur="system-material-light"
             dismissible={false}
-            grabber
             onPositionChange={handleSheetPositionChange}
           >
             {cameraPosition && (

@@ -235,6 +235,8 @@ using namespace luggmaps::events;
 
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
+  const auto &oldViewProps =
+      *std::static_pointer_cast<LuggAppleMapViewProps const>(oldProps);
   const auto &newViewProps =
       *std::static_pointer_cast<LuggAppleMapViewProps const>(props);
 
@@ -244,9 +246,49 @@ using namespace luggmaps::events;
     _mapView.rotateEnabled = newViewProps.rotateEnabled;
     _mapView.pitchEnabled = newViewProps.pitchEnabled;
     _mapView.showsUserLocation = newViewProps.userLocationEnabled;
-    _mapView.layoutMargins = UIEdgeInsetsMake(
-        newViewProps.padding.top, newViewProps.padding.left,
-        newViewProps.padding.bottom, newViewProps.padding.right);
+
+    // Check if padding changed
+    BOOL paddingChanged =
+        oldViewProps.padding.top != newViewProps.padding.top ||
+        oldViewProps.padding.left != newViewProps.padding.left ||
+        oldViewProps.padding.bottom != newViewProps.padding.bottom ||
+        oldViewProps.padding.right != newViewProps.padding.right;
+
+    if (paddingChanged) {
+      // Calculate the offset difference to keep visual center stable
+      CGFloat oldOffsetX =
+          (oldViewProps.padding.left - oldViewProps.padding.right) / 2.0;
+      CGFloat oldOffsetY =
+          (oldViewProps.padding.top - oldViewProps.padding.bottom) / 2.0;
+      CGFloat newOffsetX =
+          (newViewProps.padding.left - newViewProps.padding.right) / 2.0;
+      CGFloat newOffsetY =
+          (newViewProps.padding.top - newViewProps.padding.bottom) / 2.0;
+
+      CGFloat deltaX = newOffsetX - oldOffsetX;
+      CGFloat deltaY = newOffsetY - oldOffsetY;
+
+      // Apply new padding first
+      _mapView.layoutMargins = UIEdgeInsetsMake(
+          newViewProps.padding.top, newViewProps.padding.left,
+          newViewProps.padding.bottom, newViewProps.padding.right);
+
+      // Convert pixel offset to coordinate offset
+      if (deltaX != 0 || deltaY != 0) {
+        CLLocationCoordinate2D currentCenter = _mapView.centerCoordinate;
+        CGPoint centerPoint =
+            [_mapView convertCoordinate:currentCenter toPointToView:_mapView];
+        CGPoint newPoint =
+            CGPointMake(centerPoint.x - deltaX, centerPoint.y - deltaY);
+        CLLocationCoordinate2D newCenter =
+            [_mapView convertPoint:newPoint toCoordinateFromView:_mapView];
+        [_mapView setCenterCoordinate:newCenter animated:NO];
+      }
+    } else {
+      _mapView.layoutMargins = UIEdgeInsetsMake(
+          newViewProps.padding.top, newViewProps.padding.left,
+          newViewProps.padding.bottom, newViewProps.padding.right);
+    }
 
     _minZoom = newViewProps.minZoom;
     _maxZoom = newViewProps.maxZoom;
