@@ -379,6 +379,7 @@ using namespace luggmaps::events;
     renderer.strokeColor = polylineView.strokeColors.firstObject;
     renderer.strokeColors =
         polylineView.strokeColors.count > 1 ? polylineView.strokeColors : nil;
+    renderer.animatedOptions = polylineView.animatedOptions;
     renderer.animated = polylineView.animated;
     return;
   }
@@ -548,6 +549,7 @@ using namespace luggmaps::events;
       if (colors.count > 1) {
         renderer.strokeColors = colors;
       }
+      renderer.animatedOptions = polylineView.animatedOptions;
       renderer.animated = polylineView.animated;
       polylineView.renderer = renderer;
       return renderer;

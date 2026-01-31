@@ -76,6 +76,10 @@ export const Route = ({ coordinates }: SmoothedRouteProps) => {
         strokeColors={['#B321E0', '#3744FF']}
         coordinates={coordinates}
         strokeWidth={6}
+        animatedOptions={{
+          easing: 'easeInOut',
+          duration: 3000,
+        }}
         animated
       />
     </>

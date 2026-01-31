@@ -1,8 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMapContext } from '../MapProvider.web';
-import type { PolylineProps } from './Polyline';
+import type { PolylineProps, PolylineEasing } from './Polyline';
 
-const ANIMATION_DURATION = 1500;
+const DEFAULT_DURATION = 2150;
+
+function applyEasing(t: number, easing: PolylineEasing = 'linear'): number {
+  switch (easing) {
+    case 'easeIn':
+      return t * t;
+    case 'easeOut':
+      return t * (2 - t);
+    case 'easeInOut':
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    default:
+      return t;
+  }
+}
 
 function interpolateColor(color1: string, color2: string, t: number): string {
   const hex = (c: string) => parseInt(c, 16);
@@ -39,6 +52,7 @@ export function Polyline({
   strokeColors,
   strokeWidth = 1,
   animated,
+  animatedOptions,
   zIndex,
 }: PolylineProps) {
   const resolvedZIndex = zIndex ?? (animated ? 1 : 0);
@@ -153,18 +167,60 @@ export function Polyline({
       return;
     }
 
+    const duration = animatedOptions?.duration ?? DEFAULT_DURATION;
+    const easing = animatedOptions?.easing ?? 'linear';
+    const trailLength = Math.max(0.01, Math.min(1, animatedOptions?.trailLength ?? 1));
+    const delay = animatedOptions?.delay ?? 0;
+
     const totalPoints = fullPath.length;
-    const cycleDuration = ANIMATION_DURATION * 2;
+    const useTrailMode = trailLength < 1;
+    const cycleDuration = useTrailMode ? duration : duration * 2;
+
+    let startTime: number | null = null;
+    let delayRemaining = delay;
 
     const animate = (time: number) => {
       if (isPausedRef.current) {
+        startTime = null;
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
 
-      const progress = (time % cycleDuration) / ANIMATION_DURATION;
-      const startIdx = progress <= 1 ? 0 : (progress - 1) * totalPoints;
-      const endIdx = progress <= 1 ? progress * totalPoints : totalPoints;
+      if (startTime === null) {
+        startTime = time;
+      }
+
+      const elapsed = time - startTime;
+
+      if (delayRemaining > 0) {
+        if (elapsed < delayRemaining) {
+          animationRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        startTime = time - (elapsed - delayRemaining);
+        delayRemaining = 0;
+      }
+
+      const rawProgress = ((time - startTime) % cycleDuration) / duration;
+      const maxProgress = useTrailMode ? 1 : 2;
+      const clampedProgress = Math.min(rawProgress, maxProgress);
+      const easedProgress = applyEasing(clampedProgress / maxProgress, easing) * maxProgress;
+
+      let startIdx: number;
+      let endIdx: number;
+
+      if (useTrailMode) {
+        endIdx = easedProgress * totalPoints;
+        startIdx = Math.max(0, endIdx - trailLength * totalPoints);
+      } else {
+        startIdx = easedProgress <= 1 ? 0 : (easedProgress - 1) * totalPoints;
+        endIdx = easedProgress <= 1 ? easedProgress * totalPoints : totalPoints;
+      }
+
+      if (rawProgress >= maxProgress) {
+        delayRemaining = delay;
+        startTime = time;
+      }
 
       const partialPath: google.maps.LatLngLiteral[] = [];
       const startFloor = Math.floor(startIdx);
@@ -214,7 +270,7 @@ export function Polyline({
     animationRef.current = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationRef.current);
-  }, [coordinates, animated, hasGradient, updatePath, mapReady]);
+  }, [coordinates, animated, animatedOptions, hasGradient, updatePath, mapReady]);
 
   return null;
 }

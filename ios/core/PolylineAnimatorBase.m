@@ -1,6 +1,39 @@
 #import "PolylineAnimatorBase.h"
 
+@implementation PolylineAnimatedOptions
+
++ (instancetype)defaultOptions {
+  PolylineAnimatedOptions *options = [[PolylineAnimatedOptions alloc] init];
+  options.duration = 2.15;
+  options.easing = @"linear";
+  options.trailLength = 1.0;
+  options.delay = 0;
+  return options;
+}
+
+@end
+
 @implementation PolylineAnimatorBase
+
+- (instancetype)init {
+  if (self = [super init]) {
+    _animatedOptions = [PolylineAnimatedOptions defaultOptions];
+  }
+  return self;
+}
+
+- (CGFloat)applyEasing:(CGFloat)t {
+  NSString *easing = self.animatedOptions.easing ?: @"linear";
+
+  if ([easing isEqualToString:@"easeIn"]) {
+    return t * t;
+  } else if ([easing isEqualToString:@"easeOut"]) {
+    return t * (2 - t);
+  } else if ([easing isEqualToString:@"easeInOut"]) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+  return t;
+}
 
 - (UIColor *)colorAtGradientPosition:(CGFloat)position {
   if (!_strokeColors || _strokeColors.count == 0) {

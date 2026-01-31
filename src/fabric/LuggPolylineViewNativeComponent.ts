@@ -7,11 +7,19 @@ export interface Coordinate {
   longitude: Double;
 }
 
+export interface AnimatedOptions {
+  duration?: Double;
+  easing?: string;
+  trailLength?: Double;
+  delay?: Double;
+}
+
 export interface NativeProps extends ViewProps {
   coordinates: ReadonlyArray<Coordinate>;
   strokeColors?: ReadonlyArray<ColorValue>;
   strokeWidth?: Double;
   animated?: boolean;
+  animatedOptions?: AnimatedOptions;
 }
 
 export default codegenNativeComponent<NativeProps>(

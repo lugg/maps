@@ -31,6 +31,7 @@
   CADisplayLink *_displayLink;
   MKDisplayLinkProxy *_displayLinkProxy;
   CGFloat _animationProgress;
+  CGFloat _delayRemaining;
   NSArray<NSNumber *> *_cumulativeDistances;
   CGFloat _totalLength;
   CGColorSpaceRef _colorSpace;
@@ -41,10 +42,19 @@
   if (self) {
     _polyline = polyline;
     _animationProgress = 0;
+    _animatedOptions = [PolylineAnimatedOptions defaultOptions];
     _colorSpace = CGColorSpaceCreateDeviceRGB();
     [self createPath];
   }
   return self;
+}
+
+- (void)setAnimatedOptions:(PolylineAnimatedOptions *)animatedOptions {
+  _animatedOptions = animatedOptions ?: [PolylineAnimatedOptions defaultOptions];
+  if (_animated && _displayLink) {
+    [self stopAnimation];
+    [self startAnimation];
+  }
 }
 
 - (void)dealloc {
@@ -74,6 +84,7 @@
   }
   [self computeCumulativeDistances];
   _animationProgress = 0;
+  _delayRemaining = _animatedOptions.delay / 1000.0;
   _displayLinkProxy = [[MKDisplayLinkProxy alloc] initWithTarget:self selector:@selector(animationTick:)];
   _displayLink = [CADisplayLink displayLinkWithTarget:_displayLinkProxy selector:@selector(tick:)];
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -125,12 +136,37 @@
   return MIN(left, _cumulativeDistances.count - 2);
 }
 
+- (CGFloat)applyEasing:(CGFloat)t {
+  NSString *easing = _animatedOptions.easing ?: @"linear";
+
+  if ([easing isEqualToString:@"easeIn"]) {
+    return t * t;
+  } else if ([easing isEqualToString:@"easeOut"]) {
+    return t * (2 - t);
+  } else if ([easing isEqualToString:@"easeInOut"]) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+  return t;
+}
+
 - (void)animationTick:(CADisplayLink *)displayLink {
-  CGFloat speed = displayLink.duration / 1.0;
+  if (_delayRemaining > 0) {
+    _delayRemaining -= displayLink.duration;
+    return;
+  }
+
+  CGFloat duration = _animatedOptions.duration / 1000.0;
+  if (duration <= 0) duration = 2.15;
+
+  CGFloat trailLength = MAX(0.01, MIN(1.0, _animatedOptions.trailLength));
+  CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.15;
+
+  CGFloat speed = displayLink.duration / duration;
   _animationProgress += speed;
 
-  if (_animationProgress >= 2.15) {
+  if (_animationProgress >= maxProgress) {
     _animationProgress = 0;
+    _delayRemaining = _animatedOptions.delay / 1000.0;
   }
 
   MKMapRect bounds = _polyline.boundingMapRect;
@@ -214,14 +250,21 @@
 
   // Snake animation: grow from start, then shrink from start
   if (_animated && _polyline.pointCount > 1 && _totalLength > 0) {
-    CGFloat progress = MIN(_animationProgress, 2.0);
+    CGFloat trailLength = MAX(0.01, MIN(1.0, _animatedOptions.trailLength));
+    CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.0;
+    CGFloat progress = MIN(_animationProgress, maxProgress);
+    CGFloat easedProgress = [self applyEasing:progress / maxProgress] * maxProgress;
+
     CGFloat headDist, tailDist;
 
-    if (progress <= 1.0) {
+    if (trailLength < 1.0) {
+      headDist = easedProgress * _totalLength;
+      tailDist = MAX(0, headDist - _totalLength * trailLength);
+    } else if (easedProgress <= 1.0) {
       tailDist = 0;
-      headDist = progress * _totalLength;
+      headDist = easedProgress * _totalLength;
     } else {
-      CGFloat shrinkProgress = progress - 1.0;
+      CGFloat shrinkProgress = easedProgress - 1.0;
       tailDist = shrinkProgress * _totalLength;
       headDist = _totalLength;
     }

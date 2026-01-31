@@ -1,5 +1,6 @@
 package com.luggmaps.core
 
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.location.Location
@@ -8,6 +9,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.StrokeStyle
 import com.google.android.gms.maps.model.StyleSpan
+import com.luggmaps.AnimatedOptions
 import kotlin.math.floor
 import kotlin.math.min
 
@@ -22,6 +24,14 @@ class PolylineAnimator {
     }
   var strokeColors: List<Int> = listOf(Color.BLACK)
   var strokeWidth: Float = 1f
+  var animatedOptions: AnimatedOptions = AnimatedOptions()
+    set(value) {
+      if (field == value) return
+      field = value
+      if (animated) {
+        restartAnimation()
+      }
+    }
 
   var animated: Boolean = false
     set(value) {
@@ -44,6 +54,22 @@ class PolylineAnimator {
   private val reusablePoints = ArrayList<LatLng>()
   private val reusableSpans = ArrayList<StyleSpan>()
 
+  private fun restartAnimation() {
+    stopAnimation()
+    startAnimation()
+  }
+
+  private fun getInterpolator(): TimeInterpolator {
+    return when (animatedOptions.easing) {
+      "easeIn" -> TimeInterpolator { t -> t * t }
+      "easeOut" -> TimeInterpolator { t -> t * (2 - t) }
+      "easeInOut" -> TimeInterpolator { t ->
+        if (t < 0.5f) 2 * t * t else -1 + (4 - 2 * t) * t
+      }
+      else -> LinearInterpolator()
+    }
+  }
+
   fun update() {
     if (animated) return
 
@@ -64,10 +90,14 @@ class PolylineAnimator {
 
     computeCumulativeDistances()
 
-    animator = ValueAnimator.ofFloat(0f, 2.15f).apply {
-      duration = 2150
+    val trailLength = animatedOptions.trailLength.coerceIn(0.01f, 1f)
+    val endValue = if (trailLength < 1f) 1f else 2.15f
+
+    animator = ValueAnimator.ofFloat(0f, endValue).apply {
+      duration = animatedOptions.duration
+      startDelay = animatedOptions.delay
       repeatCount = ValueAnimator.INFINITE
-      interpolator = LinearInterpolator()
+      interpolator = getInterpolator()
       addUpdateListener { animation ->
         animationProgress = animation.animatedValue as Float
         updateAnimatedPolyline()
@@ -158,12 +188,16 @@ class PolylineAnimator {
       return
     }
 
-    val progress = min(animationProgress, 2f)
+    val trailLength = animatedOptions.trailLength.coerceIn(0.01f, 1f)
+    val progress = min(animationProgress, if (trailLength < 1f) 1f else 2f)
 
     val headDist: Float
     val tailDist: Float
 
-    if (progress <= 1f) {
+    if (trailLength < 1f) {
+      headDist = progress * totalLength
+      tailDist = maxOf(0f, headDist - totalLength * trailLength)
+    } else if (progress <= 1f) {
       tailDist = 0f
       headDist = progress * totalLength
     } else {

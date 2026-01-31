@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
@@ -63,6 +64,21 @@ class LuggPolylineViewManager :
   @ReactProp(name = "animated", defaultBoolean = false)
   override fun setAnimated(view: LuggPolylineView, value: Boolean) {
     view.setAnimated(value)
+  }
+
+  @ReactProp(name = "animatedOptions")
+  override fun setAnimatedOptions(view: LuggPolylineView, value: ReadableMap?) {
+    val options = if (value != null) {
+      AnimatedOptions(
+        duration = if (value.hasKey("duration")) value.getDouble("duration").toLong() else 2150L,
+        easing = if (value.hasKey("easing")) value.getString("easing") ?: "linear" else "linear",
+        trailLength = if (value.hasKey("trailLength")) value.getDouble("trailLength").toFloat() else 1f,
+        delay = if (value.hasKey("delay")) value.getDouble("delay").toLong() else 0L
+      )
+    } else {
+      AnimatedOptions()
+    }
+    view.setAnimatedOptions(options)
   }
 
   @ReactProp(name = "zIndex", defaultFloat = 0f)

@@ -5,6 +5,7 @@
 
 @property(nonatomic, weak) GMSPolyline *polyline;
 @property(nonatomic, assign) BOOL animated;
+@property(nonatomic, strong) PolylineAnimatedOptions *animatedOptions;
 
 - (void)update;
 - (void)pause;

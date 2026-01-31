@@ -339,6 +339,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (animator) {
     animator.coordinates = polylineView.coordinates;
     animator.strokeColors = polylineView.strokeColors;
+    animator.animatedOptions = polylineView.animatedOptions;
     animator.animated = polylineView.animated;
     [animator update];
   }
@@ -370,6 +371,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   animator.polyline = polyline;
   animator.coordinates = polylineView.coordinates;
   animator.strokeColors = polylineView.strokeColors;
+  animator.animatedOptions = polylineView.animatedOptions;
   animator.animated = polylineView.animated;
   [animator update];
 

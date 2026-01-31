@@ -337,6 +337,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       coordinates = polylineView.coordinates
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
+      animatedOptions = polylineView.animatedOptions
       animated = polylineView.animated
       update()
     }
@@ -364,6 +365,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
       coordinates = polylineView.coordinates
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
+      animatedOptions = polylineView.animatedOptions
       animated = polylineView.animated
       update()
     }

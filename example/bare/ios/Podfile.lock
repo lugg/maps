@@ -11,7 +11,7 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - LuggMaps (0.2.0-alpha.18):
+  - LuggMaps (0.2.0-alpha.19):
     - boost
     - DoubleConversion
     - fast_float
@@ -3017,7 +3017,7 @@ SPEC CHECKSUMS:
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
   hermes-engine: 3515eff1a2de44b79dfa94a03d1adeed40f0dafe
-  LuggMaps: 75d44f3004128ff6e23a67531a18a621d922e55d
+  LuggMaps: f1808eb2e560a2dd154d5a415d0eb4e36a0cc131
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 2b70c6e3abe00396cefd8913efbf6a2db01a2b36
   RCTRequired: f3540eee8094231581d40c5c6d41b0f170237a81

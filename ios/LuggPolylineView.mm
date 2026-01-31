@@ -17,6 +17,7 @@ using namespace facebook::react;
   NSArray<CLLocation *> *_coordinates;
   NSArray<UIColor *> *_strokeColors;
   BOOL _animated;
+  PolylineAnimatedOptions *_animatedOptions;
   CGFloat _strokeWidth;
   NSInteger _zIndex;
 }
@@ -72,6 +73,15 @@ using namespace facebook::react;
   }
 
   _animated = newViewProps.animated;
+
+  const auto &opts = newViewProps.animatedOptions;
+  PolylineAnimatedOptions *options = [[PolylineAnimatedOptions alloc] init];
+  options.duration = opts.duration > 0 ? opts.duration : 2150;
+  options.trailLength = (opts.trailLength > 0 && opts.trailLength <= 1.0) ? opts.trailLength : 1.0;
+  options.delay = opts.delay;
+  options.easing = !opts.easing.empty() ? [NSString stringWithUTF8String:opts.easing.c_str()] : @"linear";
+  _animatedOptions = options;
+
   _strokeWidth = newViewProps.strokeWidth > 0 ? newViewProps.strokeWidth : 1.0;
   _zIndex = newViewProps.zIndex.value_or(0);
 }
@@ -96,6 +106,10 @@ using namespace facebook::react;
 
 - (BOOL)animated {
   return _animated;
+}
+
+- (PolylineAnimatedOptions *)animatedOptions {
+  return _animatedOptions;
 }
 
 - (CGFloat)strokeWidth {

@@ -12,6 +12,13 @@ interface LuggPolylineViewDelegate {
   fun polylineViewDidUpdate(polylineView: LuggPolylineView)
 }
 
+data class AnimatedOptions(
+  val duration: Long = 2150L,
+  val easing: String = "linear",
+  val trailLength: Float = 1f,
+  val delay: Long = 0L
+)
+
 class LuggPolylineView(context: Context) : ReactViewGroup(context) {
   var coordinates: List<LatLng> = emptyList()
     private set
@@ -23,6 +30,9 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
     private set
 
   var animated: Boolean = false
+    private set
+
+  var animatedOptions: AnimatedOptions = AnimatedOptions()
     private set
 
   var zIndex: Float = 0f
@@ -56,6 +66,10 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
 
   fun setAnimated(value: Boolean) {
     animated = value
+  }
+
+  fun setAnimatedOptions(options: AnimatedOptions) {
+    animatedOptions = options
   }
 
   fun setZIndex(value: Float) {

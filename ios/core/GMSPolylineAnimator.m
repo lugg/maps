@@ -30,9 +30,12 @@
   CADisplayLink *_displayLink;
   GMSDisplayLinkProxy *_displayLinkProxy;
   CGFloat _animationProgress;
+  CGFloat _delayRemaining;
   NSArray<NSNumber *> *_cumulativeDistances;
   CGFloat _totalLength;
 }
+
+@synthesize animatedOptions = _animatedOptions;
 
 - (void)dealloc {
   [self stopAnimation];
@@ -59,12 +62,21 @@
   }
 }
 
+- (void)setAnimatedOptions:(PolylineAnimatedOptions *)animatedOptions {
+  _animatedOptions = animatedOptions ?: [PolylineAnimatedOptions defaultOptions];
+  if (_animated && _displayLink) {
+    [self stopAnimation];
+    [self startAnimation];
+  }
+}
+
 - (void)startAnimation {
   if (_displayLink) {
     return;
   }
   [self computeCumulativeDistances];
   _animationProgress = 0;
+  _delayRemaining = self.animatedOptions.delay / 1000.0;
   _displayLinkProxy = [[GMSDisplayLinkProxy alloc] initWithTarget:self selector:@selector(animationTick:)];
   _displayLink = [CADisplayLink displayLinkWithTarget:_displayLinkProxy selector:@selector(tick:)];
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -101,11 +113,23 @@
 }
 
 - (void)animationTick:(CADisplayLink *)displayLink {
-  CGFloat speed = displayLink.duration / 1.0;
+  if (_delayRemaining > 0) {
+    _delayRemaining -= displayLink.duration;
+    return;
+  }
+
+  CGFloat duration = self.animatedOptions.duration / 1000.0;
+  if (duration <= 0) duration = 2.15;
+
+  CGFloat trailLength = MAX(0.01, MIN(1.0, self.animatedOptions.trailLength));
+  CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.15;
+
+  CGFloat speed = displayLink.duration / duration;
   _animationProgress += speed;
 
-  if (_animationProgress >= 2.15) {
+  if (_animationProgress >= maxProgress) {
     _animationProgress = 0;
+    _delayRemaining = self.animatedOptions.delay / 1000.0;
   }
 
   [self updateAnimatedPolyline];
@@ -175,14 +199,21 @@
     return;
   }
 
-  CGFloat progress = MIN(_animationProgress, 2.0);
+  CGFloat trailLength = MAX(0.01, MIN(1.0, self.animatedOptions.trailLength));
+  CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.0;
+  CGFloat progress = MIN(_animationProgress, maxProgress);
+  CGFloat easedProgress = [self applyEasing:progress / maxProgress] * maxProgress;
+
   CGFloat headDist, tailDist;
 
-  if (progress <= 1.0) {
+  if (trailLength < 1.0) {
+    headDist = easedProgress * _totalLength;
+    tailDist = MAX(0, headDist - _totalLength * trailLength);
+  } else if (easedProgress <= 1.0) {
     tailDist = 0;
-    headDist = progress * _totalLength;
+    headDist = easedProgress * _totalLength;
   } else {
-    CGFloat shrinkProgress = progress - 1.0;
+    CGFloat shrinkProgress = easedProgress - 1.0;
     tailDist = shrinkProgress * _totalLength;
     headDist = _totalLength;
   }
