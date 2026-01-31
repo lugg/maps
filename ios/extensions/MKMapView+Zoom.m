@@ -19,12 +19,21 @@
 
 #pragma mark - Public Methods
 
+// Constant for altitude/zoom conversion (meters at zoom level 0)
+static const double kAltitudeAtZoomZero = 220000000.0;
+
 - (void)setCenterCoordinate:(CLLocationCoordinate2D)centerCoordinate
                   zoomLevel:(double)zoomLevel
                    animated:(BOOL)animated
 {
-    MKCoordinateRegion region = [self regionForCenterCoordinate:centerCoordinate zoomLevel:zoomLevel];
-    [self setRegion:region animated:animated];
+    // Use camera API directly to avoid region/margin interaction
+    CLLocationDistance altitude = kAltitudeAtZoomZero / pow(2, zoomLevel);
+    MKMapCamera *camera = [MKMapCamera cameraLookingAtCenterCoordinate:centerCoordinate
+                                                    fromEyeCoordinate:centerCoordinate
+                                                          eyeAltitude:altitude];
+    camera.pitch = self.camera.pitch;
+    camera.heading = self.camera.heading;
+    [self setCamera:camera animated:animated];
 }
 
 - (MKCoordinateRegion)regionForCenterCoordinate:(CLLocationCoordinate2D)centerCoordinate
@@ -37,8 +46,9 @@
 
 - (double)zoomLevel
 {
-    MKCoordinateRegion region = self.region;
-    double zoomLevel = log2(360.0 / region.span.latitudeDelta) + 0.5;
+    // Use camera altitude which isn't affected by layoutMargins
+    CLLocationDistance altitude = self.camera.altitude;
+    double zoomLevel = log2(kAltitudeAtZoomZero / altitude);
     return zoomLevel;
 }
 
