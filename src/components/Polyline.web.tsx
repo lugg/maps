@@ -169,7 +169,10 @@ export function Polyline({
 
     const duration = animatedOptions?.duration ?? DEFAULT_DURATION;
     const easing = animatedOptions?.easing ?? 'linear';
-    const trailLength = Math.max(0.01, Math.min(1, animatedOptions?.trailLength ?? 1));
+    const trailLength = Math.max(
+      0.01,
+      Math.min(1, animatedOptions?.trailLength ?? 1)
+    );
     const delay = animatedOptions?.delay ?? 0;
 
     const totalPoints = fullPath.length;
@@ -204,7 +207,8 @@ export function Polyline({
       const rawProgress = ((time - startTime) % cycleDuration) / duration;
       const maxProgress = useTrailMode ? 1 : 2;
       const clampedProgress = Math.min(rawProgress, maxProgress);
-      const easedProgress = applyEasing(clampedProgress / maxProgress, easing) * maxProgress;
+      const easedProgress =
+        applyEasing(clampedProgress / maxProgress, easing) * maxProgress;
 
       let startIdx: number;
       let endIdx: number;
@@ -270,7 +274,14 @@ export function Polyline({
     animationRef.current = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationRef.current);
-  }, [coordinates, animated, animatedOptions, hasGradient, updatePath, mapReady]);
+  }, [
+    coordinates,
+    animated,
+    animatedOptions,
+    hasGradient,
+    updatePath,
+    mapReady,
+  ]);
 
   return null;
 }

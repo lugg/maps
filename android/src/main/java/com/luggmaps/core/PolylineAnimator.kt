@@ -59,16 +59,18 @@ class PolylineAnimator {
     startAnimation()
   }
 
-  private fun getInterpolator(): TimeInterpolator {
-    return when (animatedOptions.easing) {
+  private fun getInterpolator(): TimeInterpolator =
+    when (animatedOptions.easing) {
       "easeIn" -> TimeInterpolator { t -> t * t }
+
       "easeOut" -> TimeInterpolator { t -> t * (2 - t) }
+
       "easeInOut" -> TimeInterpolator { t ->
         if (t < 0.5f) 2 * t * t else -1 + (4 - 2 * t) * t
       }
+
       else -> LinearInterpolator()
     }
-  }
 
   fun update() {
     if (animated) return

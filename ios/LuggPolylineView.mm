@@ -77,9 +77,13 @@ using namespace facebook::react;
   const auto &opts = newViewProps.animatedOptions;
   PolylineAnimatedOptions *options = [[PolylineAnimatedOptions alloc] init];
   options.duration = opts.duration > 0 ? opts.duration : 2150;
-  options.trailLength = (opts.trailLength > 0 && opts.trailLength <= 1.0) ? opts.trailLength : 1.0;
+  options.trailLength = (opts.trailLength > 0 && opts.trailLength <= 1.0)
+                            ? opts.trailLength
+                            : 1.0;
   options.delay = opts.delay;
-  options.easing = !opts.easing.empty() ? [NSString stringWithUTF8String:opts.easing.c_str()] : @"linear";
+  options.easing = !opts.easing.empty()
+                       ? [NSString stringWithUTF8String:opts.easing.c_str()]
+                       : @"linear";
   _animatedOptions = options;
 
   _strokeWidth = newViewProps.strokeWidth > 0 ? newViewProps.strokeWidth : 1.0;

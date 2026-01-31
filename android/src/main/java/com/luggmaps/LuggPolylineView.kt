@@ -12,12 +12,7 @@ interface LuggPolylineViewDelegate {
   fun polylineViewDidUpdate(polylineView: LuggPolylineView)
 }
 
-data class AnimatedOptions(
-  val duration: Long = 2150L,
-  val easing: String = "linear",
-  val trailLength: Float = 1f,
-  val delay: Long = 0L
-)
+data class AnimatedOptions(val duration: Long = 2150L, val easing: String = "linear", val trailLength: Float = 1f, val delay: Long = 0L)
 
 class LuggPolylineView(context: Context) : ReactViewGroup(context) {
   var coordinates: List<LatLng> = emptyList()

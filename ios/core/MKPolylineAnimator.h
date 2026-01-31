@@ -1,5 +1,5 @@
-#import <MapKit/MapKit.h>
 #import "PolylineAnimatorBase.h"
+#import <MapKit/MapKit.h>
 
 @interface MKPolylineAnimator : MKOverlayPathRenderer
 

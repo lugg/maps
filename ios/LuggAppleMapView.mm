@@ -276,12 +276,12 @@ using namespace luggmaps::events;
       // Convert pixel offset to coordinate offset
       if (deltaX != 0 || deltaY != 0) {
         CLLocationCoordinate2D currentCenter = _mapView.centerCoordinate;
-        CGPoint centerPoint =
-            [_mapView convertCoordinate:currentCenter toPointToView:_mapView];
+        CGPoint centerPoint = [_mapView convertCoordinate:currentCenter
+                                            toPointToView:_mapView];
         CGPoint newPoint =
             CGPointMake(centerPoint.x - deltaX, centerPoint.y - deltaY);
-        CLLocationCoordinate2D newCenter =
-            [_mapView convertPoint:newPoint toCoordinateFromView:_mapView];
+        CLLocationCoordinate2D newCenter = [_mapView convertPoint:newPoint
+                                             toCoordinateFromView:_mapView];
         [_mapView setCenterCoordinate:newCenter animated:NO];
       }
     } else {

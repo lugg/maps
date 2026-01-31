@@ -13,10 +13,15 @@ import {
   type CameraEventPayload,
 } from '@lugg/maps';
 import {
-  TrueSheet,
+  type TrueSheet,
   TrueSheetProvider,
-  type PositionChangeEvent,
 } from '@lodev09/react-native-true-sheet';
+import {
+  ReanimatedTrueSheet,
+  ReanimatedTrueSheetProvider,
+  useReanimatedTrueSheet,
+} from '@lodev09/react-native-true-sheet/reanimated';
+import { useAnimatedProps, useDerivedValue } from 'react-native-reanimated';
 
 import { Button, Map } from './components';
 import { randomFrom, randomLetter } from './utils';
@@ -28,17 +33,31 @@ import {
 } from './markers';
 import { useLocationPermission } from './useLocationPermission';
 
-export function Home() {
+function HomeContent() {
   const mapRef = useRef<MapView>(null);
   const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
   const locationPermission = useLocationPermission();
-  const [provider, setProvider] = useState<MapProviderType>('google');
+  const [provider, setProvider] = useState<MapProviderType>('apple');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
-  const [sheetHeight, setSheetHeight] = useState(0);
   const [cameraPosition, setCameraPosition] = useState<CameraEventPayload>();
   const [isIdle, setIsIdle] = useState(true);
+
+  const { animatedPosition } = useReanimatedTrueSheet();
+
+  const animatedPaddingBottom = useDerivedValue(
+    () => screenHeight - animatedPosition.value
+  );
+
+  const animatedProps = useAnimatedProps(() => ({
+    padding: {
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: animatedPaddingBottom.value,
+    },
+  }));
 
   const handleCameraMove = useCallback(
     (event: { nativeEvent: CameraEventPayload }) => {
@@ -54,13 +73,6 @@ export function Home() {
       setIsIdle(true);
     },
     []
-  );
-
-  const handleSheetPositionChange = useCallback(
-    (event: PositionChangeEvent) => {
-      setSheetHeight(screenHeight - event.nativeEvent.position);
-    },
-    [screenHeight]
   );
 
   const handleMapReady = useCallback(() => {
@@ -124,12 +136,8 @@ export function Home() {
               ref={mapRef}
               provider={provider}
               markers={markers}
-              padding={{
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: sheetHeight,
-              }}
+              animatedProps={animatedProps}
+              animatedPaddingBottom={animatedPaddingBottom}
               userLocationEnabled={locationPermission}
               onReady={handleMapReady}
               onCameraMove={handleCameraMove}
@@ -137,13 +145,12 @@ export function Home() {
             />
           )}
 
-          <TrueSheet
+          <ReanimatedTrueSheet
             ref={sheetRef}
             detents={[0.1, 'auto', 1]}
             dimmed={false}
             backgroundBlur="system-material-light"
             dismissible={false}
-            onPositionChange={handleSheetPositionChange}
           >
             {cameraPosition && (
               <Text style={styles.positionText}>
@@ -187,10 +194,18 @@ export function Home() {
                 }
               />
             </View>
-          </TrueSheet>
+          </ReanimatedTrueSheet>
         </View>
       </MapProvider>
     </TrueSheetProvider>
+  );
+}
+
+export function Home() {
+  return (
+    <ReanimatedTrueSheetProvider>
+      <HomeContent />
+    </ReanimatedTrueSheetProvider>
   );
 }
 

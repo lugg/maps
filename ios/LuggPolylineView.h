@@ -1,7 +1,7 @@
+#import "core/PolylineAnimatorBase.h"
 #import <CoreLocation/CoreLocation.h>
 #import <React/RCTViewComponentView.h>
 #import <UIKit/UIKit.h>
-#import "core/PolylineAnimatorBase.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,7 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) NSArray<CLLocation *> *coordinates;
 @property(nonatomic, readonly) NSArray<UIColor *> *strokeColors;
 @property(nonatomic, readonly) BOOL animated;
-@property(nonatomic, readonly, nullable) PolylineAnimatedOptions *animatedOptions;
+@property(nonatomic, readonly, nullable)
+    PolylineAnimatedOptions *animatedOptions;
 @property(nonatomic, readonly) CGFloat strokeWidth;
 @property(nonatomic, readonly) NSInteger zIndex;
 @property(nonatomic, weak, nullable) id<LuggPolylineViewDelegate> delegate;

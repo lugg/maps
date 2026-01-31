@@ -7,6 +7,12 @@ import {
   type CameraEventPayload,
 } from '@lugg/maps';
 import type { NativeSyntheticEvent } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
+
+const AnimatedMapView = Animated.createAnimatedComponent(MapView);
 
 import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
@@ -17,6 +23,8 @@ import { Route, smoothCoordinates } from './Route';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
+  animatedProps?: Partial<MapViewProps>;
+  animatedPaddingBottom?: SharedValue<number>;
 }
 
 const renderMarker = (marker: MarkerData) => {
@@ -77,7 +85,18 @@ const renderMarker = (marker: MarkerData) => {
 const INITIAL_ZOOM = 14;
 
 export const Map = forwardRef<MapView, MapProps>(
-  ({ markers, padding, onCameraIdle, onCameraMove, ...props }, ref) => {
+  (
+    {
+      markers,
+      padding,
+      animatedProps,
+      animatedPaddingBottom,
+      onCameraIdle,
+      onCameraMove,
+      ...props
+    },
+    ref
+  ) => {
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
     const polylineCoordinates = useMemo(
       () => markers.map((m) => m.coordinate),
@@ -87,7 +106,13 @@ export const Map = forwardRef<MapView, MapProps>(
       () => smoothCoordinates(polylineCoordinates),
       [polylineCoordinates]
     );
-    const bottomOffset = padding?.bottom ?? 0;
+
+    const centerPinStyle = useAnimatedStyle(() => {
+      const bottomOffset = animatedPaddingBottom?.value ?? padding?.bottom ?? 0;
+      return {
+        transform: [{ translateY: -bottomOffset / 2 }],
+      };
+    });
 
     const handleCameraMove = (e: NativeSyntheticEvent<CameraEventPayload>) => {
       onCameraMove?.(e);
@@ -100,13 +125,14 @@ export const Map = forwardRef<MapView, MapProps>(
 
     return (
       <View style={styles.container}>
-        <MapView
+        <AnimatedMapView
           ref={ref}
           style={StyleSheet.absoluteFill}
           mapId="6939261d95ee48fd57332474"
           initialCoordinate={{ latitude: 37.78, longitude: -122.43 }}
           initialZoom={INITIAL_ZOOM}
           padding={padding}
+          animatedProps={animatedProps}
           onCameraMove={handleCameraMove}
           onCameraIdle={handleCameraIdle}
           {...props}
@@ -120,13 +146,8 @@ export const Map = forwardRef<MapView, MapProps>(
             text="LO"
             color="#34A853"
           />
-        </MapView>
-        <View
-          style={[
-            styles.centerPin,
-            { transform: [{ translateY: -bottomOffset / 2 }] },
-          ]}
-        />
+        </AnimatedMapView>
+        <Animated.View style={[styles.centerPin, centerPinStyle]} />
       </View>
     );
   }
