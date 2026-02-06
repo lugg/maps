@@ -1,11 +1,8 @@
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
-import LuggGoogleMapViewNativeComponent, {
-  Commands as GoogleMapCommands,
-} from './fabric/LuggGoogleMapViewNativeComponent';
-import LuggAppleMapViewNativeComponent, {
-  Commands as AppleMapCommands,
-} from './fabric/LuggAppleMapViewNativeComponent';
+import LuggMapViewNativeComponent, {
+  Commands,
+} from './fabric/LuggMapViewNativeComponent';
 import LuggMapWrapperViewNativeComponent from './fabric/LuggMapWrapperViewNativeComponent';
 import type {
   MapViewProps,
@@ -31,18 +28,12 @@ export class MapView
 
   private nativeRef = React.createRef<any>();
 
-  private get nativeCommands() {
-    const provider = this.props.provider ?? MapView.defaultProps.provider;
-    const isApple = Platform.OS === 'ios' && provider === 'apple';
-    return isApple ? AppleMapCommands : GoogleMapCommands;
-  }
-
   moveCamera(coordinate: Coordinate, options?: MoveCameraOptions) {
     const ref = this.nativeRef.current;
     if (!ref) return;
 
     const { zoom = 0, duration = -1 } = options ?? {};
-    this.nativeCommands.moveCamera(
+    Commands.moveCamera(
       ref,
       coordinate.latitude,
       coordinate.longitude,
@@ -65,7 +56,7 @@ export class MapView
       return;
     }
 
-    this.nativeCommands.fitCoordinates(
+    Commands.fitCoordinates(
       ref,
       coordinates,
       top,
@@ -98,15 +89,11 @@ export class MapView
       ...rest
     } = this.props;
 
-    const NativeMapView =
-      Platform.OS === 'ios' && provider === 'apple'
-        ? LuggAppleMapViewNativeComponent
-        : LuggGoogleMapViewNativeComponent;
-
     return (
-      <NativeMapView
+      <LuggMapViewNativeComponent
         ref={this.nativeRef}
         {...rest}
+        provider={provider}
         mapId={mapId}
         initialCoordinate={initialCoordinate}
         initialZoom={initialZoom}
@@ -125,7 +112,7 @@ export class MapView
       >
         <LuggMapWrapperViewNativeComponent style={StyleSheet.absoluteFill} />
         {children}
-      </NativeMapView>
+      </LuggMapViewNativeComponent>
     );
   }
 }

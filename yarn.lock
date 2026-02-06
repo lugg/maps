@@ -3102,9 +3102,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lodev09/react-native-true-sheet@npm:3.9.0-beta.0":
-  version: 3.9.0-beta.0
-  resolution: "@lodev09/react-native-true-sheet@npm:3.9.0-beta.0"
+"@lodev09/react-native-true-sheet@npm:3.9.0-beta.1":
+  version: 3.9.0-beta.1
+  resolution: "@lodev09/react-native-true-sheet@npm:3.9.0-beta.1"
   peerDependencies:
     "@gorhom/bottom-sheet": ">=5"
     "@react-navigation/native": ">=7"
@@ -3121,7 +3121,7 @@ __metadata:
       optional: true
     react-native-worklets:
       optional: true
-  checksum: 10c0/062f21fe880447d22d94be850777d0f630b283b4e350cbcd0b71e1a6c4b017883913ec07121c9a6dc94ac83992f5c289a476d32746884563843dd5700bd7edd6
+  checksum: 10c0/0fa4c8f841b856cb9050c923449d02f4fef7ea88be10fc6e412e2f976cf671492d0ccfccd66669a163add5c16c4ac6404dc05e475dfd23ca43685fd184708b1b
   languageName: node
   linkType: hard
 

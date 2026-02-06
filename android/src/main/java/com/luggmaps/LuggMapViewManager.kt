@@ -8,27 +8,27 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
 import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.facebook.react.viewmanagers.LuggGoogleMapViewManagerDelegate
-import com.facebook.react.viewmanagers.LuggGoogleMapViewManagerInterface
+import com.facebook.react.viewmanagers.LuggMapViewManagerDelegate
+import com.facebook.react.viewmanagers.LuggMapViewManagerInterface
 import com.google.android.gms.maps.model.LatLng
 import com.luggmaps.events.CameraIdleEvent
 import com.luggmaps.events.CameraMoveEvent
 import com.luggmaps.events.ReadyEvent
 import com.luggmaps.extensions.dispatchEvent
 
-@ReactModule(name = LuggGoogleMapViewManager.NAME)
-class LuggGoogleMapViewManager :
-  ViewGroupManager<LuggGoogleMapView>(),
-  LuggGoogleMapViewManagerInterface<LuggGoogleMapView>,
-  LuggGoogleMapViewEventDelegate {
-  private val delegate: ViewManagerDelegate<LuggGoogleMapView> = LuggGoogleMapViewManagerDelegate(this)
+@ReactModule(name = LuggMapViewManager.NAME)
+class LuggMapViewManager :
+  ViewGroupManager<LuggMapView>(),
+  LuggMapViewManagerInterface<LuggMapView>,
+  LuggMapViewEventDelegate {
+  private val delegate: ViewManagerDelegate<LuggMapView> = LuggMapViewManagerDelegate(this)
 
-  override fun getDelegate(): ViewManagerDelegate<LuggGoogleMapView> = delegate
+  override fun getDelegate(): ViewManagerDelegate<LuggMapView> = delegate
 
   override fun getName(): String = NAME
 
-  override fun createViewInstance(context: ThemedReactContext): LuggGoogleMapView {
-    val view = LuggGoogleMapView(context)
+  override fun createViewInstance(context: ThemedReactContext): LuggMapView {
+    val view = LuggMapView(context)
     view.eventDelegate = this
     return view
   }
@@ -41,7 +41,7 @@ class LuggGoogleMapViewManager :
     )
 
   override fun onCameraMove(
-    view: LuggGoogleMapView,
+    view: LuggMapView,
     latitude: Double,
     longitude: Double,
     zoom: Float,
@@ -51,7 +51,7 @@ class LuggGoogleMapViewManager :
   }
 
   override fun onCameraIdle(
-    view: LuggGoogleMapView,
+    view: LuggMapView,
     latitude: Double,
     longitude: Double,
     zoom: Float,
@@ -60,17 +60,22 @@ class LuggGoogleMapViewManager :
     view.dispatchEvent(CameraIdleEvent(view, latitude, longitude, zoom, gesture))
   }
 
-  override fun onReady(view: LuggGoogleMapView) {
+  override fun onReady(view: LuggMapView) {
     view.dispatchEvent(ReadyEvent(view))
   }
 
+  @ReactProp(name = "provider")
+  override fun setProvider(view: LuggMapView, value: String?) {
+    // No-op on Android — always Google Maps
+  }
+
   @ReactProp(name = "mapId")
-  override fun setMapId(view: LuggGoogleMapView, value: String?) {
+  override fun setMapId(view: LuggMapView, value: String?) {
     view.setMapId(value)
   }
 
   @ReactProp(name = "initialCoordinate")
-  override fun setInitialCoordinate(view: LuggGoogleMapView, value: ReadableMap?) {
+  override fun setInitialCoordinate(view: LuggMapView, value: ReadableMap?) {
     value?.let {
       val latitude = if (it.hasKey("latitude")) it.getDouble("latitude") else 0.0
       val longitude = if (it.hasKey("longitude")) it.getDouble("longitude") else 0.0
@@ -79,52 +84,52 @@ class LuggGoogleMapViewManager :
   }
 
   @ReactProp(name = "initialZoom", defaultDouble = 10.0)
-  override fun setInitialZoom(view: LuggGoogleMapView, value: Double) {
+  override fun setInitialZoom(view: LuggMapView, value: Double) {
     view.setInitialZoom(value)
   }
 
   @ReactProp(name = "zoomEnabled", defaultBoolean = true)
-  override fun setZoomEnabled(view: LuggGoogleMapView, value: Boolean) {
+  override fun setZoomEnabled(view: LuggMapView, value: Boolean) {
     view.setZoomEnabled(value)
   }
 
   @ReactProp(name = "scrollEnabled", defaultBoolean = true)
-  override fun setScrollEnabled(view: LuggGoogleMapView, value: Boolean) {
+  override fun setScrollEnabled(view: LuggMapView, value: Boolean) {
     view.setScrollEnabled(value)
   }
 
   @ReactProp(name = "rotateEnabled", defaultBoolean = true)
-  override fun setRotateEnabled(view: LuggGoogleMapView, value: Boolean) {
+  override fun setRotateEnabled(view: LuggMapView, value: Boolean) {
     view.setRotateEnabled(value)
   }
 
   @ReactProp(name = "pitchEnabled", defaultBoolean = true)
-  override fun setPitchEnabled(view: LuggGoogleMapView, value: Boolean) {
+  override fun setPitchEnabled(view: LuggMapView, value: Boolean) {
     view.setPitchEnabled(value)
   }
 
   @ReactProp(name = "userLocationEnabled", defaultBoolean = false)
-  override fun setUserLocationEnabled(view: LuggGoogleMapView, value: Boolean) {
+  override fun setUserLocationEnabled(view: LuggMapView, value: Boolean) {
     view.setUserLocationEnabled(value)
   }
 
   @ReactProp(name = "minZoom")
-  override fun setMinZoom(view: LuggGoogleMapView, value: Double) {
+  override fun setMinZoom(view: LuggMapView, value: Double) {
     view.setMinZoom(value)
   }
 
   @ReactProp(name = "maxZoom")
-  override fun setMaxZoom(view: LuggGoogleMapView, value: Double) {
+  override fun setMaxZoom(view: LuggMapView, value: Double) {
     view.setMaxZoom(value)
   }
 
   @ReactProp(name = "theme")
-  override fun setTheme(view: LuggGoogleMapView, value: String?) {
+  override fun setTheme(view: LuggMapView, value: String?) {
     view.setTheme(value ?: "system")
   }
 
   @ReactProp(name = "padding")
-  override fun setPadding(view: LuggGoogleMapView, value: ReadableMap?) {
+  override fun setPadding(view: LuggMapView, value: ReadableMap?) {
     value?.let {
       val top = if (it.hasKey("top")) it.getDouble("top").toFloat().dpToPx().toInt() else 0
       val left = if (it.hasKey("left")) it.getDouble("left").toFloat().dpToPx().toInt() else 0
@@ -134,13 +139,13 @@ class LuggGoogleMapViewManager :
     }
   }
 
-  override fun onDropViewInstance(view: LuggGoogleMapView) {
+  override fun onDropViewInstance(view: LuggMapView) {
     super.onDropViewInstance(view)
     view.onDropViewInstance()
   }
 
   override fun moveCamera(
-    view: LuggGoogleMapView,
+    view: LuggMapView,
     latitude: Double,
     longitude: Double,
     zoom: Double,
@@ -150,7 +155,7 @@ class LuggGoogleMapViewManager :
   }
 
   override fun fitCoordinates(
-    view: LuggGoogleMapView,
+    view: LuggMapView,
     coordinates: ReadableArray?,
     paddingTop: Double,
     paddingLeft: Double,
@@ -171,6 +176,6 @@ class LuggGoogleMapViewManager :
   }
 
   companion object {
-    const val NAME = "LuggGoogleMapView"
+    const val NAME = "LuggMapView"
   }
 }
