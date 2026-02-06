@@ -11,6 +11,7 @@ import {
 import type { NativeSyntheticEvent } from 'react-native';
 import { View } from 'react-native';
 import {
+  ColorScheme,
   Map,
   useMap,
   type MapCameraChangedEvent,
@@ -108,6 +109,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     pitchEnabled = true,
     padding,
     userLocationEnabled,
+    theme = 'system',
     onCameraMove,
     onCameraIdle,
     onReady,
@@ -305,6 +307,13 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       ? 'cooperative'
       : 'auto';
 
+  const colorScheme =
+    theme === 'dark'
+      ? ColorScheme.DARK
+      : theme === 'light'
+      ? ColorScheme.LIGHT
+      : ColorScheme.FOLLOW_SYSTEM;
+
   const defaultCenter = initialCoordinate
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
     : undefined;
@@ -320,6 +329,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           minZoom={minZoom}
           maxZoom={maxZoom}
           gestureHandling={gestureHandling}
+          colorScheme={colorScheme}
           disableDefaultUI
           isFractionalZoomEnabled
           tilt={pitchEnabled === false ? 0 : undefined}
