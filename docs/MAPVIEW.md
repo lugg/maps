@@ -32,6 +32,7 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `padding` | `EdgeInsets` | - | Map content padding |
+| `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Map color theme |
 | `onCameraMove` | `(event) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event) => void` | - | Called when camera stops moving |
 
