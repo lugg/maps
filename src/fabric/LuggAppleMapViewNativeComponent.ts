@@ -2,6 +2,7 @@ import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
 import type { ViewProps, HostComponent } from 'react-native';
 import type {
   Double,
+  WithDefault,
   DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
 
@@ -48,6 +49,7 @@ export interface NativeProps extends ViewProps {
   pitchEnabled?: boolean;
   padding?: EdgeInsets;
   userLocationEnabled?: boolean;
+  theme?: WithDefault<'light' | 'dark' | 'system', 'system'>;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
   onCameraIdle?: DirectEventHandler<CameraIdleEvent>;
   onReady?: DirectEventHandler<ReadyEvent>;

@@ -162,6 +162,14 @@ using namespace luggmaps::events;
   _mapView.pitchEnabled = viewProps.pitchEnabled;
   _mapView.showsUserLocation = viewProps.userLocationEnabled;
 
+  if (viewProps.theme == LuggAppleMapViewTheme::Dark) {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+  } else if (viewProps.theme == LuggAppleMapViewTheme::Light) {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+  } else {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+  }
+
   _minZoom = viewProps.minZoom;
   _maxZoom = viewProps.maxZoom;
   [self applyZoomRange];
@@ -249,6 +257,16 @@ using namespace luggmaps::events;
     _mapView.rotateEnabled = newViewProps.rotateEnabled;
     _mapView.pitchEnabled = newViewProps.pitchEnabled;
     _mapView.showsUserLocation = newViewProps.userLocationEnabled;
+
+    if (oldViewProps.theme != newViewProps.theme) {
+      if (newViewProps.theme == LuggAppleMapViewTheme::Dark) {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+      } else if (newViewProps.theme == LuggAppleMapViewTheme::Light) {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+      } else {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+      }
+    }
 
     // Check if padding changed
     BOOL paddingChanged =

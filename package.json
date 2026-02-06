@@ -96,6 +96,9 @@
     "turbo": "^2.5.6",
     "typescript": "^5.9.2"
   },
+  "resolutions": {
+    "@lodev09/react-native-true-sheet": "3.9.0-beta.0"
+  },
   "peerDependencies": {
     "@vis.gl/react-google-maps": ">=1.0.0",
     "react": "*",

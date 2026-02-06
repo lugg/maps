@@ -162,6 +162,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.settings.tiltGestures = viewProps.pitchEnabled;
   _mapView.myLocationEnabled = viewProps.userLocationEnabled;
 
+  if (viewProps.theme == LuggGoogleMapViewTheme::Dark) {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+  } else if (viewProps.theme == LuggGoogleMapViewTheme::Light) {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+  } else {
+    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+  }
+
   if (viewProps.minZoom > 0) {
     [_mapView setMinZoom:(float)viewProps.minZoom maxZoom:_mapView.maxZoom];
   }
@@ -382,6 +390,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
+  const auto &oldViewProps =
+      *std::static_pointer_cast<LuggGoogleMapViewProps const>(oldProps);
   const auto &newViewProps =
       *std::static_pointer_cast<LuggGoogleMapViewProps const>(props);
 
@@ -399,6 +409,17 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _mapView.settings.rotateGestures = newViewProps.rotateEnabled;
     _mapView.settings.tiltGestures = newViewProps.pitchEnabled;
     _mapView.myLocationEnabled = newViewProps.userLocationEnabled;
+
+    if (oldViewProps.theme != newViewProps.theme) {
+      if (newViewProps.theme == LuggGoogleMapViewTheme::Dark) {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+      } else if (newViewProps.theme == LuggGoogleMapViewTheme::Light) {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+      } else {
+        _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+      }
+    }
+
     _mapView.padding = UIEdgeInsetsMake(
         newViewProps.padding.top, newViewProps.padding.left,
         newViewProps.padding.bottom, newViewProps.padding.right);

@@ -145,9 +145,10 @@ function HomeContent() {
             ref={sheetRef}
             detents={['auto']}
             dimmed={false}
-            backgroundBlur="system-material-light"
             dismissible={false}
             initialDetentIndex={0}
+            anchor="left"
+            maxContentWidth={450}
           >
             {cameraPosition && (
               <Text style={styles.positionText}>

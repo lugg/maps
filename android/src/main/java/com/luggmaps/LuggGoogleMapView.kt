@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.AdvancedMarkerOptions.CollisionBehavior
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.PolylineOptions
 import com.luggmaps.core.PolylineAnimator
 
@@ -73,6 +74,9 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
   // Zoom limits
   private var minZoom: Float? = null
   private var maxZoom: Float? = null
+
+  // Theme
+  private var theme: String = "system"
 
   // Padding
   private var paddingTop: Int = 0
@@ -164,6 +168,7 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     applyUiSettings()
     applyZoomLimits()
     applyPadding()
+    applyTheme()
     applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
@@ -212,6 +217,15 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
 
   private fun applyPadding() {
     googleMap?.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+  }
+
+  private fun applyTheme() {
+    val colorScheme = when (theme) {
+      "dark" -> MapColorScheme.DARK
+      "light" -> MapColorScheme.LIGHT
+      else -> MapColorScheme.FOLLOW_SYSTEM
+    }
+    googleMap?.setMapColorScheme(colorScheme)
   }
 
   @SuppressLint("MissingPermission")
@@ -434,6 +448,11 @@ class LuggGoogleMapView(private val reactContext: ThemedReactContext) :
     googleMap?.let { map ->
       maxZoom?.let { map.setMaxZoomPreference(it) } ?: map.resetMinMaxZoomPreference()
     }
+  }
+
+  fun setTheme(value: String) {
+    theme = value
+    applyTheme()
   }
 
   fun setMapPadding(top: Int, left: Int, bottom: Int, right: Int) {

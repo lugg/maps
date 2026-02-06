@@ -10,7 +10,7 @@
     "build:ios": "react-native build-ios --mode Debug"
   },
   "dependencies": {
-    "@lodev09/react-native-true-sheet": "^3.8.1",
+    "@lodev09/react-native-true-sheet": "3.9.0-beta.0",
     "@lugg/maps": "workspace:*",
     "@lugg/shared-example": "workspace:*",
     "react": "19.2.0",

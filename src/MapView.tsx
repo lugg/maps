@@ -26,6 +26,7 @@ export class MapView
     scrollEnabled: true,
     rotateEnabled: true,
     pitchEnabled: true,
+    theme: 'system',
   };
 
   private nativeRef = React.createRef<any>();
@@ -89,6 +90,7 @@ export class MapView
       pitchEnabled,
       padding,
       userLocationEnabled,
+      theme,
       onCameraMove,
       onCameraIdle,
       onReady,
@@ -116,6 +118,7 @@ export class MapView
         pitchEnabled={pitchEnabled}
         padding={padding}
         userLocationEnabled={userLocationEnabled}
+        theme={theme}
         onCameraMove={onCameraMove}
         onCameraIdle={onCameraIdle}
         onReady={onReady}

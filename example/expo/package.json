@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",
-    "@lodev09/react-native-true-sheet": "^3.8.1",
+    "@lodev09/react-native-true-sheet": "3.9.0-beta.0",
     "@lugg/maps": "workspace:*",
     "@lugg/shared-example": "workspace:*",
     "@vis.gl/react-google-maps": "^1.5.0",

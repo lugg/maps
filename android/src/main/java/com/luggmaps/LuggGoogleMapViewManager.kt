@@ -118,6 +118,11 @@ class LuggGoogleMapViewManager :
     view.setMaxZoom(value)
   }
 
+  @ReactProp(name = "theme")
+  override fun setTheme(view: LuggGoogleMapView, value: String?) {
+    view.setTheme(value ?: "system")
+  }
+
   @ReactProp(name = "padding")
   override fun setPadding(view: LuggGoogleMapView, value: ReadableMap?) {
     value?.let {

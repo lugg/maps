@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { NativeSyntheticEvent, ViewProps } from 'react-native';
-import type { MapProvider, Coordinate, EdgeInsets } from './types';
+import type { MapProvider, Coordinate, EdgeInsets, MapTheme } from './types';
 
 /**
  * Options for moving the camera
@@ -100,6 +100,11 @@ export interface MapViewProps extends ViewProps {
    * @default false
    */
   userLocationEnabled?: boolean;
+  /**
+   * Map color theme
+   * @default 'system'
+   */
+  theme?: MapTheme;
   /**
    * Called when camera moves
    */

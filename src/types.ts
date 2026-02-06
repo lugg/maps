@@ -28,3 +28,8 @@ export interface EdgeInsets {
   bottom: number;
   right: number;
 }
+
+/**
+ * Map theme
+ */
+export type MapTheme = 'light' | 'dark' | 'system';

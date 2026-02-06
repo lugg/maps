@@ -11,6 +11,7 @@ export type {
 } from './MapView.types';
 export type {
   MapProvider as MapProviderType,
+  MapTheme,
   Coordinate,
   Point,
   EdgeInsets,
