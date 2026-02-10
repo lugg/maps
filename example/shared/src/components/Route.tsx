@@ -77,8 +77,9 @@ export const Route = ({ coordinates }: SmoothedRouteProps) => {
         coordinates={coordinates}
         strokeWidth={6}
         animatedOptions={{
+          duration: 1250,
           easing: 'easeInOut',
-          duration: 3000,
+          trailLength: 1.0,
         }}
         animated
       />
