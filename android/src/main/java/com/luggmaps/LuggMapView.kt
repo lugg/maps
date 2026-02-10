@@ -2,6 +2,7 @@ package com.luggmaps
 
 import android.annotation.SuppressLint
 import android.view.View
+import android.view.View.VISIBLE
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.LatLng
@@ -66,6 +67,15 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     super.onAttachedToWindow()
     if (provider == null && mapWrapperView != null) {
       initializeProvider()
+    }
+  }
+
+  override fun onWindowVisibilityChanged(visibility: Int) {
+    super.onWindowVisibilityChanged(visibility)
+    if (visibility == VISIBLE) {
+      provider?.resumeAnimations()
+    } else {
+      provider?.pauseAnimations()
     }
   }
 

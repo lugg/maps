@@ -1,8 +1,8 @@
 #import "GoogleMapProvider.h"
-#import "GMSPolylineAnimator.h"
-#import "PolylineAnimatorBase.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolylineView.h"
+#import "GMSPolylineAnimator.h"
+#import "PolylineAnimatorBase.h"
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
@@ -45,7 +45,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)initializeMapInView:(UIView *)wrapperView
           initialCoordinate:(CLLocationCoordinate2D)coordinate
                 initialZoom:(double)zoom {
-  if (_mapView) return;
+  if (_mapView)
+    return;
 
   GMSMapID *gmsMapId;
   if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
@@ -123,13 +124,15 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)setMinZoom:(double)minZoom {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
   float min = minZoom > 0 ? (float)minZoom : _mapView.minZoom;
   [_mapView setMinZoom:min maxZoom:_mapView.maxZoom];
 }
 
 - (void)setMaxZoom:(double)maxZoom {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
   float max = maxZoom > 0 ? (float)maxZoom : _mapView.maxZoom;
   [_mapView setMinZoom:_mapView.minZoom maxZoom:max];
 }
@@ -143,8 +146,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)mapView:(GMSMapView *)mapView willMove:(BOOL)gesture {
   _isDragging = gesture;
   if (_isDragging) {
-    for (GMSPolylineAnimator *animator in
-         _polylineAnimators.objectEnumerator) {
+    for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
       [animator pause];
     }
   }
@@ -163,8 +165,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
   if (wasDragging) {
-    for (GMSPolylineAnimator *animator in
-         _polylineAnimators.objectEnumerator) {
+    for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
       [animator resume];
     }
   }
@@ -229,7 +230,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)processPendingMarkers {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   for (LuggMarkerView *markerView in _pendingMarkerViews) {
     [self addMarkerViewToMap:markerView];
@@ -238,7 +240,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)addMarkerViewToMap:(LuggMarkerView *)markerView {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
@@ -326,7 +329,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)processPendingPolylines {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   for (LuggPolylineView *polylineView in _pendingPolylineViews) {
     [self addPolylineViewToMap:polylineView];
@@ -335,7 +339,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)addPolylineViewToMap:(LuggPolylineView *)polylineView {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   GMSPolyline *polyline = [GMSPolyline polylineWithPath:[GMSMutablePath path]];
   polyline.strokeWidth = polylineView.strokeWidth;
@@ -354,13 +359,28 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_polylineAnimators setObject:animator forKey:polylineView];
 }
 
+#pragma mark - Lifecycle
+
+- (void)pauseAnimations {
+  for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
+    [animator pause];
+  }
+}
+
+- (void)resumeAnimations {
+  for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
+    [animator resume];
+  }
+}
+
 #pragma mark - Commands
 
 - (void)moveCamera:(double)latitude
          longitude:(double)longitude
               zoom:(double)zoom
           duration:(double)duration {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   float targetZoom = zoom > 0 ? (float)zoom : _mapView.camera.zoom;
   GMSCameraPosition *camera = [GMSCameraPosition cameraWithLatitude:latitude
@@ -384,7 +404,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
          paddingBottom:(double)paddingBottom
           paddingRight:(double)paddingRight
               duration:(double)duration {
-  if (!_mapView || coordinates.count == 0) return;
+  if (!_mapView || coordinates.count == 0)
+    return;
 
   GMSCoordinateBounds *bounds = [[GMSCoordinateBounds alloc] init];
   for (NSDictionary *coord in coordinates) {

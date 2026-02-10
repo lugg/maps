@@ -1,6 +1,8 @@
 #import "GMSPolylineAnimator.h"
 #import <QuartzCore/QuartzCore.h>
 
+static const NSUInteger kMaxAnimationSpans = 16;
+
 @interface GMSDisplayLinkProxy : NSObject
 @property(nonatomic, weak) id target;
 @property(nonatomic, assign) SEL selector;
@@ -245,12 +247,22 @@
   }
 
   NSUInteger pathCount = path.count;
-  for (NSUInteger i = 0; i < pathCount - 1; i++) {
-    CGFloat segMidDist = tailDist + visibleLength * ((CGFloat)i + 0.5) / (CGFloat)(pathCount - 1);
-    CGFloat gradientPos = (segMidDist - tailDist) / visibleLength;
+  NSUInteger segmentCount = pathCount - 1;
+
+  if (self.strokeColors.count <= 1) {
+    _polyline.path = path;
+    _polyline.strokeColor = self.strokeColors.firstObject ?: [UIColor blackColor];
+    return;
+  }
+
+  NSUInteger spanCount = MIN(segmentCount, kMaxAnimationSpans);
+  double segmentsPerSpan = (double)segmentCount / spanCount;
+
+  for (NSUInteger i = 0; i < spanCount; i++) {
+    CGFloat gradientPos = ((CGFloat)i + 0.5) / spanCount;
     UIColor *color = [self colorAtGradientPosition:gradientPos];
     GMSStrokeStyle *style = [GMSStrokeStyle solidColor:color];
-    [spans addObject:[GMSStyleSpan spanWithStyle:style]];
+    [spans addObject:[GMSStyleSpan spanWithStyle:style segments:segmentsPerSpan]];
   }
 
   _polyline.path = path;

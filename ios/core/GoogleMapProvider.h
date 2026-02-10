@@ -3,8 +3,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface GoogleMapProvider
-    : NSObject <MapProvider, GMSMapViewDelegate>
+@interface GoogleMapProvider : NSObject <MapProvider, GMSMapViewDelegate>
 
 @property(nonatomic, copy, nullable) NSString *mapId;
 @property(nonatomic, readonly, nullable) GMSMapView *mapView;

@@ -6,8 +6,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LuggAppleMapViewContent : MKMapView
 @end
 
-@interface AppleMapProvider
-    : NSObject <MapProvider, MKMapViewDelegate>
+@interface AppleMapProvider : NSObject <MapProvider, MKMapViewDelegate>
 
 @property(nonatomic, readonly, nullable) MKMapView *mapView;
 

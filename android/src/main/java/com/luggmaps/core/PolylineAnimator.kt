@@ -1,6 +1,5 @@
 package com.luggmaps.core
 
-import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.location.Location
@@ -14,6 +13,10 @@ import kotlin.math.floor
 import kotlin.math.min
 
 class PolylineAnimator {
+  companion object {
+    private const val MAX_ANIMATION_SPANS = 16
+  }
+
   var polyline: Polyline? = null
   var coordinates: List<LatLng> = emptyList()
     set(value) {
@@ -59,17 +62,12 @@ class PolylineAnimator {
     startAnimation()
   }
 
-  private fun getInterpolator(): TimeInterpolator =
+  private fun applyEasing(t: Float): Float =
     when (animatedOptions.easing) {
-      "easeIn" -> TimeInterpolator { t -> t * t }
-
-      "easeOut" -> TimeInterpolator { t -> t * (2 - t) }
-
-      "easeInOut" -> TimeInterpolator { t ->
-        if (t < 0.5f) 2 * t * t else -1 + (4 - 2 * t) * t
-      }
-
-      else -> LinearInterpolator()
+      "easeIn" -> t * t
+      "easeOut" -> t * (2 - t)
+      "easeInOut" -> if (t < 0.5f) 2 * t * t else -1 + (4 - 2 * t) * t
+      else -> t
     }
 
   fun update() {
@@ -99,7 +97,7 @@ class PolylineAnimator {
       duration = animatedOptions.duration
       startDelay = animatedOptions.delay
       repeatCount = ValueAnimator.INFINITE
-      interpolator = getInterpolator()
+      interpolator = LinearInterpolator()
       addUpdateListener { animation ->
         animationProgress = animation.animatedValue as Float
         updateAnimatedPolyline()
@@ -191,7 +189,9 @@ class PolylineAnimator {
     }
 
     val trailLength = animatedOptions.trailLength.coerceIn(0.01f, 1f)
-    val progress = min(animationProgress, if (trailLength < 1f) 1f else 2f)
+    val maxProgress = if (trailLength < 1f) 1f else 2f
+    val rawProgress = min(animationProgress, maxProgress)
+    val progress = applyEasing(rawProgress / maxProgress) * maxProgress
 
     val headDist: Float
     val tailDist: Float
@@ -209,8 +209,8 @@ class PolylineAnimator {
     }
 
     if (headDist <= tailDist) {
-      poly.setSpans(emptyList())
       poly.points = listOf(coordinates.firstOrNull() ?: LatLng(0.0, 0.0))
+      poly.color = strokeColors.firstOrNull() ?: Color.BLACK
       return
     }
 
@@ -219,7 +219,6 @@ class PolylineAnimator {
     val endIndex = indexForDistance(headDist)
 
     reusablePoints.clear()
-    reusableSpans.clear()
 
     reusablePoints.add(coordinateAtDistance(tailDist))
 
@@ -233,16 +232,21 @@ class PolylineAnimator {
       reusablePoints.add(endCoord)
     }
 
-    val pointCount = reusablePoints.size
-    for (i in 0 until (pointCount - 1)) {
-      val segMidDist = tailDist + visibleLength * (i + 0.5f) / (pointCount - 1)
-      val gradientPos = (segMidDist - tailDist) / visibleLength
-      val color = colorAtGradientPosition(gradientPos)
-      reusableSpans.add(StyleSpan(StrokeStyle.colorBuilder(color).build()))
-    }
-
     poly.points = reusablePoints
-    if (reusableSpans.isNotEmpty()) {
+
+    if (strokeColors.size <= 1) {
+      poly.color = strokeColors.firstOrNull() ?: Color.BLACK
+    } else {
+      val segmentCount = reusablePoints.size - 1
+      val spanCount = min(segmentCount, MAX_ANIMATION_SPANS)
+      val segmentsPerSpan = segmentCount.toDouble() / spanCount
+
+      reusableSpans.clear()
+      for (i in 0 until spanCount) {
+        val gradientPos = (i + 0.5f) / spanCount
+        val color = colorAtGradientPosition(gradientPos)
+        reusableSpans.add(StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan))
+      }
       poly.setSpans(reusableSpans)
     }
   }

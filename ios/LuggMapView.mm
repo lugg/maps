@@ -1,10 +1,10 @@
 #import "LuggMapView.h"
-#import "core/AppleMapProvider.h"
-#import "core/GoogleMapProvider.h"
-#import "core/MapProviderDelegate.h"
 #import "LuggMapWrapperView.h"
 #import "LuggMarkerView.h"
 #import "LuggPolylineView.h"
+#import "core/AppleMapProvider.h"
+#import "core/GoogleMapProvider.h"
+#import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
 #import "events/ReadyEvent.h"
@@ -19,14 +19,13 @@
 using namespace facebook::react;
 using namespace luggmaps::events;
 
-@interface LuggMapView () <RCTLuggMapViewViewProtocol,
-                           MapProviderDelegate>
+@interface LuggMapView () <RCTLuggMapViewViewProtocol, MapProviderDelegate>
 @end
 
 @implementation LuggMapView {
-  id<MapProvider> _content;
+  id<MapProvider> _provider;
   LuggMapWrapperView *_mapWrapperView;
-  LuggMapViewProvider _provider;
+  LuggMapViewProvider _providerType;
   NSString *_mapId;
   BOOL _initialized;
   // Cached props to apply after content creation
@@ -42,19 +41,17 @@ using namespace luggmaps::events;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
-  return concreteComponentDescriptorProvider<
-      LuggMapViewComponentDescriptor>();
+  return concreteComponentDescriptorProvider<LuggMapViewComponentDescriptor>();
 }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   if (self = [super initWithFrame:frame]) {
-    static const auto defaultProps =
-        std::make_shared<const LuggMapViewProps>();
+    static const auto defaultProps = std::make_shared<const LuggMapViewProps>();
     _props = defaultProps;
 
     _initialized = NO;
     _mapId = @"";
-    _provider = LuggMapViewProvider::Google;
+    _providerType = LuggMapViewProvider::Google;
     _zoomEnabled = YES;
     _scrollEnabled = YES;
     _rotateEnabled = YES;
@@ -77,13 +74,13 @@ using namespace luggmaps::events;
     _mapWrapperView = (LuggMapWrapperView *)childComponentView;
   } else if ([childComponentView isKindOfClass:[LuggMarkerView class]]) {
     LuggMarkerView *markerView = (LuggMarkerView *)childComponentView;
-    if (_content) {
-      [_content addMarkerView:markerView];
+    if (_provider) {
+      [_provider addMarkerView:markerView];
     }
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
     LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
-    if (_content) {
-      [_content addPolylineView:polylineView];
+    if (_provider) {
+      [_provider addPolylineView:polylineView];
     }
   }
 }
@@ -93,13 +90,13 @@ using namespace luggmaps::events;
                             index:(NSInteger)index {
   if ([childComponentView isKindOfClass:[LuggMarkerView class]]) {
     LuggMarkerView *markerView = (LuggMarkerView *)childComponentView;
-    if (_content) {
-      [_content removeMarkerView:markerView];
+    if (_provider) {
+      [_provider removeMarkerView:markerView];
     }
   } else if ([childComponentView isKindOfClass:[LuggPolylineView class]]) {
     LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
-    if (_content) {
-      [_content removePolylineView:polylineView];
+    if (_provider) {
+      [_provider removePolylineView:polylineView];
     }
   }
 
@@ -108,16 +105,21 @@ using namespace luggmaps::events;
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
-  if (self.window && !_content && _mapWrapperView) {
-    [self initializeContent];
+  if (self.window) {
+    if (!_provider && _mapWrapperView) {
+      [self initializeContent];
+    }
+    [_provider resumeAnimations];
+  } else {
+    [_provider pauseAnimations];
   }
 }
 
 - (void)prepareForRecycle {
   [super prepareForRecycle];
 
-  [_content destroy];
-  _content = nil;
+  [_provider destroy];
+  _provider = nil;
   _mapWrapperView = nil;
   _initialized = NO;
 }
@@ -125,49 +127,50 @@ using namespace luggmaps::events;
 #pragma mark - Content Initialization
 
 - (void)initializeContent {
-  if (_content || !_mapWrapperView) return;
+  if (_provider || !_mapWrapperView)
+    return;
 
   const auto &viewProps =
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
-  if (_provider == LuggMapViewProvider::Apple) {
-    _content = [[AppleMapProvider alloc] init];
+  if (_providerType == LuggMapViewProvider::Apple) {
+    _provider = [[AppleMapProvider alloc] init];
   } else {
     GoogleMapProvider *google = [[GoogleMapProvider alloc] init];
     google.mapId = _mapId;
-    _content = google;
+    _provider = google;
   }
 
-  _content.delegate = self;
+  _provider.delegate = self;
 
   // Apply cached props before initialization
-  [_content setZoomEnabled:_zoomEnabled];
-  [_content setScrollEnabled:_scrollEnabled];
-  [_content setRotateEnabled:_rotateEnabled];
-  [_content setPitchEnabled:_pitchEnabled];
-  [_content setUserLocationEnabled:_userLocationEnabled];
-  [_content setTheme:_theme];
-  [_content setMinZoom:_minZoom];
-  [_content setMaxZoom:_maxZoom];
+  [_provider setZoomEnabled:_zoomEnabled];
+  [_provider setScrollEnabled:_scrollEnabled];
+  [_provider setRotateEnabled:_rotateEnabled];
+  [_provider setPitchEnabled:_pitchEnabled];
+  [_provider setUserLocationEnabled:_userLocationEnabled];
+  [_provider setTheme:_theme];
+  [_provider setMinZoom:_minZoom];
+  [_provider setMaxZoom:_maxZoom];
 
-  CLLocationCoordinate2D coordinate = CLLocationCoordinate2DMake(
-      viewProps.initialCoordinate.latitude,
-      viewProps.initialCoordinate.longitude);
+  CLLocationCoordinate2D coordinate =
+      CLLocationCoordinate2DMake(viewProps.initialCoordinate.latitude,
+                                 viewProps.initialCoordinate.longitude);
 
-  [_content initializeMapInView:_mapWrapperView
-              initialCoordinate:coordinate
-                    initialZoom:viewProps.initialZoom];
+  [_provider initializeMapInView:_mapWrapperView
+               initialCoordinate:coordinate
+                     initialZoom:viewProps.initialZoom];
 
-  [_content setPadding:_padding oldPadding:UIEdgeInsetsZero];
+  [_provider setPadding:_padding oldPadding:UIEdgeInsetsZero];
 
   _initialized = YES;
 
   // Flush any children that were mounted before content was created
   for (UIView *subview in self.subviews) {
     if ([subview isKindOfClass:[LuggMarkerView class]]) {
-      [_content addMarkerView:(LuggMarkerView *)subview];
+      [_provider addMarkerView:(LuggMarkerView *)subview];
     } else if ([subview isKindOfClass:[LuggPolylineView class]]) {
-      [_content addPolylineView:(LuggPolylineView *)subview];
+      [_provider addPolylineView:(LuggPolylineView *)subview];
     }
   }
 }
@@ -204,7 +207,7 @@ using namespace luggmaps::events;
       *std::static_pointer_cast<LuggMapViewProps const>(props);
 
   // Capture provider and mapId before content is created
-  _provider = newViewProps.provider;
+  _providerType = newViewProps.provider;
 
   NSString *newMapId =
       [NSString stringWithUTF8String:newViewProps.mapId.c_str()];
@@ -224,12 +227,12 @@ using namespace luggmaps::events;
       UIEdgeInsetsMake(newViewProps.padding.top, newViewProps.padding.left,
                        newViewProps.padding.bottom, newViewProps.padding.right);
 
-  if (_content) {
-    [_content setZoomEnabled:_zoomEnabled];
-    [_content setScrollEnabled:_scrollEnabled];
-    [_content setRotateEnabled:_rotateEnabled];
-    [_content setPitchEnabled:_pitchEnabled];
-    [_content setUserLocationEnabled:_userLocationEnabled];
+  if (_provider) {
+    [_provider setZoomEnabled:_zoomEnabled];
+    [_provider setScrollEnabled:_scrollEnabled];
+    [_provider setRotateEnabled:_rotateEnabled];
+    [_provider setPitchEnabled:_pitchEnabled];
+    [_provider setUserLocationEnabled:_userLocationEnabled];
 
     if (oldViewProps.theme != newViewProps.theme) {
       NSString *theme;
@@ -241,12 +244,12 @@ using namespace luggmaps::events;
         theme = @"system";
       }
       _theme = theme;
-      [_content setTheme:_theme];
+      [_provider setTheme:_theme];
     }
 
-    [_content setMinZoom:newViewProps.minZoom];
-    [_content setMaxZoom:newViewProps.maxZoom];
-    [_content setPadding:_padding oldPadding:oldPadding];
+    [_provider setMinZoom:newViewProps.minZoom];
+    [_provider setMaxZoom:newViewProps.maxZoom];
+    [_provider setPadding:_padding oldPadding:oldPadding];
   } else {
     // Cache theme for later
     if (newViewProps.theme == LuggMapViewTheme::Dark) {
@@ -269,10 +272,10 @@ using namespace luggmaps::events;
          longitude:(double)longitude
               zoom:(double)zoom
           duration:(double)duration {
-  [_content moveCamera:latitude
-             longitude:longitude
-                  zoom:zoom
-              duration:duration];
+  [_provider moveCamera:latitude
+              longitude:longitude
+                   zoom:zoom
+               duration:duration];
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
@@ -281,12 +284,12 @@ using namespace luggmaps::events;
          paddingBottom:(double)paddingBottom
           paddingRight:(double)paddingRight
               duration:(double)duration {
-  [_content fitCoordinates:coordinates
-                paddingTop:paddingTop
-               paddingLeft:paddingLeft
-             paddingBottom:paddingBottom
-              paddingRight:paddingRight
-                  duration:duration];
+  [_provider fitCoordinates:coordinates
+                 paddingTop:paddingTop
+                paddingLeft:paddingLeft
+              paddingBottom:paddingBottom
+               paddingRight:paddingRight
+                   duration:duration];
 }
 
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {

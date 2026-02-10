@@ -375,6 +375,18 @@ class GoogleMapProvider(private val context: Context) :
 
   // endregion
 
+  // region Lifecycle
+
+  override fun pauseAnimations() {
+    polylineAnimators.values.forEach { it.pause() }
+  }
+
+  override fun resumeAnimations() {
+    polylineAnimators.values.forEach { it.resume() }
+  }
+
+  // endregion
+
   // region Commands
 
   override fun moveCamera(latitude: Double, longitude: Double, zoom: Double, duration: Int) {

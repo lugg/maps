@@ -34,6 +34,10 @@ interface MapProvider {
   fun addPolylineView(polylineView: LuggPolylineView)
   fun removePolylineView(polylineView: LuggPolylineView)
 
+  // Lifecycle
+  fun pauseAnimations()
+  fun resumeAnimations()
+
   // Commands
   fun moveCamera(latitude: Double, longitude: Double, zoom: Double, duration: Int)
   fun fitCoordinates(

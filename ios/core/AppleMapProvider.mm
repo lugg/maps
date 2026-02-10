@@ -1,8 +1,8 @@
 #import "AppleMapProvider.h"
-#import "MKPolylineAnimator.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolylineView.h"
 #import "../extensions/MKMapView+Zoom.h"
+#import "MKPolylineAnimator.h"
 
 @interface AppleMarkerAnnotation : NSObject <MKAnnotation>
 @property(nonatomic, assign) CLLocationCoordinate2D coordinate;
@@ -53,10 +53,10 @@
 - (void)initializeMapInView:(UIView *)wrapperView
           initialCoordinate:(CLLocationCoordinate2D)coordinate
                 initialZoom:(double)zoom {
-  if (_mapView) return;
+  if (_mapView)
+    return;
 
-  _mapView =
-      [[LuggAppleMapViewContent alloc] initWithFrame:wrapperView.bounds];
+  _mapView = [[LuggAppleMapViewContent alloc] initWithFrame:wrapperView.bounds];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   _mapView.delegate = self;
@@ -66,8 +66,8 @@
 
   [wrapperView addSubview:_mapView];
 
-  MKCoordinateRegion region =
-      [_mapView regionForCenterCoordinate:coordinate zoomLevel:zoom];
+  MKCoordinateRegion region = [_mapView regionForCenterCoordinate:coordinate
+                                                        zoomLevel:zoom];
   [_mapView setRegion:region animated:NO];
 
   _isMapReady = YES;
@@ -151,7 +151,8 @@
 }
 
 - (void)applyZoomRange {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   CLLocationDistance minDistance =
       _maxZoom > 0 ? [self cameraDistanceForZoomLevel:_maxZoom] : 0;
@@ -180,8 +181,8 @@
 - (void)mapView:(MKMapView *)mapView regionWillChangeAnimated:(BOOL)animated {
   _isDragging = [self isUserInteracting];
   if (_isDragging) {
-    for (LuggPolylineView *polylineView in
-         _overlayToPolylineMap.objectEnumerator) {
+    for (LuggPolylineView *polylineView in _overlayToPolylineMap
+             .objectEnumerator) {
       MKPolylineAnimator *renderer =
           (MKPolylineAnimator *)polylineView.renderer;
       [renderer pause];
@@ -200,8 +201,8 @@
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
   if (wasDragging) {
-    for (LuggPolylineView *polylineView in
-         _overlayToPolylineMap.objectEnumerator) {
+    for (LuggPolylineView *polylineView in _overlayToPolylineMap
+             .objectEnumerator) {
       MKPolylineAnimator *renderer =
           (MKPolylineAnimator *)polylineView.renderer;
       [renderer resume];
@@ -219,8 +220,7 @@
     return nil;
   }
 
-  AppleMarkerAnnotation *markerAnnotation =
-      (AppleMarkerAnnotation *)annotation;
+  AppleMarkerAnnotation *markerAnnotation = (AppleMarkerAnnotation *)annotation;
   LuggMarkerView *markerView = markerAnnotation.markerView;
 
   if (!markerView || !markerView.hasCustomView) {
@@ -291,7 +291,8 @@
   AppleMarkerAnnotation *annotation =
       (AppleMarkerAnnotation *)markerView.marker;
 
-  if (!annotation) return;
+  if (!annotation)
+    return;
 
   annotation.coordinate = markerView.coordinate;
   annotation.title = markerView.title;
@@ -354,7 +355,8 @@
 
   UIView *iconView = markerView.iconView;
   CGRect frame = iconView.frame;
-  if (frame.size.width <= 0 || frame.size.height <= 0) return;
+  if (frame.size.width <= 0 || frame.size.height <= 0)
+    return;
 
   CGFloat scale = markerView.scale;
   CGPoint anchor = markerView.anchor;
@@ -383,7 +385,8 @@
   MKAnnotationView *annotationView = annotation.annotationView;
   LuggMarkerView *markerView = annotation.markerView;
 
-  if (!annotationView || !markerView) return;
+  if (!annotationView || !markerView)
+    return;
 
   [self applyMarkerStyle:markerView annotationView:annotationView];
 }
@@ -406,7 +409,8 @@
 }
 
 - (void)syncPolylineView:(LuggPolylineView *)polylineView {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
   MKPolyline *oldPolyline = (MKPolyline *)polylineView.polyline;
@@ -459,10 +463,12 @@
 }
 
 - (void)addPolylineOverlayToMap:(LuggPolylineView *)polylineView {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   NSArray<CLLocation *> *coordinates = polylineView.coordinates;
-  if (coordinates.count == 0) return;
+  if (coordinates.count == 0)
+    return;
 
   CLLocationCoordinate2D *coords = (CLLocationCoordinate2D *)malloc(
       sizeof(CLLocationCoordinate2D) * coordinates.count);
@@ -470,8 +476,8 @@
     coords[i] = coordinates[i].coordinate;
   }
 
-  MKPolyline *polyline =
-      [MKPolyline polylineWithCoordinates:coords count:coordinates.count];
+  MKPolyline *polyline = [MKPolyline polylineWithCoordinates:coords
+                                                       count:coordinates.count];
   free(coords);
 
   polylineView.polyline = polyline;
@@ -500,20 +506,40 @@
   [_mapView insertOverlay:overlay atIndex:insertIndex];
 }
 
+#pragma mark - Lifecycle
+
+- (void)pauseAnimations {
+  for (LuggPolylineView *polylineView in _overlayToPolylineMap
+           .objectEnumerator) {
+    MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
+    [renderer pause];
+  }
+}
+
+- (void)resumeAnimations {
+  for (LuggPolylineView *polylineView in _overlayToPolylineMap
+           .objectEnumerator) {
+    MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
+    [renderer resume];
+  }
+}
+
 #pragma mark - Commands
 
 - (void)moveCamera:(double)latitude
          longitude:(double)longitude
               zoom:(double)zoom
           duration:(double)duration {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   double targetZoom = zoom > 0 ? zoom : _mapView.zoomLevel;
 
   if (duration < 0) {
-    [_mapView setCenterCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
-                        zoomLevel:targetZoom
-                         animated:YES];
+    [_mapView
+        setCenterCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
+                  zoomLevel:targetZoom
+                   animated:YES];
   } else if (duration > 0) {
     CLLocationCoordinate2D center =
         CLLocationCoordinate2DMake(latitude, longitude);
@@ -524,9 +550,10 @@
                        [self->_mapView setRegion:region animated:NO];
                      }];
   } else {
-    [_mapView setCenterCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
-                        zoomLevel:targetZoom
-                         animated:NO];
+    [_mapView
+        setCenterCoordinate:CLLocationCoordinate2DMake(latitude, longitude)
+                  zoomLevel:targetZoom
+                   animated:NO];
   }
 }
 
@@ -536,7 +563,8 @@
          paddingBottom:(double)paddingBottom
           paddingRight:(double)paddingRight
               duration:(double)duration {
-  if (!_mapView || coordinates.count == 0) return;
+  if (!_mapView || coordinates.count == 0)
+    return;
 
   CLLocationCoordinate2D *coords = (CLLocationCoordinate2D *)malloc(
       sizeof(CLLocationCoordinate2D) * coordinates.count);

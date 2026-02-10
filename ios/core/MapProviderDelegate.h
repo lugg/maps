@@ -47,6 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removePolylineView:(LuggPolylineView *)polylineView;
 - (void)syncPolylineView:(LuggPolylineView *)polylineView;
 
+// Lifecycle
+- (void)pauseAnimations;
+- (void)resumeAnimations;
+
 // Commands
 - (void)moveCamera:(double)latitude
          longitude:(double)longitude
