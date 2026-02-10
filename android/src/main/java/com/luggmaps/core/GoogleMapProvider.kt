@@ -206,8 +206,17 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets) {
+    val map = googleMap
+    val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
-    applyEdgeInsets()
+
+    if (map != null && oldInsets != edgeInsets) {
+      val cameraUpdate = CameraUpdateFactory.newCameraPosition(map.cameraPosition)
+      applyEdgeInsets()
+      map.moveCamera(cameraUpdate)
+    } else {
+      applyEdgeInsets()
+    }
   }
 
   // endregion
