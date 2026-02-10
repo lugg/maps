@@ -50,6 +50,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
+  private var myLocationButtonEnabled: Boolean = false
   private var minZoom: Double? = null
   private var maxZoom: Double? = null
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -147,6 +148,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setRotateEnabled(rotateEnabled)
     provider?.setPitchEnabled(pitchEnabled)
     provider?.setUserLocationEnabled(userLocationEnabled)
+    provider?.setMyLocationButtonEnabled(myLocationButtonEnabled)
     provider?.setTheme(theme)
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
@@ -196,6 +198,11 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   fun setUserLocationEnabled(enabled: Boolean) {
     userLocationEnabled = enabled
     provider?.setUserLocationEnabled(enabled)
+  }
+
+  fun setMyLocationButtonEnabled(enabled: Boolean) {
+    myLocationButtonEnabled = enabled
+    provider?.setMyLocationButtonEnabled(enabled)
   }
 
   fun setMinZoom(zoom: Double) {

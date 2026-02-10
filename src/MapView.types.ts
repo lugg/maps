@@ -101,6 +101,11 @@ export interface MapViewProps extends ViewProps {
    */
   userLocationEnabled?: boolean;
   /**
+   * Show native my-location button when userLocationEnabled is true (Android only).
+   * @default false
+   */
+  myLocationButtonEnabled?: boolean;
+  /**
    * Map color theme
    * @default 'system'
    */
