@@ -52,7 +52,19 @@ export interface MarkerProps {
   children?: ReactNode;
 }
 
-export class Marker extends React.Component<MarkerProps> {
+export class Marker extends React.PureComponent<MarkerProps> {
+  private getStyle(zIndex: number | undefined) {
+    if (zIndex == null) return styles.marker;
+    if (zIndex !== this._cachedZIndex) {
+      this._cachedZIndex = zIndex;
+      this._cachedStyle = [{ zIndex }, styles.marker];
+    }
+    return this._cachedStyle!;
+  }
+
+  private _cachedZIndex: number | undefined;
+  private _cachedStyle: any;
+
   render() {
     const {
       name,
@@ -69,7 +81,7 @@ export class Marker extends React.Component<MarkerProps> {
 
     return (
       <LuggMarkerViewNativeComponent
-        style={[{ zIndex }, styles.marker]}
+        style={this.getStyle(zIndex)}
         name={name}
         coordinate={coordinate}
         title={title}

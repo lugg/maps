@@ -18,8 +18,34 @@
 - (instancetype)init {
   if (self = [super init]) {
     _animatedOptions = [PolylineAnimatedOptions defaultOptions];
+    _colorCache = NULL;
+    _colorCacheCount = 0;
   }
   return self;
+}
+
+- (void)dealloc {
+  free(_colorCache);
+}
+
+- (void)setStrokeColors:(NSArray<UIColor *> *)strokeColors {
+  _strokeColors = strokeColors;
+  [self rebuildColorCache];
+}
+
+- (void)rebuildColorCache {
+  free(_colorCache);
+  _colorCache = NULL;
+  _colorCacheCount = _strokeColors.count;
+  if (_colorCacheCount == 0) return;
+
+  _colorCache = (RGBAComponents *)malloc(sizeof(RGBAComponents) * _colorCacheCount);
+  for (NSUInteger i = 0; i < _colorCacheCount; i++) {
+    [_strokeColors[i] getRed:&_colorCache[i].r
+                       green:&_colorCache[i].g
+                        blue:&_colorCache[i].b
+                       alpha:&_colorCache[i].a];
+  }
 }
 
 - (CGFloat)applyEasing:(CGFloat)t {
@@ -35,34 +61,38 @@
   return t;
 }
 
-- (UIColor *)colorAtGradientPosition:(CGFloat)position {
-  if (!_strokeColors || _strokeColors.count == 0) {
-    return [UIColor blackColor];
+- (void)colorAtGradientPosition:(CGFloat)position rgba:(RGBAComponents *)out {
+  if (_colorCacheCount == 0) {
+    *out = (RGBAComponents){0, 0, 0, 1};
+    return;
   }
-  if (_strokeColors.count == 1) {
-    return _strokeColors[0];
+  if (_colorCacheCount == 1) {
+    *out = _colorCache[0];
+    return;
   }
 
   position = MAX(0, MIN(1, position));
-  CGFloat scaledPos = position * (_strokeColors.count - 1);
-  NSUInteger index = (NSUInteger)floor(scaledPos);
+  CGFloat scaledPos = position * (_colorCacheCount - 1);
+  NSUInteger index = (NSUInteger)scaledPos;
   CGFloat t = scaledPos - index;
 
-  if (index >= _strokeColors.count - 1) {
-    return _strokeColors.lastObject;
+  if (index >= _colorCacheCount - 1) {
+    *out = _colorCache[_colorCacheCount - 1];
+    return;
   }
 
-  UIColor *c1 = _strokeColors[index];
-  UIColor *c2 = _strokeColors[index + 1];
+  RGBAComponents c1 = _colorCache[index];
+  RGBAComponents c2 = _colorCache[index + 1];
+  out->r = c1.r + (c2.r - c1.r) * t;
+  out->g = c1.g + (c2.g - c1.g) * t;
+  out->b = c1.b + (c2.b - c1.b) * t;
+  out->a = c1.a + (c2.a - c1.a) * t;
+}
 
-  CGFloat r1, g1, b1, a1, r2, g2, b2, a2;
-  [c1 getRed:&r1 green:&g1 blue:&b1 alpha:&a1];
-  [c2 getRed:&r2 green:&g2 blue:&b2 alpha:&a2];
-
-  return [UIColor colorWithRed:r1 + (r2 - r1) * t
-                         green:g1 + (g2 - g1) * t
-                          blue:b1 + (b2 - b1) * t
-                         alpha:a1 + (a2 - a1) * t];
+- (UIColor *)colorAtGradientPosition:(CGFloat)position {
+  RGBAComponents rgba;
+  [self colorAtGradientPosition:position rgba:&rgba];
+  return [UIColor colorWithRed:rgba.r green:rgba.g blue:rgba.b alpha:rgba.a];
 }
 
 @end

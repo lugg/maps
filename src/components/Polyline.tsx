@@ -57,7 +57,19 @@ export interface PolylineProps {
   zIndex?: number;
 }
 
-export class Polyline extends React.Component<PolylineProps> {
+export class Polyline extends React.PureComponent<PolylineProps> {
+  private getStyle(zIndex: number | undefined) {
+    if (zIndex == null) return styles.polyline;
+    if (zIndex !== this._cachedZIndex) {
+      this._cachedZIndex = zIndex;
+      this._cachedStyle = [{ zIndex }, styles.polyline];
+    }
+    return this._cachedStyle!;
+  }
+
+  private _cachedZIndex: number | undefined;
+  private _cachedStyle: any;
+
   render() {
     const {
       coordinates,
@@ -70,7 +82,7 @@ export class Polyline extends React.Component<PolylineProps> {
 
     return (
       <LuggPolylineViewNativeComponent
-        style={[{ zIndex }, styles.polyline]}
+        style={this.getStyle(zIndex)}
         coordinates={coordinates}
         strokeColors={strokeColors}
         strokeWidth={strokeWidth}

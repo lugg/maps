@@ -24,13 +24,22 @@
 
 @end
 
-@interface PolylineAnimatorBase : NSObject
+typedef struct {
+  CGFloat r, g, b, a;
+} RGBAComponents;
+
+@interface PolylineAnimatorBase : NSObject {
+@protected
+  RGBAComponents *_colorCache;
+  NSUInteger _colorCacheCount;
+}
 
 @property(nonatomic, strong) NSArray<CLLocation *> *coordinates;
 @property(nonatomic, strong) NSArray<UIColor *> *strokeColors;
 @property(nonatomic, strong) PolylineAnimatedOptions *animatedOptions;
 
 - (UIColor *)colorAtGradientPosition:(CGFloat)position;
+- (void)colorAtGradientPosition:(CGFloat)position rgba:(RGBAComponents *)out;
 - (CGFloat)applyEasing:(CGFloat)t;
 
 @end

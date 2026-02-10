@@ -1,7 +1,14 @@
 export { MapView } from './MapView';
 export { MapProvider } from './MapProvider';
 export type { MapProviderProps } from './MapProvider.types';
-export * from './components';
+export { Marker } from './components';
+export type { MarkerProps } from './components';
+export { Polyline } from './components';
+export type {
+  PolylineProps,
+  PolylineEasing,
+  PolylineAnimatedOptions,
+} from './components';
 export type {
   MapViewProps,
   MapViewRef,

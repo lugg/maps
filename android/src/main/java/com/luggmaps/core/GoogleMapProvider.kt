@@ -88,6 +88,9 @@ class GoogleMapProvider(private val context: Context) :
     pendingPolylineViews.clear()
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
+    googleMap?.setOnCameraMoveStartedListener(null)
+    googleMap?.setOnCameraMoveListener(null)
+    googleMap?.setOnCameraIdleListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false

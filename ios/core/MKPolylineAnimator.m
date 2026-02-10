@@ -35,6 +35,8 @@
   NSArray<NSNumber *> *_cumulativeDistances;
   CGFloat _totalLength;
   CGColorSpaceRef _colorSpace;
+  RGBAComponents *_colorCache;
+  NSUInteger _colorCacheCount;
 }
 
 - (id)initWithPolyline:(MKPolyline *)polyline {
@@ -59,6 +61,7 @@
 
 - (void)dealloc {
   [self stopAnimation];
+  free(_colorCache);
   if (_colorSpace) {
     CGColorSpaceRelease(_colorSpace);
     _colorSpace = NULL;
@@ -199,34 +202,60 @@
   self.path = path;
 }
 
-- (UIColor *)colorAtGradientPosition:(CGFloat)position {
-  if (!_strokeColors || _strokeColors.count == 0) {
-    return self.strokeColor;
+- (void)setStrokeColors:(NSArray<UIColor *> *)strokeColors {
+  _strokeColors = strokeColors;
+  [self rebuildColorCache];
+}
+
+- (void)rebuildColorCache {
+  free(_colorCache);
+  _colorCache = NULL;
+  _colorCacheCount = _strokeColors.count;
+  if (_colorCacheCount == 0) return;
+
+  _colorCache = (RGBAComponents *)malloc(sizeof(RGBAComponents) * _colorCacheCount);
+  for (NSUInteger i = 0; i < _colorCacheCount; i++) {
+    [_strokeColors[i] getRed:&_colorCache[i].r
+                       green:&_colorCache[i].g
+                        blue:&_colorCache[i].b
+                       alpha:&_colorCache[i].a];
   }
-  if (_strokeColors.count == 1) {
-    return _strokeColors[0];
+}
+
+- (void)colorAtGradientPosition:(CGFloat)position rgba:(RGBAComponents *)out {
+  if (_colorCacheCount == 0) {
+    CGFloat r, g, b, a;
+    [self.strokeColor getRed:&r green:&g blue:&b alpha:&a];
+    *out = (RGBAComponents){r, g, b, a};
+    return;
+  }
+  if (_colorCacheCount == 1) {
+    *out = _colorCache[0];
+    return;
   }
 
   position = MAX(0, MIN(1, position));
-  CGFloat scaledPos = position * (_strokeColors.count - 1);
-  NSUInteger index = (NSUInteger)floor(scaledPos);
+  CGFloat scaledPos = position * (_colorCacheCount - 1);
+  NSUInteger index = (NSUInteger)scaledPos;
   CGFloat t = scaledPos - index;
 
-  if (index >= _strokeColors.count - 1) {
-    return _strokeColors.lastObject;
+  if (index >= _colorCacheCount - 1) {
+    *out = _colorCache[_colorCacheCount - 1];
+    return;
   }
 
-  UIColor *c1 = _strokeColors[index];
-  UIColor *c2 = _strokeColors[index + 1];
+  RGBAComponents c1 = _colorCache[index];
+  RGBAComponents c2 = _colorCache[index + 1];
+  out->r = c1.r + (c2.r - c1.r) * t;
+  out->g = c1.g + (c2.g - c1.g) * t;
+  out->b = c1.b + (c2.b - c1.b) * t;
+  out->a = c1.a + (c2.a - c1.a) * t;
+}
 
-  CGFloat r1, g1, b1, a1, r2, g2, b2, a2;
-  [c1 getRed:&r1 green:&g1 blue:&b1 alpha:&a1];
-  [c2 getRed:&r2 green:&g2 blue:&b2 alpha:&a2];
-
-  return [UIColor colorWithRed:r1 + (r2 - r1) * t
-                         green:g1 + (g2 - g1) * t
-                          blue:b1 + (b2 - b1) * t
-                         alpha:a1 + (a2 - a1) * t];
+- (UIColor *)colorAtGradientPosition:(CGFloat)position {
+  RGBAComponents rgba;
+  [self colorAtGradientPosition:position rgba:&rgba];
+  return [UIColor colorWithRed:rgba.r green:rgba.g blue:rgba.b alpha:rgba.a];
 }
 
 - (void)drawMapRect:(MKMapRect)mapRect
@@ -311,11 +340,15 @@
       CGFloat gradientStart = (drawStartDist - tailDist) / visibleLength;
       CGFloat gradientEnd = (drawEndDist - tailDist) / visibleLength;
 
-      UIColor *startColor = [self colorAtGradientPosition:gradientStart];
-      UIColor *endColor = [self colorAtGradientPosition:gradientEnd];
+      RGBAComponents startRGBA, endRGBA;
+      [self colorAtGradientPosition:gradientStart rgba:&startRGBA];
+      [self colorAtGradientPosition:gradientEnd rgba:&endRGBA];
 
-      NSArray *colors = @[(__bridge id)startColor.CGColor, (__bridge id)endColor.CGColor];
-      CGGradientRef gradient = CGGradientCreateWithColors(_colorSpace, (__bridge CFArrayRef)colors, NULL);
+      CGFloat components[] = {
+        startRGBA.r, startRGBA.g, startRGBA.b, startRGBA.a,
+        endRGBA.r, endRGBA.g, endRGBA.b, endRGBA.a
+      };
+      CGGradientRef gradient = CGGradientCreateWithColorComponents(_colorSpace, components, NULL, 2);
 
       CGContextSaveGState(context);
       CGContextBeginPath(context);
@@ -341,11 +374,15 @@
       CGFloat gradientStart = (CGFloat)i / segmentCount;
       CGFloat gradientEnd = (CGFloat)(i + 1) / segmentCount;
 
-      UIColor *startColor = [self colorAtGradientPosition:gradientStart];
-      UIColor *endColor = [self colorAtGradientPosition:gradientEnd];
+      RGBAComponents startRGBA, endRGBA;
+      [self colorAtGradientPosition:gradientStart rgba:&startRGBA];
+      [self colorAtGradientPosition:gradientEnd rgba:&endRGBA];
 
-      NSArray *colors = @[(__bridge id)startColor.CGColor, (__bridge id)endColor.CGColor];
-      CGGradientRef gradient = CGGradientCreateWithColors(_colorSpace, (__bridge CFArrayRef)colors, NULL);
+      CGFloat components[] = {
+        startRGBA.r, startRGBA.g, startRGBA.b, startRGBA.a,
+        endRGBA.r, endRGBA.g, endRGBA.b, endRGBA.a
+      };
+      CGGradientRef gradient = CGGradientCreateWithColorComponents(_colorSpace, components, NULL, 2);
 
       CGContextSaveGState(context);
       CGContextBeginPath(context);
