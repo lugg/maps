@@ -143,7 +143,7 @@ function HomeContent() {
 
           <ReanimatedTrueSheet
             ref={sheetRef}
-            detents={['auto']}
+            detents={['auto', 0.5]}
             style={styles.sheet}
             dimmed={false}
             dismissible={false}

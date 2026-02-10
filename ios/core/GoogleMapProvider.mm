@@ -155,13 +155,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
-  UIEdgeInsets rounded =
-      UIEdgeInsetsMake(round(edgeInsets.top), round(edgeInsets.left),
-                       round(edgeInsets.bottom), round(edgeInsets.right));
-  if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, rounded))
+  if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, edgeInsets))
     return;
-  _edgeInsets = rounded;
-  _mapView.padding = rounded;
+  _edgeInsets = edgeInsets;
+  _mapView.padding = edgeInsets;
 }
 
 #pragma mark - GMSMapViewDelegate
