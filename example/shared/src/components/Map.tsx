@@ -106,17 +106,14 @@ export const Map = forwardRef<MapView, MapProps>(
       [polylineCoordinates]
     );
 
-    const animatedProps = useAnimatedProps(() => {
-      if (!animatedEdgeInsetsBottom) return {};
-      return {
-        edgeInsets: {
-          top: edgeInsets?.top ?? 0,
-          left: edgeInsets?.left ?? 0,
-          right: edgeInsets?.right ?? 0,
-          bottom: animatedEdgeInsetsBottom.value,
-        },
-      };
-    });
+    const animatedProps = useAnimatedProps(() => ({
+      edgeInsets: {
+        top: edgeInsets?.top ?? 0,
+        left: edgeInsets?.left ?? 0,
+        right: edgeInsets?.right ?? 0,
+        bottom: animatedEdgeInsetsBottom?.value ?? edgeInsets?.bottom ?? 0,
+      },
+    }));
 
     const centerPinStyle = useAnimatedStyle(() => {
       const bottomOffset =
