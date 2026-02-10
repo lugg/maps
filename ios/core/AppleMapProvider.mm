@@ -103,13 +103,17 @@
   _mapView.showsUserLocation = enabled;
 }
 
-- (void)setTheme:(NSString *)theme {
-  if ([theme isEqualToString:@"dark"]) {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-  } else if ([theme isEqualToString:@"light"]) {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-  } else {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+- (void)setTheme:(NSInteger)theme {
+  switch (theme) {
+    case 1: // Dark
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+      break;
+    case 0: // Light
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+      break;
+    default: // System
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+      break;
   }
 }
 

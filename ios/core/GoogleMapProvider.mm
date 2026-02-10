@@ -14,7 +14,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
-  NSString *_theme;
+  NSInteger _theme;
+  UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
@@ -116,8 +117,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.myLocationEnabled = enabled;
 }
 
-- (void)setTheme:(NSString *)theme {
-  _theme = [theme copy];
+- (void)setTheme:(NSInteger)theme {
+  _theme = theme;
   [self applyTheme];
 }
 
@@ -125,12 +126,16 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (!_mapView)
     return;
 
-  if ([_theme isEqualToString:@"dark"]) {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-  } else if ([_theme isEqualToString:@"light"]) {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-  } else {
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+  switch (_theme) {
+    case 1: // Dark
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+      break;
+    case 0: // Light
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+      break;
+    default: // System
+      _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+      break;
   }
 }
 
@@ -149,7 +154,15 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
-  _mapView.padding = edgeInsets;
+  UIEdgeInsets rounded = UIEdgeInsetsMake(
+    round(edgeInsets.top),
+    round(edgeInsets.left),
+    round(edgeInsets.bottom),
+    round(edgeInsets.right)
+  );
+  if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, rounded)) return;
+  _edgeInsets = rounded;
+  _mapView.padding = rounded;
 }
 
 #pragma mark - GMSMapViewDelegate

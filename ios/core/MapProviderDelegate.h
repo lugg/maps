@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setRotateEnabled:(BOOL)enabled;
 - (void)setPitchEnabled:(BOOL)enabled;
 - (void)setUserLocationEnabled:(BOOL)enabled;
-- (void)setTheme:(NSString *)theme;
+- (void)setTheme:(NSInteger)theme;
 - (void)setMinZoom:(double)minZoom;
 - (void)setMaxZoom:(double)maxZoom;
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets;

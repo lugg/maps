@@ -139,7 +139,6 @@ export function CrewMarker({
       coordinate={route[0]}
       anchor={DEFAULT_ANCHOR}
       animatedProps={animatedProps}
-      rasterize={false}
     >
       <PickupIcon loaded={loaded} />
     </AnimatedMarker>
