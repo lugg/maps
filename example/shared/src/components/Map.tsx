@@ -8,6 +8,7 @@ import {
 } from '@lugg/maps';
 import type { NativeSyntheticEvent } from 'react-native';
 import Animated, {
+  useAnimatedProps,
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -23,7 +24,6 @@ import { Route, smoothCoordinates } from './Route';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
-  animatedProps?: Partial<MapViewProps>;
   animatedEdgeInsetsBottom?: SharedValue<number>;
 }
 
@@ -89,7 +89,6 @@ export const Map = forwardRef<MapView, MapProps>(
     {
       markers,
       edgeInsets,
-      animatedProps,
       animatedEdgeInsetsBottom,
       onCameraIdle,
       onCameraMove,
@@ -106,6 +105,18 @@ export const Map = forwardRef<MapView, MapProps>(
       () => smoothCoordinates(polylineCoordinates),
       [polylineCoordinates]
     );
+
+    const animatedProps = useAnimatedProps(() => {
+      if (!animatedEdgeInsetsBottom) return {};
+      return {
+        edgeInsets: {
+          top: edgeInsets?.top ?? 0,
+          left: edgeInsets?.left ?? 0,
+          right: edgeInsets?.right ?? 0,
+          bottom: animatedEdgeInsetsBottom.value,
+        },
+      };
+    });
 
     const centerPinStyle = useAnimatedStyle(() => {
       const bottomOffset =

@@ -21,7 +21,7 @@ import {
   ReanimatedTrueSheetProvider,
   useReanimatedTrueSheet,
 } from '@lodev09/react-native-true-sheet/reanimated';
-import { useAnimatedProps, useDerivedValue } from 'react-native-reanimated';
+import { useDerivedValue } from 'react-native-reanimated';
 
 import { Button, Map } from './components';
 import { randomFrom, randomLetter } from './utils';
@@ -49,15 +49,6 @@ function HomeContent() {
   const animatedEdgeInsetsBottom = useDerivedValue(
     () => screenHeight - animatedPosition.value
   );
-
-  const animatedProps = useAnimatedProps(() => ({
-    edgeInsets: {
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: animatedEdgeInsetsBottom.value,
-    },
-  }));
 
   const handleCameraMove = useCallback(
     (event: { nativeEvent: CameraEventPayload }) => {
@@ -133,7 +124,6 @@ function HomeContent() {
               ref={mapRef}
               provider={provider}
               markers={markers}
-              animatedProps={animatedProps}
               animatedEdgeInsetsBottom={animatedEdgeInsetsBottom}
               userLocationEnabled={locationPermission}
               onCameraMove={handleCameraMove}
