@@ -28,7 +28,7 @@ interface MapProvider {
   fun setTheme(value: String)
   fun setMinZoom(zoom: Double)
   fun setMaxZoom(zoom: Double)
-  fun setPadding(padding: EdgeInsets)
+  fun setEdgeInsets(edgeInsets: EdgeInsets)
 
   // Children
   fun addMarkerView(markerView: LuggMarkerView)
@@ -44,10 +44,10 @@ interface MapProvider {
   fun moveCamera(latitude: Double, longitude: Double, zoom: Double, duration: Int)
   fun fitCoordinates(
     coordinates: List<Any>,
-    paddingTop: Int,
-    paddingLeft: Int,
-    paddingBottom: Int,
-    paddingRight: Int,
+    edgeInsetsTop: Int,
+    edgeInsetsLeft: Int,
+    edgeInsetsBottom: Int,
+    edgeInsetsRight: Int,
     duration: Int
   )
 }

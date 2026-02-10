@@ -37,7 +37,7 @@ using namespace luggmaps::events;
   NSString *_theme;
   double _minZoom;
   double _maxZoom;
-  UIEdgeInsets _padding;
+  UIEdgeInsets _edgeInsets;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -58,7 +58,7 @@ using namespace luggmaps::events;
     _pitchEnabled = YES;
     _userLocationEnabled = NO;
     _theme = @"system";
-    _padding = UIEdgeInsetsZero;
+    _edgeInsets = UIEdgeInsetsZero;
   }
   return self;
 }
@@ -154,7 +154,7 @@ using namespace luggmaps::events;
                initialCoordinate:coordinate
                      initialZoom:viewProps.initialZoom];
 
-  [_provider setPadding:_padding oldPadding:UIEdgeInsetsZero];
+  [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:UIEdgeInsetsZero];
 
   _initialized = YES;
 
@@ -235,14 +235,14 @@ using namespace luggmaps::events;
     _theme = @"system";
   }
 
-  UIEdgeInsets oldPadding = _padding;
-  _padding =
-      UIEdgeInsetsMake(newViewProps.padding.top, newViewProps.padding.left,
-                       newViewProps.padding.bottom, newViewProps.padding.right);
+  UIEdgeInsets oldEdgeInsets = _edgeInsets;
+  _edgeInsets =
+      UIEdgeInsetsMake(newViewProps.edgeInsets.top, newViewProps.edgeInsets.left,
+                       newViewProps.edgeInsets.bottom, newViewProps.edgeInsets.right);
 
   if (_provider) {
     [self applyProps];
-    [_provider setPadding:_padding oldPadding:oldPadding];
+    [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:oldEdgeInsets];
   }
 
   [super updateProps:props oldProps:oldProps];
@@ -261,16 +261,16 @@ using namespace luggmaps::events;
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
-            paddingTop:(double)paddingTop
-           paddingLeft:(double)paddingLeft
-         paddingBottom:(double)paddingBottom
-          paddingRight:(double)paddingRight
+         edgeInsetsTop:(double)edgeInsetsTop
+        edgeInsetsLeft:(double)edgeInsetsLeft
+      edgeInsetsBottom:(double)edgeInsetsBottom
+       edgeInsetsRight:(double)edgeInsetsRight
               duration:(double)duration {
   [_provider fitCoordinates:coordinates
-                 paddingTop:paddingTop
-                paddingLeft:paddingLeft
-              paddingBottom:paddingBottom
-               paddingRight:paddingRight
+              edgeInsetsTop:edgeInsetsTop
+             edgeInsetsLeft:edgeInsetsLeft
+           edgeInsetsBottom:edgeInsetsBottom
+            edgeInsetsRight:edgeInsetsRight
                    duration:duration];
 }
 

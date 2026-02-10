@@ -31,7 +31,7 @@ import { MapView } from '@lugg/maps';
 | `scrollEnabled` | `boolean` | `true` | Enable scroll/pan gestures |
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
-| `padding` | `EdgeInsets` | - | Map content padding |
+| `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Map color theme |
 | `onCameraMove` | `(event) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event) => void` | - | Called when camera stops moving |
@@ -56,7 +56,7 @@ mapRef.current?.fitCoordinates(
     { latitude: 37.7749, longitude: -122.4194 },
     { latitude: 37.8049, longitude: -122.4094 },
   ],
-  { padding: 50, duration: 500 }
+  { edgeInsets: { top: 50, left: 50, bottom: 50, right: 50 }, duration: 500 }
 );
 ```
 
@@ -81,7 +81,7 @@ Fit multiple coordinates in the visible map area.
 fitCoordinates(coordinates: Coordinate[], options?: FitCoordinatesOptions): void
 
 interface FitCoordinatesOptions {
-  padding?: number;
+  edgeInsets?: EdgeInsets;
   duration?: number; // milliseconds, -1 for default
 }
 ```

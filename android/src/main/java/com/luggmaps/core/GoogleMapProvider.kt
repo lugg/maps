@@ -61,8 +61,8 @@ class GoogleMapProvider(private val context: Context) :
   // Theme
   private var theme: String = "system"
 
-  // Padding
-  private var padding: EdgeInsets = EdgeInsets()
+  // Edge Insets
+  private var edgeInsets: EdgeInsets = EdgeInsets()
 
   // region MapProvider
 
@@ -108,7 +108,7 @@ class GoogleMapProvider(private val context: Context) :
 
     applyUiSettings()
     applyZoomLimits()
-    applyPadding()
+    applyEdgeInsets()
     applyTheme()
     applyUserLocation()
     processPendingMarkers()
@@ -199,9 +199,9 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  override fun setPadding(padding: EdgeInsets) {
-    this.padding = padding
-    applyPadding()
+  override fun setEdgeInsets(edgeInsets: EdgeInsets) {
+    this.edgeInsets = edgeInsets
+    applyEdgeInsets()
   }
 
   // endregion
@@ -397,10 +397,10 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun fitCoordinates(
     coordinates: List<Any>,
-    paddingTop: Int,
-    paddingLeft: Int,
-    paddingBottom: Int,
-    paddingRight: Int,
+    edgeInsetsTop: Int,
+    edgeInsetsLeft: Int,
+    edgeInsetsBottom: Int,
+    edgeInsetsRight: Int,
     duration: Int
   ) {
     val map = googleMap ?: return
@@ -413,16 +413,16 @@ class GoogleMapProvider(private val context: Context) :
     latLngs.forEach { boundsBuilder.include(it) }
     val bounds = boundsBuilder.build()
 
-    val top = paddingTop.toFloat().dpToPx().toInt()
-    val left = paddingLeft.toFloat().dpToPx().toInt()
-    val bottom = paddingBottom.toFloat().dpToPx().toInt()
-    val right = paddingRight.toFloat().dpToPx().toInt()
+    val top = edgeInsetsTop.toFloat().dpToPx().toInt()
+    val left = edgeInsetsLeft.toFloat().dpToPx().toInt()
+    val bottom = edgeInsetsBottom.toFloat().dpToPx().toInt()
+    val right = edgeInsetsRight.toFloat().dpToPx().toInt()
 
     map.setPadding(
-      padding.left + left,
-      padding.top + top,
-      padding.right + right,
-      padding.bottom + bottom
+      edgeInsets.left + left,
+      edgeInsets.top + top,
+      edgeInsets.right + right,
+      edgeInsets.bottom + bottom
     )
 
     val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 0)
@@ -433,7 +433,7 @@ class GoogleMapProvider(private val context: Context) :
       else -> map.moveCamera(cameraUpdate)
     }
 
-    map.setPadding(padding.left, padding.top, padding.right, padding.bottom)
+    map.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
   }
 
   // endregion
@@ -456,8 +456,8 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  private fun applyPadding() {
-    googleMap?.setPadding(padding.left, padding.top, padding.right, padding.bottom)
+  private fun applyEdgeInsets() {
+    googleMap?.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
   }
 
   private fun applyTheme() {

@@ -16,7 +16,7 @@ export interface MoveCameraOptions {
  * @default duration -1
  */
 export interface FitCoordinatesOptions {
-  padding?: EdgeInsets;
+  edgeInsets?: EdgeInsets;
   duration?: number;
 }
 
@@ -91,9 +91,9 @@ export interface MapViewProps extends ViewProps {
    */
   pitchEnabled?: boolean;
   /**
-   * Map content padding
+   * Map content edge insets
    */
-  padding?: EdgeInsets;
+  edgeInsets?: EdgeInsets;
   /**
    * Show current user location on the map.
    * Requires location permission to be granted, otherwise silently ignored.

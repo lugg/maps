@@ -148,8 +148,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_mapView setMinZoom:_mapView.minZoom maxZoom:max];
 }
 
-- (void)setPadding:(UIEdgeInsets)padding oldPadding:(UIEdgeInsets)oldPadding {
-  _mapView.padding = padding;
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
+  _mapView.padding = edgeInsets;
 }
 
 #pragma mark - GMSMapViewDelegate
@@ -410,10 +410,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
-            paddingTop:(double)paddingTop
-           paddingLeft:(double)paddingLeft
-         paddingBottom:(double)paddingBottom
-          paddingRight:(double)paddingRight
+         edgeInsetsTop:(double)edgeInsetsTop
+        edgeInsetsLeft:(double)edgeInsetsLeft
+      edgeInsetsBottom:(double)edgeInsetsBottom
+       edgeInsetsRight:(double)edgeInsetsRight
               duration:(double)duration {
   if (!_mapView || coordinates.count == 0)
     return;
@@ -425,10 +425,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     bounds = [bounds includingCoordinate:CLLocationCoordinate2DMake(lat, lng)];
   }
 
-  UIEdgeInsets edgePadding =
-      UIEdgeInsetsMake(paddingTop, paddingLeft, paddingBottom, paddingRight);
+  UIEdgeInsets insets =
+      UIEdgeInsetsMake(edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight);
   GMSCameraUpdate *cameraUpdate = [GMSCameraUpdate fitBounds:bounds
-                                              withEdgeInsets:edgePadding];
+                                              withEdgeInsets:insets];
 
   if (duration < 0) {
     [_mapView animateWithCameraUpdate:cameraUpdate];

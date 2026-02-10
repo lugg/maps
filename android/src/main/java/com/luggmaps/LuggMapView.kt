@@ -52,7 +52,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var userLocationEnabled: Boolean = false
   private var minZoom: Double? = null
   private var maxZoom: Double? = null
-  private var padding: EdgeInsets = EdgeInsets()
+  private var edgeInsets: EdgeInsets = EdgeInsets()
 
   // region View Lifecycle
 
@@ -150,7 +150,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setTheme(theme)
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
-    provider?.setPadding(padding)
+    provider?.setEdgeInsets(edgeInsets)
   }
 
   fun setProvider(value: String?) {
@@ -213,9 +213,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setTheme(value)
   }
 
-  fun setPadding(top: Int, left: Int, bottom: Int, right: Int) {
-    padding = EdgeInsets(top, left, bottom, right)
-    provider?.setPadding(padding)
+  fun setEdgeInsets(top: Int, left: Int, bottom: Int, right: Int) {
+    edgeInsets = EdgeInsets(top, left, bottom, right)
+    provider?.setEdgeInsets(edgeInsets)
   }
 
   // endregion
@@ -228,13 +228,13 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
   fun fitCoordinates(
     coordinates: List<LatLng>,
-    paddingTop: Int,
-    paddingLeft: Int,
-    paddingBottom: Int,
-    paddingRight: Int,
+    edgeInsetsTop: Int,
+    edgeInsetsLeft: Int,
+    edgeInsetsBottom: Int,
+    edgeInsetsRight: Int,
     duration: Int
   ) {
-    provider?.fitCoordinates(coordinates, paddingTop, paddingLeft, paddingBottom, paddingRight, duration)
+    provider?.fitCoordinates(coordinates, edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight, duration)
   }
 
   // endregion

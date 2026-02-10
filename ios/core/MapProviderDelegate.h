@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setTheme:(NSString *)theme;
 - (void)setMinZoom:(double)minZoom;
 - (void)setMaxZoom:(double)maxZoom;
-- (void)setPadding:(UIEdgeInsets)padding oldPadding:(UIEdgeInsets)oldPadding;
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets;
 
 // Children
 - (void)addMarkerView:(LuggMarkerView *)markerView;
@@ -57,10 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
               zoom:(double)zoom
           duration:(double)duration;
 - (void)fitCoordinates:(NSArray *)coordinates
-            paddingTop:(double)paddingTop
-           paddingLeft:(double)paddingLeft
-         paddingBottom:(double)paddingBottom
-          paddingRight:(double)paddingRight
+         edgeInsetsTop:(double)edgeInsetsTop
+        edgeInsetsLeft:(double)edgeInsetsLeft
+      edgeInsetsBottom:(double)edgeInsetsBottom
+       edgeInsetsRight:(double)edgeInsetsRight
               duration:(double)duration;
 
 @end

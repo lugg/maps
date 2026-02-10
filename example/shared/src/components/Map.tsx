@@ -24,7 +24,7 @@ import { Route, smoothCoordinates } from './Route';
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
   animatedProps?: Partial<MapViewProps>;
-  animatedPaddingBottom?: SharedValue<number>;
+  animatedEdgeInsetsBottom?: SharedValue<number>;
 }
 
 const renderMarker = (marker: MarkerData) => {
@@ -88,9 +88,9 @@ export const Map = forwardRef<MapView, MapProps>(
   (
     {
       markers,
-      padding,
+      edgeInsets,
       animatedProps,
-      animatedPaddingBottom,
+      animatedEdgeInsetsBottom,
       onCameraIdle,
       onCameraMove,
       ...props
@@ -108,7 +108,7 @@ export const Map = forwardRef<MapView, MapProps>(
     );
 
     const centerPinStyle = useAnimatedStyle(() => {
-      const bottomOffset = animatedPaddingBottom?.value ?? padding?.bottom ?? 0;
+      const bottomOffset = animatedEdgeInsetsBottom?.value ?? edgeInsets?.bottom ?? 0;
       return {
         transform: [{ translateY: -bottomOffset / 2 }],
       };
@@ -132,7 +132,7 @@ export const Map = forwardRef<MapView, MapProps>(
           initialCoordinate={{ latitude: 37.78, longitude: -122.43 }}
           initialZoom={INITIAL_ZOOM}
           userLocationEnabled
-          padding={padding}
+          edgeInsets={edgeInsets}
           animatedProps={animatedProps}
           onCameraMove={handleCameraMove}
           onCameraIdle={handleCameraIdle}

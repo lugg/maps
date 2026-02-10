@@ -128,14 +128,14 @@ class LuggMapViewManager :
     view.setTheme(value ?: "system")
   }
 
-  @ReactProp(name = "padding")
-  override fun setPadding(view: LuggMapView, value: ReadableMap?) {
+  @ReactProp(name = "edgeInsets")
+  override fun setEdgeInsets(view: LuggMapView, value: ReadableMap?) {
     value?.let {
       val top = if (it.hasKey("top")) it.getDouble("top").toFloat().dpToPx().toInt() else 0
       val left = if (it.hasKey("left")) it.getDouble("left").toFloat().dpToPx().toInt() else 0
       val bottom = if (it.hasKey("bottom")) it.getDouble("bottom").toFloat().dpToPx().toInt() else 0
       val right = if (it.hasKey("right")) it.getDouble("right").toFloat().dpToPx().toInt() else 0
-      view.setPadding(top, left, bottom, right)
+      view.setEdgeInsets(top, left, bottom, right)
     }
   }
 
@@ -157,10 +157,10 @@ class LuggMapViewManager :
   override fun fitCoordinates(
     view: LuggMapView,
     coordinates: ReadableArray?,
-    paddingTop: Double,
-    paddingLeft: Double,
-    paddingBottom: Double,
-    paddingRight: Double,
+    edgeInsetsTop: Double,
+    edgeInsetsLeft: Double,
+    edgeInsetsBottom: Double,
+    edgeInsetsRight: Double,
     duration: Double
   ) {
     val coords = mutableListOf<LatLng>()
@@ -172,7 +172,7 @@ class LuggMapViewManager :
         coords.add(LatLng(lat, lng))
       }
     }
-    view.fitCoordinates(coords, paddingTop.toInt(), paddingLeft.toInt(), paddingBottom.toInt(), paddingRight.toInt(), duration.toInt())
+    view.fitCoordinates(coords, edgeInsetsTop.toInt(), edgeInsetsLeft.toInt(), edgeInsetsBottom.toInt(), edgeInsetsRight.toInt(), duration.toInt())
   }
 
   companion object {

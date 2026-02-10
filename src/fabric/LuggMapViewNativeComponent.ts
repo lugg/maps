@@ -49,7 +49,7 @@ export interface NativeProps extends ViewProps {
   scrollEnabled?: boolean;
   rotateEnabled?: boolean;
   pitchEnabled?: boolean;
-  padding?: EdgeInsets;
+  edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
   theme?: WithDefault<'light' | 'dark' | 'system', 'system'>;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
@@ -70,10 +70,10 @@ interface NativeCommands {
   fitCoordinates: (
     viewRef: React.ElementRef<ComponentType>,
     coordinates: Coordinate[],
-    paddingTop: Double,
-    paddingLeft: Double,
-    paddingBottom: Double,
-    paddingRight: Double,
+    edgeInsetsTop: Double,
+    edgeInsetsLeft: Double,
+    edgeInsetsBottom: Double,
+    edgeInsetsRight: Double,
     duration: Double
   ) => void;
 }

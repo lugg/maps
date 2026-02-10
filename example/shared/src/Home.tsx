@@ -46,16 +46,16 @@ function HomeContent() {
 
   const { animatedPosition } = useReanimatedTrueSheet();
 
-  const animatedPaddingBottom = useDerivedValue(
+  const animatedEdgeInsetsBottom = useDerivedValue(
     () => screenHeight - animatedPosition.value
   );
 
   const animatedProps = useAnimatedProps(() => ({
-    padding: {
+    edgeInsets: {
       top: 0,
       left: 0,
       right: 0,
-      bottom: animatedPaddingBottom.value,
+      bottom: animatedEdgeInsetsBottom.value,
     },
   }));
 
@@ -112,7 +112,7 @@ function HomeContent() {
   const fitAllMarkers = () => {
     const coordinates = markers.map((m) => m.coordinate);
     mapRef.current?.fitCoordinates(coordinates, {
-      padding: {
+      edgeInsets: {
         top: 60,
         left: 40,
         right: 40,
@@ -134,7 +134,7 @@ function HomeContent() {
               provider={provider}
               markers={markers}
               animatedProps={animatedProps}
-              animatedPaddingBottom={animatedPaddingBottom}
+              animatedEdgeInsetsBottom={animatedEdgeInsetsBottom}
               userLocationEnabled={locationPermission}
               onCameraMove={handleCameraMove}
               onCameraIdle={handleCameraIdle}

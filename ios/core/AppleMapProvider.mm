@@ -123,16 +123,16 @@
   [self applyZoomRange];
 }
 
-- (void)setPadding:(UIEdgeInsets)padding oldPadding:(UIEdgeInsets)oldPadding {
-  CGFloat oldOffsetX = (oldPadding.left - oldPadding.right) / 2.0;
-  CGFloat oldOffsetY = (oldPadding.top - oldPadding.bottom) / 2.0;
-  CGFloat newOffsetX = (padding.left - padding.right) / 2.0;
-  CGFloat newOffsetY = (padding.top - padding.bottom) / 2.0;
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
+  CGFloat oldOffsetX = (oldEdgeInsets.left - oldEdgeInsets.right) / 2.0;
+  CGFloat oldOffsetY = (oldEdgeInsets.top - oldEdgeInsets.bottom) / 2.0;
+  CGFloat newOffsetX = (edgeInsets.left - edgeInsets.right) / 2.0;
+  CGFloat newOffsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0;
 
   CGFloat deltaX = newOffsetX - oldOffsetX;
   CGFloat deltaY = newOffsetY - oldOffsetY;
 
-  _mapView.layoutMargins = padding;
+  _mapView.layoutMargins = edgeInsets;
 
   if (deltaX != 0 || deltaY != 0) {
     CLLocationCoordinate2D currentCenter = _mapView.centerCoordinate;
@@ -558,10 +558,10 @@
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
-            paddingTop:(double)paddingTop
-           paddingLeft:(double)paddingLeft
-         paddingBottom:(double)paddingBottom
-          paddingRight:(double)paddingRight
+         edgeInsetsTop:(double)edgeInsetsTop
+        edgeInsetsLeft:(double)edgeInsetsLeft
+      edgeInsetsBottom:(double)edgeInsetsBottom
+       edgeInsetsRight:(double)edgeInsetsRight
               duration:(double)duration {
   if (!_mapView || coordinates.count == 0)
     return;
@@ -582,20 +582,20 @@
   }
   free(coords);
 
-  UIEdgeInsets edgePadding =
-      UIEdgeInsetsMake(paddingTop, paddingLeft, paddingBottom, paddingRight);
+  UIEdgeInsets insets =
+      UIEdgeInsetsMake(edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight);
 
   if (duration < 0) {
-    [_mapView setVisibleMapRect:mapRect edgePadding:edgePadding animated:YES];
+    [_mapView setVisibleMapRect:mapRect edgePadding:insets animated:YES];
   } else if (duration > 0) {
     [UIView animateWithDuration:duration / 1000.0
                      animations:^{
                        [self->_mapView setVisibleMapRect:mapRect
-                                             edgePadding:edgePadding
+                                             edgePadding:insets
                                                 animated:NO];
                      }];
   } else {
-    [_mapView setVisibleMapRect:mapRect edgePadding:edgePadding animated:NO];
+    [_mapView setVisibleMapRect:mapRect edgePadding:insets animated:NO];
   }
 }
 

@@ -47,8 +47,8 @@ export class MapView
     const first = coordinates[0];
     if (!ref || !first) return;
 
-    const { padding, duration = -1 } = options ?? {};
-    const { top = 0, left = 0, bottom = 0, right = 0 } = padding ?? {};
+    const { edgeInsets, duration = -1 } = options ?? {};
+    const { top = 0, left = 0, bottom = 0, right = 0 } = edgeInsets ?? {};
 
     if (coordinates.length === 1) {
       const zoom = this.props.initialZoom ?? 10;
@@ -79,7 +79,7 @@ export class MapView
       scrollEnabled,
       rotateEnabled,
       pitchEnabled,
-      padding,
+      edgeInsets,
       userLocationEnabled,
       theme,
       onCameraMove,
@@ -103,7 +103,7 @@ export class MapView
         scrollEnabled={scrollEnabled}
         rotateEnabled={rotateEnabled}
         pitchEnabled={pitchEnabled}
-        padding={padding}
+        edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
         theme={theme}
         onCameraMove={onCameraMove}

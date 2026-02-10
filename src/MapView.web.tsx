@@ -107,7 +107,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     zoomEnabled = true,
     scrollEnabled = true,
     pitchEnabled = true,
-    padding,
+    edgeInsets,
     userLocationEnabled,
     theme = 'system',
     onCameraMove,
@@ -123,16 +123,16 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   const readyFired = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
   const wasGesture = useRef(false);
-  const prevPadding = useRef(padding);
+  const prevEdgeInsets = useRef(edgeInsets);
 
   const offsetCenter = useCallback(
     (
       coord: Coordinate,
       zoom: number,
-      paddingOverride?: typeof padding,
+      edgeInsetsOverride?: typeof edgeInsets,
       reverse = false
     ) => {
-      const p = paddingOverride ?? padding;
+      const p = edgeInsetsOverride ?? edgeInsets;
       const div = map?.getDiv();
       if (!p || !div) {
         return { lat: coord.latitude, lng: coord.longitude };
@@ -157,7 +157,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
 
       return { lat, lng };
     },
-    [map, padding]
+    [map, edgeInsets]
   );
 
   useImperativeHandle(
@@ -190,7 +190,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         const first = coordinates[0];
         if (!map || !first) return;
 
-        const { padding: fitPadding, duration = -1 } = options ?? {};
+        const { edgeInsets: fitEdgeInsets, duration = -1 } = options ?? {};
 
         if (coordinates.length === 1) {
           this.moveCamera(first, { zoom: initialZoom, duration });
@@ -203,14 +203,14 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         });
 
         map.fitBounds(bounds, {
-          top: (padding?.top ?? 0) + (fitPadding?.top ?? 0),
-          left: (padding?.left ?? 0) + (fitPadding?.left ?? 0),
-          bottom: (padding?.bottom ?? 0) + (fitPadding?.bottom ?? 0),
-          right: (padding?.right ?? 0) + (fitPadding?.right ?? 0),
+          top: (edgeInsets?.top ?? 0) + (fitEdgeInsets?.top ?? 0),
+          left: (edgeInsets?.left ?? 0) + (fitEdgeInsets?.left ?? 0),
+          bottom: (edgeInsets?.bottom ?? 0) + (fitEdgeInsets?.bottom ?? 0),
+          right: (edgeInsets?.right ?? 0) + (fitEdgeInsets?.right ?? 0),
         });
       },
     }),
-    [map, initialZoom, padding, offsetCenter]
+    [map, initialZoom, edgeInsets, offsetCenter]
   );
 
   useEffect(() => {
@@ -221,16 +221,16 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   }, [map, onReady]);
 
   useEffect(() => {
-    if (!map || !padding) return;
+    if (!map || !edgeInsets) return;
 
-    const prev = prevPadding.current;
-    const paddingChanged =
-      prev?.top !== padding.top ||
-      prev?.left !== padding.left ||
-      prev?.bottom !== padding.bottom ||
-      prev?.right !== padding.right;
+    const prev = prevEdgeInsets.current;
+    const changed =
+      prev?.top !== edgeInsets.top ||
+      prev?.left !== edgeInsets.left ||
+      prev?.bottom !== edgeInsets.bottom ||
+      prev?.right !== edgeInsets.right;
 
-    if (paddingChanged) {
+    if (changed) {
       const center = map.getCenter();
       const zoom = map.getZoom() ?? initialZoom;
       if (center) {
@@ -243,14 +243,14 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         const newCenter = offsetCenter(
           { latitude: logicalCenter.lat, longitude: logicalCenter.lng },
           zoom,
-          padding,
+          edgeInsets,
           false
         );
         map.panTo(newCenter);
       }
-      prevPadding.current = padding;
+      prevEdgeInsets.current = edgeInsets;
     }
-  }, [map, padding, initialZoom, offsetCenter]);
+  }, [map, edgeInsets, initialZoom, offsetCenter]);
 
   const handleDragStart = () => {
     setIsDragging(true);
