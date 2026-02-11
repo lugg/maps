@@ -39,6 +39,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setMaxZoom:(double)maxZoom;
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets;
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
+        oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
+             duration:(double)duration;
 
 // Children
 - (void)addMarkerView:(LuggMarkerView *)markerView;

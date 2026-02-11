@@ -77,10 +77,18 @@ interface NativeCommands {
     edgeInsetsRight: Double,
     duration: Double
   ) => void;
+  setEdgeInsets: (
+    viewRef: React.ElementRef<ComponentType>,
+    top: Double,
+    left: Double,
+    bottom: Double,
+    right: Double,
+    duration: Double
+  ) => void;
 }
 
 export const Commands = codegenNativeCommands<NativeCommands>({
-  supportedCommands: ['moveCamera', 'fitCoordinates'],
+  supportedCommands: ['moveCamera', 'fitCoordinates', 'setEdgeInsets'],
 });
 
 export default codegenNativeComponent<NativeProps>(

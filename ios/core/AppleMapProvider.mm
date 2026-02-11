@@ -29,6 +29,13 @@
   double _minZoom;
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
+
+  // Edge insets animation
+  CADisplayLink *_edgeInsetsDisplayLink;
+  UIEdgeInsets _edgeInsetsFrom;
+  UIEdgeInsets _edgeInsetsTo;
+  CFTimeInterval _edgeInsetsAnimationStart;
+  CFTimeInterval _edgeInsetsAnimationDuration;
 }
 
 @synthesize delegate = _delegate;
@@ -76,6 +83,7 @@
 }
 
 - (void)destroy {
+  [self stopEdgeInsetsAnimation];
   [_mapView removeFromSuperview];
   _mapView = nil;
   _isMapReady = NO;
@@ -149,6 +157,54 @@
                                          toCoordinateFromView:_mapView];
     [_mapView setCenterCoordinate:newCenter animated:NO];
   }
+}
+
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
+        oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
+             duration:(double)duration {
+  [self stopEdgeInsetsAnimation];
+
+  if (duration > 0 && _mapView) {
+    _edgeInsetsFrom = oldEdgeInsets;
+    _edgeInsetsTo = edgeInsets;
+    _edgeInsetsAnimationDuration = duration / 1000.0;
+    _edgeInsetsAnimationStart = CACurrentMediaTime();
+
+    _edgeInsetsDisplayLink =
+        [CADisplayLink displayLinkWithTarget:self
+                                    selector:@selector(edgeInsetsAnimationTick:)];
+    [_edgeInsetsDisplayLink addToRunLoop:[NSRunLoop mainRunLoop]
+                                 forMode:NSRunLoopCommonModes];
+  } else {
+    [self setEdgeInsets:edgeInsets oldEdgeInsets:oldEdgeInsets];
+  }
+}
+
+- (void)edgeInsetsAnimationTick:(CADisplayLink *)displayLink {
+  CFTimeInterval elapsed = CACurrentMediaTime() - _edgeInsetsAnimationStart;
+  CGFloat progress = MIN(elapsed / _edgeInsetsAnimationDuration, 1.0);
+
+  // Ease out cubic
+  CGFloat t = 1.0 - (1.0 - progress) * (1.0 - progress) * (1.0 - progress);
+
+  UIEdgeInsets current = UIEdgeInsetsMake(
+      _edgeInsetsFrom.top + (_edgeInsetsTo.top - _edgeInsetsFrom.top) * t,
+      _edgeInsetsFrom.left + (_edgeInsetsTo.left - _edgeInsetsFrom.left) * t,
+      _edgeInsetsFrom.bottom +
+          (_edgeInsetsTo.bottom - _edgeInsetsFrom.bottom) * t,
+      _edgeInsetsFrom.right +
+          (_edgeInsetsTo.right - _edgeInsetsFrom.right) * t);
+
+  [self setEdgeInsets:current oldEdgeInsets:_mapView.layoutMargins];
+
+  if (progress >= 1.0) {
+    [self stopEdgeInsetsAnimation];
+  }
+}
+
+- (void)stopEdgeInsetsAnimation {
+  [_edgeInsetsDisplayLink invalidate];
+  _edgeInsetsDisplayLink = nil;
 }
 
 - (CLLocationDistance)cameraDistanceForZoomLevel:(double)zoomLevel {

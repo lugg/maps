@@ -13,15 +13,22 @@ import {
   type CameraEventPayload,
 } from '@lugg/maps';
 import {
-  type TrueSheet,
+  TrueSheet,
+  type DetentChangeEvent,
   TrueSheetProvider,
 } from '@lodev09/react-native-true-sheet';
 import {
-  ReanimatedTrueSheet,
-  ReanimatedTrueSheetProvider,
-  useReanimatedTrueSheet,
-} from '@lodev09/react-native-true-sheet/reanimated';
-import { useDerivedValue } from 'react-native-reanimated';
+  useSharedValue,
+  withSpring,
+  type WithSpringConfig,
+} from 'react-native-reanimated';
+
+const SPRING_CONFIG: WithSpringConfig = {
+  damping: 500,
+  stiffness: 1000,
+  mass: 3,
+  overshootClamping: true,
+};
 
 import { Button, Map } from './components';
 import { randomFrom, randomLetter } from './utils';
@@ -43,11 +50,34 @@ function HomeContent() {
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [cameraPosition, setCameraPosition] = useState<CameraEventPayload>();
   const [isIdle, setIsIdle] = useState(true);
+  const edgeInsetsBottom = useSharedValue(0);
 
-  const { animatedPosition } = useReanimatedTrueSheet();
+  const handleMapReady = useCallback(() => {
+    const bottom = edgeInsetsBottom.value;
+    if (bottom > 0) {
+      mapRef.current?.setEdgeInsets({ top: 0, left: 0, bottom, right: 0 });
+    }
+  }, [edgeInsetsBottom]);
 
-  const animatedEdgeInsetsBottom = useDerivedValue(
-    () => screenHeight - animatedPosition.value
+  const handleSheetPresent = useCallback(
+    (event: DetentChangeEvent) => {
+      const bottom = screenHeight - event.nativeEvent.position;
+      edgeInsetsBottom.value = bottom;
+      mapRef.current?.setEdgeInsets({ top: 0, left: 0, bottom, right: 0 });
+    },
+    [screenHeight, edgeInsetsBottom]
+  );
+
+  const handleDetentChange = useCallback(
+    (event: DetentChangeEvent) => {
+      const bottom = screenHeight - event.nativeEvent.position;
+      edgeInsetsBottom.value = withSpring(bottom, SPRING_CONFIG);
+      mapRef.current?.setEdgeInsets(
+        { top: 0, left: 0, bottom, right: 0 },
+        { duration: 300 }
+      );
+    },
+    [screenHeight, edgeInsetsBottom]
   );
 
   const handleCameraMove = useCallback(
@@ -124,14 +154,15 @@ function HomeContent() {
               ref={mapRef}
               provider={provider}
               markers={markers}
-              animatedEdgeInsetsBottom={animatedEdgeInsetsBottom}
+              edgeInsetsBottom={edgeInsetsBottom}
               userLocationEnabled={locationPermission}
+              onReady={handleMapReady}
               onCameraMove={handleCameraMove}
               onCameraIdle={handleCameraIdle}
             />
           )}
 
-          <ReanimatedTrueSheet
+          <TrueSheet
             ref={sheetRef}
             detents={['auto', 0.5]}
             style={styles.sheet}
@@ -140,6 +171,8 @@ function HomeContent() {
             initialDetentIndex={0}
             anchor="left"
             maxContentWidth={500}
+            onDidPresent={handleSheetPresent}
+            onDetentChange={handleDetentChange}
           >
             <Text style={styles.positionText}>
               {cameraPosition ? (
@@ -187,7 +220,7 @@ function HomeContent() {
                 }
               />
             </View>
-          </ReanimatedTrueSheet>
+          </TrueSheet>
         </View>
       </MapProvider>
     </TrueSheetProvider>
@@ -195,11 +228,7 @@ function HomeContent() {
 }
 
 export function Home() {
-  return (
-    <ReanimatedTrueSheetProvider>
-      <HomeContent />
-    </ReanimatedTrueSheetProvider>
-  );
+  return <HomeContent />;
 }
 
 const styles = StyleSheet.create({

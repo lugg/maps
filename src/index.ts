@@ -14,6 +14,7 @@ export type {
   MapViewRef,
   MoveCameraOptions,
   FitCoordinatesOptions,
+  SetEdgeInsetsOptions,
   CameraEventPayload,
 } from './MapView.types';
 export type {

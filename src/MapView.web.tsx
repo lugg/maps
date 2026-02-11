@@ -209,6 +209,10 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           right: (edgeInsets?.right ?? 0) + (fitEdgeInsets?.right ?? 0),
         });
       },
+
+      setEdgeInsets() {
+        // No-op on web — edgeInsets is handled via props
+      },
     }),
     [map, initialZoom, edgeInsets, offsetCenter]
   );

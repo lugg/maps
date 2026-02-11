@@ -9,8 +9,9 @@ import type {
   MapViewRef,
   MoveCameraOptions,
   FitCoordinatesOptions,
+  SetEdgeInsetsOptions,
 } from './MapView.types';
-import type { Coordinate } from './types';
+import type { Coordinate, EdgeInsets } from './types';
 
 export class MapView
   extends React.Component<MapViewProps>
@@ -65,6 +66,15 @@ export class MapView
       right,
       duration
     );
+  }
+
+  setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions) {
+    const ref = this.nativeRef.current;
+    if (!ref) return;
+
+    const { top = 0, left = 0, bottom = 0, right = 0 } = edgeInsets;
+    const { duration = 0 } = options ?? {};
+    Commands.setEdgeInsets(ref, top, left, bottom, right, duration);
   }
 
   render() {

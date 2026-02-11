@@ -220,9 +220,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setTheme(value)
   }
 
-  fun setEdgeInsets(top: Int, left: Int, bottom: Int, right: Int) {
+  fun setEdgeInsets(top: Int, left: Int, bottom: Int, right: Int, duration: Int = 0) {
     edgeInsets = EdgeInsets(top, left, bottom, right)
-    provider?.setEdgeInsets(edgeInsets)
+    provider?.setEdgeInsets(edgeInsets, duration)
   }
 
   // endregion

@@ -19,6 +19,13 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
+
+  // Edge insets animation
+  CADisplayLink *_edgeInsetsDisplayLink;
+  UIEdgeInsets _edgeInsetsFrom;
+  UIEdgeInsets _edgeInsetsTo;
+  CFTimeInterval _edgeInsetsAnimationStart;
+  CFTimeInterval _edgeInsetsAnimationDuration;
 }
 
 @synthesize delegate = _delegate;
@@ -86,6 +93,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)destroy {
+  [self stopEdgeInsetsAnimation];
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
@@ -155,10 +163,60 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
+  [self setEdgeInsets:edgeInsets oldEdgeInsets:oldEdgeInsets duration:0];
+}
+
+- (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
+        oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
+             duration:(double)duration {
   if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, edgeInsets))
     return;
-  _edgeInsets = edgeInsets;
-  _mapView.padding = edgeInsets;
+
+  [self stopEdgeInsetsAnimation];
+
+  if (duration > 0 && _mapView) {
+    _edgeInsetsFrom = _edgeInsets;
+    _edgeInsetsTo = edgeInsets;
+    _edgeInsets = edgeInsets;
+    _edgeInsetsAnimationDuration = duration / 1000.0;
+    _edgeInsetsAnimationStart = CACurrentMediaTime();
+
+    _edgeInsetsDisplayLink =
+        [CADisplayLink displayLinkWithTarget:self
+                                    selector:@selector(edgeInsetsAnimationTick:)];
+    [_edgeInsetsDisplayLink addToRunLoop:[NSRunLoop mainRunLoop]
+                                 forMode:NSRunLoopCommonModes];
+  } else {
+    _edgeInsets = edgeInsets;
+    _mapView.padding = edgeInsets;
+  }
+}
+
+- (void)edgeInsetsAnimationTick:(CADisplayLink *)displayLink {
+  CFTimeInterval elapsed = CACurrentMediaTime() - _edgeInsetsAnimationStart;
+  CGFloat progress = MIN(elapsed / _edgeInsetsAnimationDuration, 1.0);
+
+  // Ease out cubic
+  CGFloat t = 1.0 - (1.0 - progress) * (1.0 - progress) * (1.0 - progress);
+
+  UIEdgeInsets current = UIEdgeInsetsMake(
+      _edgeInsetsFrom.top + (_edgeInsetsTo.top - _edgeInsetsFrom.top) * t,
+      _edgeInsetsFrom.left + (_edgeInsetsTo.left - _edgeInsetsFrom.left) * t,
+      _edgeInsetsFrom.bottom +
+          (_edgeInsetsTo.bottom - _edgeInsetsFrom.bottom) * t,
+      _edgeInsetsFrom.right +
+          (_edgeInsetsTo.right - _edgeInsetsFrom.right) * t);
+
+  _mapView.padding = current;
+
+  if (progress >= 1.0) {
+    [self stopEdgeInsetsAnimation];
+  }
+}
+
+- (void)stopEdgeInsetsAnimation {
+  [_edgeInsetsDisplayLink invalidate];
+  _edgeInsetsDisplayLink = nil;
 }
 
 #pragma mark - GMSMapViewDelegate

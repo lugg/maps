@@ -30,6 +30,7 @@ interface MapProvider {
   fun setMinZoom(zoom: Double)
   fun setMaxZoom(zoom: Double)
   fun setEdgeInsets(edgeInsets: EdgeInsets)
+  fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int)
 
   // Children
   fun addMarkerView(markerView: LuggMarkerView)

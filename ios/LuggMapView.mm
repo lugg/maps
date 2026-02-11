@@ -273,6 +273,16 @@ using namespace luggmaps::events;
                    duration:duration];
 }
 
+- (void)setEdgeInsets:(double)top
+                 left:(double)left
+               bottom:(double)bottom
+                right:(double)right
+             duration:(double)duration {
+  UIEdgeInsets oldInsets = _edgeInsets;
+  _edgeInsets = UIEdgeInsetsMake(top, left, bottom, right);
+  [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:oldInsets duration:duration];
+}
+
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
   RCTLuggMapViewHandleCommand(self, commandName, args);
 }

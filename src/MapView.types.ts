@@ -19,6 +19,13 @@ export interface FitCoordinatesOptions {
 }
 
 /**
+ * Options for setting edge insets
+ */
+export interface SetEdgeInsetsOptions {
+  duration?: number;
+}
+
+/**
  * MapView ref methods
  */
 export interface MapViewRef {
@@ -27,6 +34,7 @@ export interface MapViewRef {
     coordinates: Coordinate[],
     options?: FitCoordinatesOptions
   ): void;
+  setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions): void;
 }
 
 /**

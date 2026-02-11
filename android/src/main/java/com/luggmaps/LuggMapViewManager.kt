@@ -159,6 +159,16 @@ class LuggMapViewManager :
     view.moveCamera(latitude, longitude, zoom, duration.toInt())
   }
 
+  override fun setEdgeInsets(view: LuggMapView, top: Double, left: Double, bottom: Double, right: Double, duration: Double) {
+    view.setEdgeInsets(
+      top.toFloat().dpToPx().toInt(),
+      left.toFloat().dpToPx().toInt(),
+      bottom.toFloat().dpToPx().toInt(),
+      right.toFloat().dpToPx().toInt(),
+      duration.toInt()
+    )
+  }
+
   override fun fitCoordinates(
     view: LuggMapView,
     coordinates: ReadableArray?,
