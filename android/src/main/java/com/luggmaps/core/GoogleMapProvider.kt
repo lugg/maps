@@ -209,7 +209,16 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets) {
-    setEdgeInsets(edgeInsets, 0)
+    val oldInsets = this.edgeInsets
+    this.edgeInsets = edgeInsets
+    applyEdgeInsets()
+
+    val map = googleMap
+    if (map != null && oldInsets != edgeInsets) {
+      mapView?.post {
+        setEdgeInsets(edgeInsets, 0)
+      }
+    }
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int) {

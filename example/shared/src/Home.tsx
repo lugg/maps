@@ -31,7 +31,7 @@ const SPRING_CONFIG: WithSpringConfig = {
   overshootClamping: true,
 };
 
-import { Button, Map } from './components';
+import { AnimatedMap, Button, Map } from './components';
 import { randomFrom, randomLetter } from './utils';
 import {
   MARKER_COLORS,
@@ -55,6 +55,7 @@ export function Home() {
   const locationPermission = useLocationPermission();
   const [provider, setProvider] = useState<MapProviderType>('apple');
   const [showMap, setShowMap] = useState(true);
+  const [useAnimatedProps, setUseAnimatedProps] = useState(false);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [cameraPosition, setCameraPosition] = useState<CameraEventPayload>();
   const [isIdle, setIsIdle] = useState(true);
@@ -154,19 +155,32 @@ export function Home() {
     <TrueSheetProvider>
       <MapProvider apiKey={apiKey}>
         <View style={styles.container}>
-          {showMap && (
-            <Map
-              key={provider}
-              ref={mapRef}
-              provider={provider}
-              markers={markers}
-              edgeInsetsBottom={edgeInsetsBottom}
-              userLocationEnabled={locationPermission}
-              onReady={handleMapReady}
-              onCameraMove={(e) => handleCameraEvent(e, false)}
-              onCameraIdle={(e) => handleCameraEvent(e, true)}
-            />
-          )}
+          {showMap &&
+            (useAnimatedProps ? (
+              <AnimatedMap
+                key={`${provider}-animated`}
+                ref={mapRef}
+                provider={provider}
+                markers={markers}
+                edgeInsetsBottom={edgeInsetsBottom}
+                userLocationEnabled={locationPermission}
+                onReady={handleMapReady}
+                onCameraMove={(e) => handleCameraEvent(e, false)}
+                onCameraIdle={(e) => handleCameraEvent(e, true)}
+              />
+            ) : (
+              <Map
+                key={provider}
+                ref={mapRef}
+                provider={provider}
+                markers={markers}
+                edgeInsetsBottom={edgeInsetsBottom}
+                userLocationEnabled={locationPermission}
+                onReady={handleMapReady}
+                onCameraMove={(e) => handleCameraEvent(e, false)}
+                onCameraIdle={(e) => handleCameraEvent(e, true)}
+              />
+            ))}
 
           <TrueSheet
             ref={sheetRef}
@@ -224,6 +238,10 @@ export function Home() {
                 onPress={() =>
                   setProvider((p) => (p === 'google' ? 'apple' : 'google'))
                 }
+              />
+              <Button
+                title={useAnimatedProps ? 'Use Command' : 'Use AnimatedProps'}
+                onPress={() => setUseAnimatedProps((prev) => !prev)}
               />
             </View>
           </TrueSheet>
