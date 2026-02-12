@@ -127,15 +127,9 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   const prevEdgeInsets = useRef(edgeInsets);
 
   const offsetCenter = useCallback(
-    (
-      coord: Coordinate,
-      zoom: number,
-      edgeInsetsOverride?: typeof edgeInsets,
-      reverse = false
-    ) => {
-      const p = edgeInsetsOverride ?? edgeInsets;
-      const div = map?.getDiv();
-      if (!p || !div) {
+    (coord: Coordinate, zoom: number, insets?: EdgeInsets, reverse = false) => {
+      const p = insets ?? prevEdgeInsets.current;
+      if (!p) {
         return { lat: coord.latitude, lng: coord.longitude };
       }
 
@@ -158,7 +152,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
 
       return { lat, lng };
     },
-    [map, edgeInsets]
+    []
   );
 
   const applyEdgeInsets = useCallback(
@@ -237,11 +231,12 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           bounds.extend({ lat: coord.latitude, lng: coord.longitude });
         });
 
+        const ei = prevEdgeInsets.current;
         map.fitBounds(bounds, {
-          top: (edgeInsets?.top ?? 0) + (fitPadding?.top ?? 0),
-          left: (edgeInsets?.left ?? 0) + (fitPadding?.left ?? 0),
-          bottom: (edgeInsets?.bottom ?? 0) + (fitPadding?.bottom ?? 0),
-          right: (edgeInsets?.right ?? 0) + (fitPadding?.right ?? 0),
+          top: (ei?.top ?? 0) + (fitPadding?.top ?? 0),
+          left: (ei?.left ?? 0) + (fitPadding?.left ?? 0),
+          bottom: (ei?.bottom ?? 0) + (fitPadding?.bottom ?? 0),
+          right: (ei?.right ?? 0) + (fitPadding?.right ?? 0),
         });
       },
 
@@ -249,7 +244,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         applyEdgeInsets(newEdgeInsets, options?.duration);
       },
     }),
-    [map, initialZoom, edgeInsets, offsetCenter, applyEdgeInsets]
+    [map, initialZoom, offsetCenter, applyEdgeInsets]
   );
 
   useEffect(() => {
