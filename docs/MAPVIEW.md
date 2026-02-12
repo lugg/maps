@@ -56,7 +56,13 @@ mapRef.current?.fitCoordinates(
     { latitude: 37.7749, longitude: -122.4194 },
     { latitude: 37.8049, longitude: -122.4094 },
   ],
-  { edgeInsets: { top: 50, left: 50, bottom: 50, right: 50 }, duration: 500 }
+  { padding: { top: 50, left: 50, bottom: 50, right: 50 }, duration: 500 }
+);
+
+// Set edge insets with animation
+mapRef.current?.setEdgeInsets(
+  { top: 0, left: 0, bottom: 200, right: 0 },
+  { duration: 300 }
 );
 ```
 
@@ -81,8 +87,20 @@ Fit multiple coordinates in the visible map area.
 fitCoordinates(coordinates: Coordinate[], options?: FitCoordinatesOptions): void
 
 interface FitCoordinatesOptions {
-  edgeInsets?: EdgeInsets;
+  padding?: EdgeInsets;
   duration?: number; // milliseconds, -1 for default
+}
+```
+
+### setEdgeInsets
+
+Programmatically update the map's edge insets with optional animation.
+
+```ts
+setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions): void
+
+interface SetEdgeInsetsOptions {
+  duration?: number; // milliseconds, -1 for default animation, 0 for instant
 }
 ```
 

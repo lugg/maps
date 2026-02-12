@@ -38,6 +38,29 @@ import { MapView, Polyline } from '@lugg/maps';
 | `coordinates` | `Coordinate[]` | **required** | Array of coordinates |
 | `strokeWidth` | `number` | - | Line width in points |
 | `strokeColors` | `ColorValue[]` | - | Gradient colors along the line |
+| `animated` | `boolean` | `false` | Animate the polyline with a snake effect |
+| `animatedOptions` | `PolylineAnimatedOptions` | - | Animation configuration options |
+| `zIndex` | `number` | - | Z-index for layering polylines |
+
+## Animated Options
+
+```ts
+interface PolylineAnimatedOptions {
+  duration?: number;   // milliseconds, default 2150
+  easing?: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut'; // default 'linear'
+  trailLength?: number; // 0-1, default 1.0 (full snake effect)
+  delay?: number;       // milliseconds, default 0
+}
+```
+
+```tsx
+<Polyline
+  coordinates={coordinates}
+  strokeWidth={4}
+  animated
+  animatedOptions={{ duration: 3000, easing: 'easeOut', trailLength: 0.5 }}
+/>
+```
 
 ## Gradient Colors
 
