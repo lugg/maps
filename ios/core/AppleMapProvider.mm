@@ -164,10 +164,11 @@
              duration:(double)duration {
   [self stopEdgeInsetsAnimation];
 
-  if (duration > 0 && _mapView) {
+  if (duration != 0 && _mapView) {
+    double actualDuration = duration < 0 ? 0.3 : duration / 1000.0;
     _edgeInsetsFrom = oldEdgeInsets;
     _edgeInsetsTo = edgeInsets;
-    _edgeInsetsAnimationDuration = duration / 1000.0;
+    _edgeInsetsAnimationDuration = actualDuration;
     _edgeInsetsAnimationStart = CACurrentMediaTime();
 
     _edgeInsetsDisplayLink = [CADisplayLink

@@ -174,11 +174,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   [self stopEdgeInsetsAnimation];
 
-  if (duration > 0 && _mapView) {
+  if (duration != 0 && _mapView) {
+    double actualDuration = duration < 0 ? 0.3 : duration / 1000.0;
     _edgeInsetsFrom = _edgeInsets;
     _edgeInsetsTo = edgeInsets;
     _edgeInsets = edgeInsets;
-    _edgeInsetsAnimationDuration = duration / 1000.0;
+    _edgeInsetsAnimationDuration = actualDuration;
     _edgeInsetsAnimationStart = CACurrentMediaTime();
 
     _edgeInsetsDisplayLink = [CADisplayLink

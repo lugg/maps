@@ -220,10 +220,10 @@ class GoogleMapProvider(private val context: Context) :
     if (map != null && oldInsets != edgeInsets) {
       val cameraUpdate = CameraUpdateFactory.newCameraPosition(map.cameraPosition)
       applyEdgeInsets()
-      if (duration > 0) {
-        map.animateCamera(cameraUpdate, duration, null)
-      } else {
-        map.moveCamera(cameraUpdate)
+      when {
+        duration < 0 -> map.animateCamera(cameraUpdate)
+        duration > 0 -> map.animateCamera(cameraUpdate, duration, null)
+        else -> map.moveCamera(cameraUpdate)
       }
     } else {
       applyEdgeInsets()

@@ -89,9 +89,7 @@ export function Home() {
         Platform.OS === 'ios'
           ? withSpring(bottom, SPRING_CONFIG)
           : withTiming(bottom);
-      mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom), {
-        duration: 300,
-      });
+      mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom));
     },
     [getSheetBottom, edgeInsetsBottom]
   );

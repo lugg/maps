@@ -73,7 +73,7 @@ export class MapView
     if (!ref) return;
 
     const { top = 0, left = 0, bottom = 0, right = 0 } = edgeInsets;
-    const { duration = 0 } = options ?? {};
+    const { duration = -1 } = options ?? {};
     Commands.setEdgeInsets(ref, top, left, bottom, right, duration);
   }
 
