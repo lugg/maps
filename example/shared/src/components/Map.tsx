@@ -1,7 +1,8 @@
 import { forwardRef, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   MapView,
+  Marker,
   type MapViewProps,
   type CameraEventPayload,
 } from '@lugg/maps';
@@ -11,31 +12,90 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { renderMarker } from '../renderMarker';
 import { CrewMarker } from './CrewMarker';
+import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
+import { MarkerImage } from './MarkerImage';
 import type { MarkerData } from './index';
 import { Route, smoothCoordinates } from './Route';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
-  edgeInsetsBottom?: SharedValue<number>;
+  animatedPosition?: SharedValue<number>;
 }
 
 const INITIAL_ZOOM = 14;
+
+const renderMarker = (marker: MarkerData) => {
+  const {
+    id,
+    name,
+    coordinate,
+    type,
+    anchor,
+    title,
+    description,
+    text,
+    color,
+    imageUrl,
+  } = marker;
+
+  switch (type) {
+    case 'icon':
+      return <MarkerIcon key={id} name={name} coordinate={coordinate} />;
+    case 'text':
+      return (
+        <MarkerText
+          key={id}
+          name={name}
+          coordinate={coordinate}
+          text={text ?? 'X'}
+          color={color}
+        />
+      );
+    case 'image':
+      return (
+        <MarkerImage
+          key={id}
+          name={name}
+          coordinate={coordinate}
+          source={{ uri: imageUrl }}
+        />
+      );
+    case 'custom':
+      return (
+        <Marker key={id} name={name} coordinate={coordinate} anchor={anchor}>
+          <View
+            style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}
+          />
+        </Marker>
+      );
+    default:
+      return (
+        <Marker
+          key={id}
+          name={name}
+          coordinate={coordinate}
+          title={title}
+          description={description}
+        />
+      );
+  }
+};
 
 export const Map = forwardRef<MapView, MapProps>(
   (
     {
       markers,
       edgeInsets,
-      edgeInsetsBottom,
+      animatedPosition,
       onCameraIdle,
       onCameraMove,
       ...props
     },
     ref
   ) => {
+    const { height: screenHeight } = useWindowDimensions();
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
     const polylineCoordinates = useMemo(
       () => markers.map((m) => m.coordinate),
@@ -46,9 +106,14 @@ export const Map = forwardRef<MapView, MapProps>(
       [polylineCoordinates]
     );
 
-    const centerPinStyle = useAnimatedStyle(() => ({
-      transform: [{ translateY: -(edgeInsetsBottom?.value ?? 0) / 2 }],
-    }));
+    const centerPinStyle = useAnimatedStyle(() => {
+      const bottom = animatedPosition
+        ? screenHeight - animatedPosition.value
+        : 0;
+      return {
+        transform: [{ translateY: -bottom / 2 }],
+      };
+    });
 
     const handleCameraMove = (e: NativeSyntheticEvent<CameraEventPayload>) => {
       onCameraMove?.(e);
@@ -99,5 +164,10 @@ const styles = StyleSheet.create({
     height: 20,
     width: 20,
     borderRadius: 10,
+  },
+  customMarker: {
+    height: 30,
+    width: 30,
+    borderRadius: 15,
   },
 });
