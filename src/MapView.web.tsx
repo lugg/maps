@@ -25,9 +25,10 @@ import type {
   MapViewRef,
   MoveCameraOptions,
   FitCoordinatesOptions,
+  SetEdgeInsetsOptions,
   CameraEventPayload,
 } from './MapView.types';
-import type { Coordinate } from './types';
+import type { Coordinate, EdgeInsets } from './types';
 
 const createSyntheticEvent = <T,>(nativeEvent: T): NativeSyntheticEvent<T> =>
   ({
@@ -160,6 +161,40 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     [map, edgeInsets]
   );
 
+  const applyEdgeInsets = useCallback(
+    (newEdgeInsets: EdgeInsets, duration?: number) => {
+      if (!map) return;
+
+      const prev = prevEdgeInsets.current;
+      const center = map.getCenter();
+      const zoom = map.getZoom() ?? initialZoom;
+
+      if (center) {
+        const logicalCenter = offsetCenter(
+          { latitude: center.lat(), longitude: center.lng() },
+          zoom,
+          prev,
+          true
+        );
+        const newCenter = offsetCenter(
+          { latitude: logicalCenter.lat, longitude: logicalCenter.lng },
+          zoom,
+          newEdgeInsets,
+          false
+        );
+
+        if (duration === 0) {
+          map.moveCamera({ center: newCenter, zoom });
+        } else {
+          map.panTo(newCenter);
+        }
+      }
+
+      prevEdgeInsets.current = newEdgeInsets;
+    },
+    [map, initialZoom, offsetCenter]
+  );
+
   useImperativeHandle(
     ref,
     () => ({
@@ -210,11 +245,11 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         });
       },
 
-      setEdgeInsets() {
-        // No-op on web — edgeInsets is handled via props
+      setEdgeInsets(newEdgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions) {
+        applyEdgeInsets(newEdgeInsets, options?.duration);
       },
     }),
-    [map, initialZoom, edgeInsets, offsetCenter]
+    [map, initialZoom, edgeInsets, offsetCenter, applyEdgeInsets]
   );
 
   useEffect(() => {
@@ -235,26 +270,9 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       prev?.right !== edgeInsets.right;
 
     if (changed) {
-      const center = map.getCenter();
-      const zoom = map.getZoom() ?? initialZoom;
-      if (center) {
-        const logicalCenter = offsetCenter(
-          { latitude: center.lat(), longitude: center.lng() },
-          zoom,
-          prev,
-          true
-        );
-        const newCenter = offsetCenter(
-          { latitude: logicalCenter.lat, longitude: logicalCenter.lng },
-          zoom,
-          edgeInsets,
-          false
-        );
-        map.panTo(newCenter);
-      }
-      prevEdgeInsets.current = edgeInsets;
+      applyEdgeInsets(edgeInsets);
     }
-  }, [map, edgeInsets, initialZoom, offsetCenter]);
+  }, [map, edgeInsets, applyEdgeInsets]);
 
   const handleDragStart = () => {
     setIsDragging(true);

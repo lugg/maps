@@ -170,9 +170,9 @@
     _edgeInsetsAnimationDuration = duration / 1000.0;
     _edgeInsetsAnimationStart = CACurrentMediaTime();
 
-    _edgeInsetsDisplayLink =
-        [CADisplayLink displayLinkWithTarget:self
-                                    selector:@selector(edgeInsetsAnimationTick:)];
+    _edgeInsetsDisplayLink = [CADisplayLink
+        displayLinkWithTarget:self
+                     selector:@selector(edgeInsetsAnimationTick:)];
     [_edgeInsetsDisplayLink addToRunLoop:[NSRunLoop mainRunLoop]
                                  forMode:NSRunLoopCommonModes];
   } else {
