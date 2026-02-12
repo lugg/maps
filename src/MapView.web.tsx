@@ -190,7 +190,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         const first = coordinates[0];
         if (!map || !first) return;
 
-        const { edgeInsets: fitEdgeInsets, duration = -1 } = options ?? {};
+        const { padding: fitPadding, duration = -1 } = options ?? {};
 
         if (coordinates.length === 1) {
           this.moveCamera(first, { zoom: initialZoom, duration });
@@ -203,10 +203,10 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         });
 
         map.fitBounds(bounds, {
-          top: (edgeInsets?.top ?? 0) + (fitEdgeInsets?.top ?? 0),
-          left: (edgeInsets?.left ?? 0) + (fitEdgeInsets?.left ?? 0),
-          bottom: (edgeInsets?.bottom ?? 0) + (fitEdgeInsets?.bottom ?? 0),
-          right: (edgeInsets?.right ?? 0) + (fitEdgeInsets?.right ?? 0),
+          top: (edgeInsets?.top ?? 0) + (fitPadding?.top ?? 0),
+          left: (edgeInsets?.left ?? 0) + (fitPadding?.left ?? 0),
+          bottom: (edgeInsets?.bottom ?? 0) + (fitPadding?.bottom ?? 0),
+          right: (edgeInsets?.right ?? 0) + (fitPadding?.right ?? 0),
         });
       },
 

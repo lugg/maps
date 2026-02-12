@@ -133,7 +133,7 @@ function HomeContent() {
   const fitAllMarkers = () => {
     const coordinates = markers.map((m) => m.coordinate);
     mapRef.current?.fitCoordinates(coordinates, {
-      edgeInsets: {
+      padding: {
         top: 60,
         left: 40,
         right: 40,

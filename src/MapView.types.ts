@@ -14,7 +14,7 @@ export interface MoveCameraOptions {
  * Options for fitting coordinates in view
  */
 export interface FitCoordinatesOptions {
-  edgeInsets?: EdgeInsets;
+  padding?: EdgeInsets;
   duration?: number;
 }
 
