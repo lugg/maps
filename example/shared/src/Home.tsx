@@ -20,6 +20,7 @@ import {
 import {
   useSharedValue,
   withSpring,
+  withTiming,
   type WithSpringConfig,
 } from 'react-native-reanimated';
 
@@ -40,7 +41,14 @@ import {
 } from './markers';
 import { useLocationPermission } from './useLocationPermission';
 
-function HomeContent() {
+const bottomEdgeInsets = (bottom: number) => ({
+  top: 0,
+  left: 0,
+  bottom,
+  right: 0,
+});
+
+export function Home() {
   const mapRef = useRef<MapView>(null);
   const sheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
@@ -52,46 +60,46 @@ function HomeContent() {
   const [isIdle, setIsIdle] = useState(true);
   const edgeInsetsBottom = useSharedValue(0);
 
+  const getSheetBottom = useCallback(
+    (event: DetentChangeEvent) =>
+      screenHeight - event.nativeEvent.position,
+    [screenHeight]
+  );
+
   const handleMapReady = useCallback(() => {
     const bottom = edgeInsetsBottom.value;
     if (bottom > 0) {
-      mapRef.current?.setEdgeInsets({ top: 0, left: 0, bottom, right: 0 });
+      mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom));
     }
   }, [edgeInsetsBottom]);
 
   const handleSheetPresent = useCallback(
     (event: DetentChangeEvent) => {
-      const bottom = screenHeight - event.nativeEvent.position;
+      const bottom = getSheetBottom(event);
       edgeInsetsBottom.value = bottom;
-      mapRef.current?.setEdgeInsets({ top: 0, left: 0, bottom, right: 0 });
+      mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom));
     },
-    [screenHeight, edgeInsetsBottom]
+    [getSheetBottom, edgeInsetsBottom]
   );
 
   const handleDetentChange = useCallback(
     (event: DetentChangeEvent) => {
-      const bottom = screenHeight - event.nativeEvent.position;
-      edgeInsetsBottom.value = withSpring(bottom, SPRING_CONFIG);
-      mapRef.current?.setEdgeInsets(
-        { top: 0, left: 0, bottom, right: 0 },
-        { duration: 300 }
-      );
+      const bottom = getSheetBottom(event);
+      edgeInsetsBottom.value =
+        Platform.OS === 'ios'
+          ? withSpring(bottom, SPRING_CONFIG)
+          : withTiming(bottom);
+      mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom), {
+        duration: 300,
+      });
     },
-    [screenHeight, edgeInsetsBottom]
+    [getSheetBottom, edgeInsetsBottom]
   );
 
-  const handleCameraMove = useCallback(
-    (event: { nativeEvent: CameraEventPayload }) => {
+  const handleCameraEvent = useCallback(
+    (event: { nativeEvent: CameraEventPayload }, idle: boolean) => {
       setCameraPosition(event.nativeEvent);
-      setIsIdle(false);
-    },
-    []
-  );
-
-  const handleCameraIdle = useCallback(
-    (event: { nativeEvent: CameraEventPayload }) => {
-      setCameraPosition(event.nativeEvent);
-      setIsIdle(true);
+      setIsIdle(idle);
     },
     []
   );
@@ -157,8 +165,8 @@ function HomeContent() {
               edgeInsetsBottom={edgeInsetsBottom}
               userLocationEnabled={locationPermission}
               onReady={handleMapReady}
-              onCameraMove={handleCameraMove}
-              onCameraIdle={handleCameraIdle}
+              onCameraMove={(e) => handleCameraEvent(e, false)}
+              onCameraIdle={(e) => handleCameraEvent(e, true)}
             />
           )}
 
@@ -225,10 +233,6 @@ function HomeContent() {
       </MapProvider>
     </TrueSheetProvider>
   );
-}
-
-export function Home() {
-  return <HomeContent />;
 }
 
 const styles = StyleSheet.create({
