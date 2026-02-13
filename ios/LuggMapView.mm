@@ -207,6 +207,8 @@ using namespace luggmaps::events;
            oldProps:(Props::Shared const &)oldProps {
   const auto &newViewProps =
       *std::static_pointer_cast<LuggMapViewProps const>(props);
+  const auto &prevViewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   _providerType = newViewProps.provider;
 
@@ -216,34 +218,49 @@ using namespace luggmaps::events;
     _mapId = newMapId;
   }
 
-  _zoomEnabled = newViewProps.zoomEnabled;
-  _scrollEnabled = newViewProps.scrollEnabled;
-  _rotateEnabled = newViewProps.rotateEnabled;
-  _pitchEnabled = newViewProps.pitchEnabled;
-  _userLocationEnabled = newViewProps.userLocationEnabled;
-  _minZoom = newViewProps.minZoom;
-  _maxZoom = newViewProps.maxZoom;
+  if (newViewProps.zoomEnabled != prevViewProps.zoomEnabled) {
+    _zoomEnabled = newViewProps.zoomEnabled;
+    [_provider setZoomEnabled:_zoomEnabled];
+  }
+  if (newViewProps.scrollEnabled != prevViewProps.scrollEnabled) {
+    _scrollEnabled = newViewProps.scrollEnabled;
+    [_provider setScrollEnabled:_scrollEnabled];
+  }
+  if (newViewProps.rotateEnabled != prevViewProps.rotateEnabled) {
+    _rotateEnabled = newViewProps.rotateEnabled;
+    [_provider setRotateEnabled:_rotateEnabled];
+  }
+  if (newViewProps.pitchEnabled != prevViewProps.pitchEnabled) {
+    _pitchEnabled = newViewProps.pitchEnabled;
+    [_provider setPitchEnabled:_pitchEnabled];
+  }
+  if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
+    _userLocationEnabled = newViewProps.userLocationEnabled;
+    [_provider setUserLocationEnabled:_userLocationEnabled];
+  }
+  if (newViewProps.minZoom != prevViewProps.minZoom) {
+    _minZoom = newViewProps.minZoom;
+    [_provider setMinZoom:_minZoom];
+  }
+  if (newViewProps.maxZoom != prevViewProps.maxZoom) {
+    _maxZoom = newViewProps.maxZoom;
+    [_provider setMaxZoom:_maxZoom];
+  }
+  if (newViewProps.theme != prevViewProps.theme) {
+    _theme = newViewProps.theme;
+    [_provider setTheme:(NSInteger)_theme];
+  }
 
-  _theme = newViewProps.theme;
-
-  _oldEdgeInsets = _edgeInsets;
-  _edgeInsets = UIEdgeInsetsMake(
+  UIEdgeInsets newEdgeInsets = UIEdgeInsetsMake(
       newViewProps.edgeInsets.top, newViewProps.edgeInsets.left,
       newViewProps.edgeInsets.bottom, newViewProps.edgeInsets.right);
-
-  [super updateProps:props oldProps:oldProps];
-}
-
-- (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
-  [super finalizeUpdates:updateMask];
-
-  if (updateMask & RNComponentViewUpdateMaskProps) {
-    if (!_provider)
-      return;
-
-    [self applyProps];
+  if (!UIEdgeInsetsEqualToEdgeInsets(newEdgeInsets, _edgeInsets)) {
+    _oldEdgeInsets = _edgeInsets;
+    _edgeInsets = newEdgeInsets;
     [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:_oldEdgeInsets];
   }
+
+  [super updateProps:props oldProps:oldProps];
 }
 
 #pragma mark - Commands

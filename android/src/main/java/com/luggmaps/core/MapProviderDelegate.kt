@@ -25,7 +25,7 @@ interface MapProvider {
   fun setRotateEnabled(enabled: Boolean)
   fun setPitchEnabled(enabled: Boolean)
   fun setUserLocationEnabled(enabled: Boolean)
-  fun setMyLocationButtonEnabled(enabled: Boolean)
+  fun setUserLocationButtonEnabled(enabled: Boolean)
   fun setTheme(value: String)
   fun setMinZoom(zoom: Double)
   fun setMaxZoom(zoom: Double)

@@ -50,7 +50,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
-  private var myLocationButtonEnabled: Boolean = false
+  private var userLocationButtonEnabled: Boolean = false
   private var minZoom: Double? = null
   private var maxZoom: Double? = null
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -148,7 +148,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setRotateEnabled(rotateEnabled)
     provider?.setPitchEnabled(pitchEnabled)
     provider?.setUserLocationEnabled(userLocationEnabled)
-    provider?.setMyLocationButtonEnabled(myLocationButtonEnabled)
+    provider?.setUserLocationButtonEnabled(userLocationButtonEnabled)
     provider?.setTheme(theme)
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
@@ -176,46 +176,55 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   }
 
   fun setZoomEnabled(enabled: Boolean) {
+    if (zoomEnabled == enabled) return
     zoomEnabled = enabled
     provider?.setZoomEnabled(enabled)
   }
 
   fun setScrollEnabled(enabled: Boolean) {
+    if (scrollEnabled == enabled) return
     scrollEnabled = enabled
     provider?.setScrollEnabled(enabled)
   }
 
   fun setRotateEnabled(enabled: Boolean) {
+    if (rotateEnabled == enabled) return
     rotateEnabled = enabled
     provider?.setRotateEnabled(enabled)
   }
 
   fun setPitchEnabled(enabled: Boolean) {
+    if (pitchEnabled == enabled) return
     pitchEnabled = enabled
     provider?.setPitchEnabled(enabled)
   }
 
   fun setUserLocationEnabled(enabled: Boolean) {
+    if (userLocationEnabled == enabled) return
     userLocationEnabled = enabled
     provider?.setUserLocationEnabled(enabled)
   }
 
-  fun setMyLocationButtonEnabled(enabled: Boolean) {
-    myLocationButtonEnabled = enabled
-    provider?.setMyLocationButtonEnabled(enabled)
+  fun setUserLocationButtonEnabled(enabled: Boolean) {
+    if (userLocationButtonEnabled == enabled) return
+    userLocationButtonEnabled = enabled
+    provider?.setUserLocationButtonEnabled(enabled)
   }
 
   fun setMinZoom(zoom: Double) {
+    if (minZoom == zoom) return
     minZoom = zoom
     provider?.setMinZoom(zoom)
   }
 
   fun setMaxZoom(zoom: Double) {
+    if (maxZoom == zoom) return
     maxZoom = zoom
     provider?.setMaxZoom(zoom)
   }
 
   fun setTheme(value: String) {
+    if (theme == value) return
     theme = value
     provider?.setTheme(value)
   }
@@ -227,7 +236,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     right: Int,
     duration: Int = 0
   ) {
-    edgeInsets = EdgeInsets(top, left, bottom, right)
+    val newEdgeInsets = EdgeInsets(top, left, bottom, right)
+    if (edgeInsets == newEdgeInsets) return
+    edgeInsets = newEdgeInsets
     provider?.setEdgeInsets(edgeInsets, duration)
   }
 

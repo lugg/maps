@@ -111,7 +111,7 @@ export interface MapViewProps extends ViewProps {
    * @default false
    * @platform android
    */
-  myLocationButtonEnabled?: boolean;
+  userLocationButtonEnabled?: boolean;
   /**
    * Map color theme
    * @default 'system'

@@ -51,7 +51,7 @@ export interface NativeProps extends ViewProps {
   pitchEnabled?: boolean;
   edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
-  myLocationButtonEnabled?: boolean;
+  userLocationButtonEnabled?: boolean;
   theme?: WithDefault<'light' | 'dark' | 'system', 'system'>;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
   onCameraIdle?: DirectEventHandler<CameraIdleEvent>;

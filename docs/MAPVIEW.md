@@ -32,6 +32,8 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
+| `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
+| `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Map color theme |
 | `onCameraMove` | `(event) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event) => void` | - | Called when camera stops moving |

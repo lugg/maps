@@ -91,7 +91,7 @@ export class MapView
       pitchEnabled,
       edgeInsets,
       userLocationEnabled,
-      myLocationButtonEnabled,
+      userLocationButtonEnabled,
       theme,
       onCameraMove,
       onCameraIdle,
@@ -116,7 +116,7 @@ export class MapView
         pitchEnabled={pitchEnabled}
         edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
-        myLocationButtonEnabled={myLocationButtonEnabled}
+        userLocationButtonEnabled={userLocationButtonEnabled}
         theme={theme}
         onCameraMove={onCameraMove}
         onCameraIdle={onCameraIdle}

@@ -53,7 +53,7 @@ class GoogleMapProvider(private val context: Context) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
-  private var myLocationButtonEnabled: Boolean = false
+  private var userLocationButtonEnabled: Boolean = false
 
   // Zoom limits
   private var minZoom: Float? = null
@@ -184,8 +184,8 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.isMyLocationEnabled = userLocationEnabled && hasPermission
   }
 
-  override fun setMyLocationButtonEnabled(enabled: Boolean) {
-    myLocationButtonEnabled = enabled
+  override fun setUserLocationButtonEnabled(enabled: Boolean) {
+    userLocationButtonEnabled = enabled
     googleMap?.uiSettings?.isMyLocationButtonEnabled = enabled
   }
 
@@ -481,6 +481,7 @@ class GoogleMapProvider(private val context: Context) :
       isScrollGesturesEnabled = scrollEnabled
       isRotateGesturesEnabled = rotateEnabled
       isTiltGesturesEnabled = pitchEnabled
+      isMyLocationButtonEnabled = userLocationButtonEnabled
     }
   }
 
@@ -513,7 +514,7 @@ class GoogleMapProvider(private val context: Context) :
         context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
         android.content.pm.PackageManager.PERMISSION_GRANTED
     googleMap?.isMyLocationEnabled = userLocationEnabled && hasPermission
-    googleMap?.uiSettings?.isMyLocationButtonEnabled = myLocationButtonEnabled
+    googleMap?.uiSettings?.isMyLocationButtonEnabled = userLocationButtonEnabled
   }
 
   // endregion

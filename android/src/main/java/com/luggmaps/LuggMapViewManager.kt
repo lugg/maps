@@ -113,9 +113,9 @@ class LuggMapViewManager :
     view.setUserLocationEnabled(value)
   }
 
-  @ReactProp(name = "myLocationButtonEnabled", defaultBoolean = false)
-  override fun setMyLocationButtonEnabled(view: LuggMapView, value: Boolean) {
-    view.setMyLocationButtonEnabled(value)
+  @ReactProp(name = "userLocationButtonEnabled", defaultBoolean = false)
+  override fun setUserLocationButtonEnabled(view: LuggMapView, value: Boolean) {
+    view.setUserLocationButtonEnabled(value)
   }
 
   @ReactProp(name = "minZoom")
