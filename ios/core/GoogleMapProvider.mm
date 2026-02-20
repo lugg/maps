@@ -1,5 +1,6 @@
 #import "GoogleMapProvider.h"
 #import "../LuggMarkerView.h"
+#import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
 #import "GMSPolylineAnimator.h"
 #import "PolylineAnimatorBase.h"
@@ -7,7 +8,8 @@
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 @interface GoogleMapProvider () <LuggMarkerViewDelegate,
-                                 LuggPolylineViewDelegate>
+                                 LuggPolylineViewDelegate,
+                                 LuggPolygonViewDelegate>
 @end
 
 @implementation GoogleMapProvider {
@@ -18,6 +20,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
+  NSMutableArray<LuggPolygonView *> *_pendingPolygonViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
 
   // Edge insets animation
@@ -36,6 +39,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _mapId = kDemoMapId;
     _pendingMarkerViews = [NSMutableArray array];
     _pendingPolylineViews = [NSMutableArray array];
+    _pendingPolygonViews = [NSMutableArray array];
     _polylineAnimators = [NSMapTable weakToStrongObjectsMapTable];
   }
   return self;
@@ -88,6 +92,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _isMapReady = YES;
   [self processPendingMarkers];
   [self processPendingPolylines];
+  [self processPendingPolygons];
 
   [_delegate mapProviderDidReady];
 }
@@ -96,6 +101,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [self stopEdgeInsetsAnimation];
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
+  [_pendingPolygonViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
   [_mapView clear];
   [_mapView removeFromSuperview];
@@ -270,6 +276,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [self syncPolylineView:polylineView];
 }
 
+#pragma mark - PolygonViewDelegate
+
+- (void)polygonViewDidUpdate:(LuggPolygonView *)polygonView {
+  [self syncPolygonView:polygonView];
+}
+
 #pragma mark - Marker Management
 
 - (void)addMarkerView:(LuggMarkerView *)markerView {
@@ -436,6 +448,75 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [animator update];
 
   [_polylineAnimators setObject:animator forKey:polylineView];
+}
+
+#pragma mark - Polygon Management
+
+- (void)addPolygonView:(LuggPolygonView *)polygonView {
+  polygonView.delegate = self;
+  [self syncPolygonView:polygonView];
+}
+
+- (void)removePolygonView:(LuggPolygonView *)polygonView {
+  GMSPolygon *polygon = (GMSPolygon *)polygonView.polygon;
+  if (polygon) {
+    polygon.map = nil;
+    polygonView.polygon = nil;
+  }
+}
+
+- (void)syncPolygonView:(LuggPolygonView *)polygonView {
+  if (!_mapView) {
+    if (![_pendingPolygonViews containsObject:polygonView]) {
+      [_pendingPolygonViews addObject:polygonView];
+    }
+    return;
+  }
+
+  if (!polygonView.polygon) {
+    [self addPolygonViewToMap:polygonView];
+    return;
+  }
+
+  GMSPolygon *polygon = (GMSPolygon *)polygonView.polygon;
+
+  GMSMutablePath *path = [GMSMutablePath path];
+  for (CLLocation *location in polygonView.coordinates) {
+    [path addCoordinate:location.coordinate];
+  }
+  polygon.path = path;
+  polygon.fillColor = polygonView.fillColor;
+  polygon.strokeColor = polygonView.strokeColor;
+  polygon.strokeWidth = polygonView.strokeWidth;
+  polygon.zIndex = (int)polygonView.zIndex;
+}
+
+- (void)processPendingPolygons {
+  if (!_mapView)
+    return;
+
+  for (LuggPolygonView *polygonView in _pendingPolygonViews) {
+    [self addPolygonViewToMap:polygonView];
+  }
+  [_pendingPolygonViews removeAllObjects];
+}
+
+- (void)addPolygonViewToMap:(LuggPolygonView *)polygonView {
+  if (!_mapView)
+    return;
+
+  GMSMutablePath *path = [GMSMutablePath path];
+  for (CLLocation *location in polygonView.coordinates) {
+    [path addCoordinate:location.coordinate];
+  }
+
+  GMSPolygon *polygon = [GMSPolygon polygonWithPath:path];
+  polygon.fillColor = polygonView.fillColor;
+  polygon.strokeColor = polygonView.strokeColor;
+  polygon.strokeWidth = polygonView.strokeWidth;
+  polygon.zIndex = (int)polygonView.zIndex;
+  polygon.map = _mapView;
+  polygonView.polygon = polygon;
 }
 
 #pragma mark - Lifecycle

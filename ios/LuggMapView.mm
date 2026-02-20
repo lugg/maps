@@ -1,6 +1,7 @@
 #import "LuggMapView.h"
 #import "LuggMapWrapperView.h"
 #import "LuggMarkerView.h"
+#import "LuggPolygonView.h"
 #import "LuggPolylineView.h"
 #import "core/AppleMapProvider.h"
 #import "core/GoogleMapProvider.h"
@@ -83,6 +84,11 @@ using namespace luggmaps::events;
     if (_provider) {
       [_provider addPolylineView:polylineView];
     }
+  } else if ([childComponentView isKindOfClass:[LuggPolygonView class]]) {
+    LuggPolygonView *polygonView = (LuggPolygonView *)childComponentView;
+    if (_provider) {
+      [_provider addPolygonView:polygonView];
+    }
   }
 }
 
@@ -98,6 +104,11 @@ using namespace luggmaps::events;
     LuggPolylineView *polylineView = (LuggPolylineView *)childComponentView;
     if (_provider) {
       [_provider removePolylineView:polylineView];
+    }
+  } else if ([childComponentView isKindOfClass:[LuggPolygonView class]]) {
+    LuggPolygonView *polygonView = (LuggPolygonView *)childComponentView;
+    if (_provider) {
+      [_provider removePolygonView:polygonView];
     }
   }
 
@@ -164,6 +175,8 @@ using namespace luggmaps::events;
       [_provider addMarkerView:(LuggMarkerView *)subview];
     } else if ([subview isKindOfClass:[LuggPolylineView class]]) {
       [_provider addPolylineView:(LuggPolylineView *)subview];
+    } else if ([subview isKindOfClass:[LuggPolygonView class]]) {
+      [_provider addPolygonView:(LuggPolygonView *)subview];
     }
   }
 }

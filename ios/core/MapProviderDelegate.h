@@ -5,6 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class LuggMarkerView;
 @class LuggPolylineView;
+@class LuggPolygonView;
 
 @protocol MapProviderDelegate <NSObject>
 - (void)mapProviderDidReady;
@@ -50,6 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addPolylineView:(LuggPolylineView *)polylineView;
 - (void)removePolylineView:(LuggPolylineView *)polylineView;
 - (void)syncPolylineView:(LuggPolylineView *)polylineView;
+- (void)addPolygonView:(LuggPolygonView *)polygonView;
+- (void)removePolygonView:(LuggPolygonView *)polygonView;
+- (void)syncPolygonView:(LuggPolygonView *)polygonView;
 
 // Lifecycle
 - (void)pauseAnimations;

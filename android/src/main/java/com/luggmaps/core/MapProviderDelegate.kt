@@ -2,6 +2,7 @@ package com.luggmaps.core
 
 import android.view.View
 import com.luggmaps.LuggMarkerView
+import com.luggmaps.LuggPolygonView
 import com.luggmaps.LuggPolylineView
 
 data class EdgeInsets(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0)
@@ -37,6 +38,8 @@ interface MapProvider {
   fun removeMarkerView(markerView: LuggMarkerView)
   fun addPolylineView(polylineView: LuggPolylineView)
   fun removePolylineView(polylineView: LuggPolylineView)
+  fun addPolygonView(polygonView: LuggPolygonView)
+  fun removePolygonView(polygonView: LuggPolygonView)
 
   // Lifecycle
   fun pauseAnimations()

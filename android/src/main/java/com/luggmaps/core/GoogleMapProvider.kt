@@ -14,9 +14,12 @@ import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapColorScheme
+import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggMarkerViewDelegate
+import com.luggmaps.LuggPolygonView
+import com.luggmaps.LuggPolygonViewDelegate
 import com.luggmaps.LuggPolylineView
 import com.luggmaps.LuggPolylineViewDelegate
 
@@ -25,6 +28,7 @@ class GoogleMapProvider(private val context: Context) :
   OnMapReadyCallback,
   LuggMarkerViewDelegate,
   LuggPolylineViewDelegate,
+  LuggPolygonViewDelegate,
   GoogleMap.OnCameraMoveStartedListener,
   GoogleMap.OnCameraMoveListener,
   GoogleMap.OnCameraIdleListener {
@@ -40,6 +44,7 @@ class GoogleMapProvider(private val context: Context) :
   private var isDragging = false
   private val pendingMarkerViews = mutableSetOf<LuggMarkerView>()
   private val pendingPolylineViews = mutableSetOf<LuggPolylineView>()
+  private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
 
   // Initial camera settings
@@ -86,6 +91,7 @@ class GoogleMapProvider(private val context: Context) :
   override fun destroy() {
     pendingMarkerViews.clear()
     pendingPolylineViews.clear()
+    pendingPolygonViews.clear()
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
     googleMap?.setOnCameraMoveStartedListener(null)
@@ -117,6 +123,7 @@ class GoogleMapProvider(private val context: Context) :
     applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
+    processPendingPolygons()
 
     delegate?.mapProviderDidReady()
   }
@@ -270,6 +277,14 @@ class GoogleMapProvider(private val context: Context) :
 
   // endregion
 
+  // region PolygonViewDelegate
+
+  override fun polygonViewDidUpdate(polygonView: LuggPolygonView) {
+    syncPolygonView(polygonView)
+  }
+
+  // endregion
+
   // region Marker Management
 
   override fun addMarkerView(markerView: LuggMarkerView) {
@@ -400,6 +415,60 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     polylineAnimators[polylineView] = animator
+  }
+
+  // endregion
+
+  // region Polygon Management
+
+  override fun addPolygonView(polygonView: LuggPolygonView) {
+    polygonView.delegate = this
+    syncPolygonView(polygonView)
+  }
+
+  override fun removePolygonView(polygonView: LuggPolygonView) {
+    polygonView.polygon?.remove()
+    polygonView.polygon = null
+  }
+
+  private fun syncPolygonView(polygonView: LuggPolygonView) {
+    if (googleMap == null) {
+      pendingPolygonViews.add(polygonView)
+      return
+    }
+
+    if (polygonView.polygon == null) {
+      addPolygonViewToMap(polygonView)
+      return
+    }
+
+    polygonView.polygon?.apply {
+      points = polygonView.coordinates
+      fillColor = polygonView.fillColor
+      strokeColor = polygonView.strokeColor
+      strokeWidth = polygonView.strokeWidth.dpToPx()
+      zIndex = polygonView.zIndex
+    }
+  }
+
+  private fun processPendingPolygons() {
+    if (googleMap == null) return
+    pendingPolygonViews.forEach { addPolygonViewToMap(it) }
+    pendingPolygonViews.clear()
+  }
+
+  private fun addPolygonViewToMap(polygonView: LuggPolygonView) {
+    val map = googleMap ?: return
+
+    val options = PolygonOptions()
+      .addAll(polygonView.coordinates)
+      .fillColor(polygonView.fillColor)
+      .strokeColor(polygonView.strokeColor)
+      .strokeWidth(polygonView.strokeWidth.dpToPx())
+      .zIndex(polygonView.zIndex)
+
+    val polygon = map.addPolygon(options)
+    polygonView.polygon = polygon
   }
 
   // endregion

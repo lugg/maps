@@ -3,6 +3,8 @@ export { MapProvider } from './MapProvider';
 export type { MapProviderProps } from './MapProvider.types';
 export { Marker } from './components';
 export type { MarkerProps } from './components';
+export { Polygon } from './components';
+export type { PolygonProps } from './components';
 export { Polyline } from './components';
 export type {
   PolylineProps,

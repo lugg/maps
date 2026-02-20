@@ -63,6 +63,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggMapWrapperView -> mapWrapperView = child
       is LuggMarkerView -> provider?.addMarkerView(child)
       is LuggPolylineView -> provider?.addPolylineView(child)
+      is LuggPolygonView -> provider?.addPolygonView(child)
     }
   }
 
@@ -71,6 +72,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     when (view) {
       is LuggMarkerView -> provider?.removeMarkerView(view)
       is LuggPolylineView -> provider?.removePolylineView(view)
+      is LuggPolygonView -> provider?.removePolygonView(view)
     }
     super.removeViewAt(index)
   }
@@ -118,6 +120,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       when (val child = getChildAt(i)) {
         is LuggMarkerView -> google.addMarkerView(child)
         is LuggPolylineView -> google.addPolylineView(child)
+        is LuggPolygonView -> google.addPolygonView(child)
       }
     }
   }

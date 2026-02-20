@@ -6,5 +6,5 @@ import com.facebook.react.uimanager.ViewManager
 
 class LuggPackage : ReactPackage {
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
-    listOf(LuggMapViewManager(), LuggMarkerViewManager(), LuggMapWrapperViewManager(), LuggPolylineViewManager())
+    listOf(LuggMapViewManager(), LuggMarkerViewManager(), LuggMapWrapperViewManager(), LuggPolylineViewManager(), LuggPolygonViewManager())
 }
