@@ -3,6 +3,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   MapView,
   Marker,
+  Polygon,
   type MapViewProps,
   type CameraEventPayload,
 } from '@lugg/maps';
@@ -140,6 +141,17 @@ export const Map = forwardRef<MapView, MapProps>(
           {markers.map(renderMarker)}
           <Route coordinates={smoothedRoute} />
           <CrewMarker route={smoothedRoute} zoom={zoom} />
+          <Polygon
+            coordinates={[
+              { latitude: 37.784, longitude: -122.428 },
+              { latitude: 37.784, longitude: -122.422 },
+              { latitude: 37.779, longitude: -122.422 },
+              { latitude: 37.779, longitude: -122.428 },
+            ]}
+            fillColor="rgba(66, 133, 244, 0.3)"
+            strokeColor="#4285F4"
+            strokeWidth={2}
+          />
           <MarkerText
             name="inline-marker"
             coordinate={{ latitude: 37.782, longitude: -122.425 }}
