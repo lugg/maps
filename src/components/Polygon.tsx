@@ -25,6 +25,10 @@ export interface PolygonProps {
    * Z-index for layering
    */
   zIndex?: number;
+  /**
+   * Called when the polygon is tapped
+   */
+  onPress?: () => void;
 }
 
 export class Polygon extends React.PureComponent<PolygonProps> {
@@ -41,7 +45,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
   }
 
   render() {
-    const { coordinates, strokeColor, strokeWidth, fillColor, zIndex } =
+    const { coordinates, strokeColor, strokeWidth, fillColor, zIndex, onPress } =
       this.props;
 
     return (
@@ -51,6 +55,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
         strokeColor={strokeColor}
         strokeWidth={strokeWidth}
         fillColor={fillColor}
+        onPress={onPress}
       />
     );
   }

@@ -22,6 +22,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
   NSMutableArray<LuggPolygonView *> *_pendingPolygonViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
+  NSMapTable<GMSPolygon *, LuggPolygonView *> *_polygonToViewMap;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -41,6 +42,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _pendingPolylineViews = [NSMutableArray array];
     _pendingPolygonViews = [NSMutableArray array];
     _polylineAnimators = [NSMapTable weakToStrongObjectsMapTable];
+    _polygonToViewMap = [NSMapTable strongToWeakObjectsMapTable];
   }
   return self;
 }
@@ -103,6 +105,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_pendingPolylineViews removeAllObjects];
   [_pendingPolygonViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
+  [_polygonToViewMap removeAllObjects];
   [_mapView clear];
   [_mapView removeFromSuperview];
   _mapView = nil;
@@ -258,6 +261,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
                             longitude:position.target.longitude
                                  zoom:position.zoom
                               gesture:wasDragging];
+}
+
+- (void)mapView:(GMSMapView *)mapView didTapOverlay:(GMSOverlay *)overlay {
+  if ([overlay isKindOfClass:[GMSPolygon class]]) {
+    LuggPolygonView *polygonView =
+        [_polygonToViewMap objectForKey:(GMSPolygon *)overlay];
+    [polygonView emitPressEvent];
+  }
 }
 
 #pragma mark - MarkerViewDelegate
@@ -460,6 +471,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)removePolygonView:(LuggPolygonView *)polygonView {
   GMSPolygon *polygon = (GMSPolygon *)polygonView.polygon;
   if (polygon) {
+    [_polygonToViewMap removeObjectForKey:polygon];
     polygon.map = nil;
     polygonView.polygon = nil;
   }
@@ -515,8 +527,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   polygon.strokeColor = polygonView.strokeColor;
   polygon.strokeWidth = polygonView.strokeWidth;
   polygon.zIndex = (int)polygonView.zIndex;
+  polygon.tappable = YES;
   polygon.map = _mapView;
   polygonView.polygon = polygon;
+  [_polygonToViewMap setObject:polygonView forKey:polygon];
 }
 
 #pragma mark - Lifecycle

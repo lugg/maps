@@ -63,8 +63,8 @@ function HomeContent() {
   const [provider, setProvider] = useState<MapProviderType>('apple');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
-  const [cameraPosition, setCameraPosition] = useState<CameraEventPayload>();
-  const [isIdle, setIsIdle] = useState(true);
+  const [statusText, setStatusText] = useState('Loading...');
+  const lastCoordinate = useRef({ latitude: 37.78, longitude: -122.43 });
 
   const getSheetBottom = useCallback(
     (event: DetentChangeEvent) => screenHeight - event.nativeEvent.position,
@@ -94,17 +94,22 @@ function HomeContent() {
     [getSheetBottom]
   );
 
-  const handleCameraEvent = useCallback(
+  const formatCameraEvent = useCallback(
     (event: { nativeEvent: CameraEventPayload }, idle: boolean) => {
-      setCameraPosition(event.nativeEvent);
-      setIsIdle(idle);
+      const { coordinate, zoom, gesture } = event.nativeEvent;
+      lastCoordinate.current = coordinate;
+      const pos = `${coordinate.latitude.toFixed(5)}, ${coordinate.longitude.toFixed(5)} (z${zoom.toFixed(1)})`;
+      const suffix = idle
+        ? ` (idle${gesture ? ', gesture' : ''})`
+        : gesture
+          ? ' (gesture)'
+          : '';
+      setStatusText(pos + suffix);
     },
     []
   );
 
   const addMarker = () => {
-    if (!cameraPosition) return;
-
     const type = randomFrom(MARKER_TYPES);
     const id = Date.now().toString();
 
@@ -113,7 +118,7 @@ function HomeContent() {
       {
         id,
         name: `marker-${id}`,
-        coordinate: cameraPosition.coordinate,
+        coordinate: lastCoordinate.current,
         type,
         anchor: { x: 0.5, y: type === 'icon' ? 1 : 0.5 },
         text: randomLetter(),
@@ -159,8 +164,9 @@ function HomeContent() {
           animatedPosition={animatedPosition}
           userLocationEnabled={locationPermission}
           onReady={handleMapReady}
-          onCameraMove={(e) => handleCameraEvent(e, false)}
-          onCameraIdle={(e) => handleCameraEvent(e, true)}
+          onCameraMove={(e) => formatCameraEvent(e, false)}
+          onCameraIdle={(e) => formatCameraEvent(e, true)}
+          onPolygonPress={() => setStatusText('Polygon pressed!')}
         />
       )}
 
@@ -176,22 +182,7 @@ function HomeContent() {
         onDidPresent={handleSheetPresent}
         onDetentChange={handleDetentChange}
       >
-        <Text style={styles.positionText}>
-          {cameraPosition ? (
-            <>
-              {cameraPosition.coordinate.latitude.toFixed(5)},{' '}
-              {cameraPosition.coordinate.longitude.toFixed(5)} (z
-              {cameraPosition.zoom.toFixed(1)})
-              {isIdle
-                ? ` (idle${cameraPosition.gesture ? ', gesture' : ''})`
-                : cameraPosition.gesture
-                ? ' (gesture)'
-                : ''}
-            </>
-          ) : (
-            'Loading...'
-          )}
-        </Text>
+        <Text style={styles.statusText}>{statusText}</Text>
         <View style={styles.sheetContent}>
           <Button title="Add Marker" onPress={addMarker} />
           <Button
@@ -229,7 +220,7 @@ function HomeContent() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  positionText: {
+  statusText: {
     fontSize: 14,
     color: '#666',
   },

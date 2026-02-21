@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapColorScheme
+import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.luggmaps.LuggMarkerView
@@ -31,7 +32,8 @@ class GoogleMapProvider(private val context: Context) :
   LuggPolygonViewDelegate,
   GoogleMap.OnCameraMoveStartedListener,
   GoogleMap.OnCameraMoveListener,
-  GoogleMap.OnCameraIdleListener {
+  GoogleMap.OnCameraIdleListener,
+  GoogleMap.OnPolygonClickListener {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -46,6 +48,7 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingPolylineViews = mutableSetOf<LuggPolylineView>()
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
+  private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
 
   // Initial camera settings
   private var initialLatitude: Double = 0.0
@@ -94,9 +97,11 @@ class GoogleMapProvider(private val context: Context) :
     pendingPolygonViews.clear()
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
+    polygonToViewMap.clear()
     googleMap?.setOnCameraMoveStartedListener(null)
     googleMap?.setOnCameraMoveListener(null)
     googleMap?.setOnCameraIdleListener(null)
+    googleMap?.setOnPolygonClickListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false
@@ -115,6 +120,7 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnCameraMoveStartedListener(this)
     map.setOnCameraMoveListener(this)
     map.setOnCameraIdleListener(this)
+    map.setOnPolygonClickListener(this)
 
     applyUiSettings()
     applyZoomLimits()
@@ -153,6 +159,10 @@ class GoogleMapProvider(private val context: Context) :
       polylineAnimators.values.forEach { it.resume() }
     }
     isDragging = false
+  }
+
+  override fun onPolygonClick(polygon: Polygon) {
+    polygonToViewMap[polygon]?.emitPressEvent()
   }
 
   // endregion
@@ -427,6 +437,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun removePolygonView(polygonView: LuggPolygonView) {
+    polygonView.polygon?.let { polygonToViewMap.remove(it) }
     polygonView.polygon?.remove()
     polygonView.polygon = null
   }
@@ -468,7 +479,9 @@ class GoogleMapProvider(private val context: Context) :
       .zIndex(polygonView.zIndex)
 
     val polygon = map.addPolygon(options)
+    polygon.isClickable = true
     polygonView.polygon = polygon
+    polygonToViewMap[polygon] = polygonView
   }
 
   // endregion

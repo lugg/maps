@@ -23,6 +23,7 @@ import { Route, smoothCoordinates } from './Route';
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
   animatedPosition?: SharedValue<number>;
+  onPolygonPress?: () => void;
 }
 
 const INITIAL_ZOOM = 14;
@@ -105,6 +106,7 @@ export const Map = forwardRef<MapView, MapProps>(
       animatedPosition,
       onCameraIdle,
       onCameraMove,
+      onPolygonPress,
       ...props
     },
     ref
@@ -159,6 +161,7 @@ export const Map = forwardRef<MapView, MapProps>(
             fillColor="rgba(66, 133, 244, 0.15)"
             strokeColor="#4285F4"
             strokeWidth={2}
+            onPress={onPolygonPress}
           />
           <MarkerText
             name="inline-marker"

@@ -32,6 +32,7 @@
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
+  UITapGestureRecognizer *_tapGesture;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -75,6 +76,12 @@
 
   [self applyZoomRange];
 
+  _tapGesture =
+      [[UITapGestureRecognizer alloc] initWithTarget:self
+                                              action:@selector(handleMapTap:)];
+  _tapGesture.cancelsTouchesInView = NO;
+  [_mapView addGestureRecognizer:_tapGesture];
+
   [wrapperView addSubview:_mapView];
 
   MKCoordinateRegion region = [_mapView regionForCenterCoordinate:coordinate
@@ -88,6 +95,10 @@
 
 - (void)destroy {
   [self stopEdgeInsetsAnimation];
+  if (_tapGesture) {
+    [_mapView removeGestureRecognizer:_tapGesture];
+    _tapGesture = nil;
+  }
   [_mapView removeFromSuperview];
   _mapView = nil;
   _isMapReady = NO;
@@ -229,6 +240,52 @@
       initWithMinCenterCoordinateDistance:minDistance
               maxCenterCoordinateDistance:maxDistance];
   _mapView.cameraZoomRange = zoomRange;
+}
+
+- (void)handleMapTap:(UITapGestureRecognizer *)gesture {
+  if (gesture.state != UIGestureRecognizerStateEnded)
+    return;
+
+  CGPoint tapPoint = [gesture locationInView:_mapView];
+  CLLocationCoordinate2D tapCoordinate =
+      [_mapView convertPoint:tapPoint toCoordinateFromView:_mapView];
+  MKMapPoint mapPoint = MKMapPointForCoordinate(tapCoordinate);
+  CGPoint mapPointAsCGP = CGPointMake(mapPoint.x, mapPoint.y);
+
+  NSArray<id<MKOverlay>> *overlays = _mapView.overlays;
+  for (NSInteger i = overlays.count - 1; i >= 0; i--) {
+    id<MKOverlay> overlay = overlays[i];
+    if (![overlay isKindOfClass:[MKPolygon class]])
+      continue;
+
+    LuggPolygonView *polygonView =
+        [_overlayToPolygonMap objectForKey:overlay];
+    if (!polygonView)
+      continue;
+
+    NSArray<CLLocation *> *coordinates = polygonView.coordinates;
+    if (coordinates.count == 0)
+      continue;
+
+    CGMutablePathRef path = CGPathCreateMutable();
+    for (NSUInteger j = 0; j < coordinates.count; j++) {
+      MKMapPoint mp = MKMapPointForCoordinate(coordinates[j].coordinate);
+      if (j == 0) {
+        CGPathMoveToPoint(path, NULL, mp.x, mp.y);
+      } else {
+        CGPathAddLineToPoint(path, NULL, mp.x, mp.y);
+      }
+    }
+    CGPathCloseSubpath(path);
+
+    BOOL contains = CGPathContainsPoint(path, NULL, mapPointAsCGP, NO);
+    CGPathRelease(path);
+
+    if (contains) {
+      [polygonView emitPressEvent];
+      return;
+    }
+  }
 }
 
 #pragma mark - MKMapViewDelegate

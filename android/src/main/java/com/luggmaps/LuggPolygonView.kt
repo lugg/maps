@@ -5,6 +5,8 @@ import android.graphics.Color
 import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polygon
+import com.luggmaps.events.PolygonPressEvent
+import com.luggmaps.extensions.dispatchEvent
 
 interface LuggPolygonViewDelegate {
   fun polygonViewDidUpdate(polygonView: LuggPolygonView)
@@ -51,6 +53,10 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
 
   fun setZIndex(value: Float) {
     zIndex = value
+  }
+
+  fun emitPressEvent() {
+    dispatchEvent(PolygonPressEvent(this))
   }
 
   fun onAfterUpdateTransaction() {

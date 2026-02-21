@@ -1,4 +1,5 @@
 #import "LuggPolygonView.h"
+#import "events/PolygonPressEvent.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
 #import <react/renderer/components/RNMapsSpec/EventEmitters.h>
@@ -9,6 +10,7 @@
 #import <React/RCTConversions.h>
 
 using namespace facebook::react;
+using namespace luggmaps::events;
 
 @interface LuggPolygonView () <RCTLuggPolygonViewViewProtocol>
 @end
@@ -105,6 +107,10 @@ using namespace facebook::react;
 
 - (NSInteger)zIndex {
   return _zIndex;
+}
+
+- (void)emitPressEvent {
+  PolygonPressEvent::emit<LuggPolygonViewEventEmitter>(_eventEmitter);
 }
 
 - (void)prepareForRecycle {

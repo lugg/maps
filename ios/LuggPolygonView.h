@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, nullable) NSObject *polygon;
 @property(nonatomic, weak, nullable) NSObject *renderer;
 
+- (void)emitPressEvent;
+
 @end
 
 NS_ASSUME_NONNULL_END

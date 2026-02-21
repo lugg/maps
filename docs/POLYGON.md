@@ -19,6 +19,7 @@ import { MapView, Polygon } from '@lugg/maps';
     fillColor="rgba(66, 133, 244, 0.3)"
     strokeColor="#4285F4"
     strokeWidth={2}
+    onPress={() => console.log('Polygon pressed')}
   />
 </MapView>
 ```
@@ -32,3 +33,4 @@ import { MapView, Polygon } from '@lugg/maps';
 | `strokeColor` | `ColorValue` | - | Stroke (outline) color |
 | `strokeWidth` | `number` | - | Stroke width in points |
 | `zIndex` | `number` | - | Z-index for layering |
+| `onPress` | `() => void` | - | Called when the polygon is tapped |
