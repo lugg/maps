@@ -77,7 +77,7 @@ function App() {
 ## Usage
 
 ```tsx
-import { MapView, Marker, Polyline } from '@lugg/maps';
+import { MapView, Marker, Polyline, Polygon } from '@lugg/maps';
 
 <MapView
   style={{ flex: 1 }}
@@ -96,6 +96,17 @@ import { MapView, Marker, Polyline } from '@lugg/maps';
     ]}
     strokeWidth={3}
   />
+  <Polygon
+    coordinates={[
+      { latitude: 37.784, longitude: -122.428 },
+      { latitude: 37.784, longitude: -122.422 },
+      { latitude: 37.779, longitude: -122.422 },
+      { latitude: 37.779, longitude: -122.428 },
+    ]}
+    fillColor="rgba(66, 133, 244, 0.3)"
+    strokeColor="#4285F4"
+    strokeWidth={2}
+  />
 </MapView>
 ```
 
@@ -104,6 +115,7 @@ import { MapView, Marker, Polyline } from '@lugg/maps';
 - [MapView](docs/MAPVIEW.md) - Main map component
 - [Marker](docs/MARKER.md) - Map markers
 - [Polyline](docs/POLYLINE.md) - Draw lines on the map
+- [Polygon](docs/POLYGON.md) - Draw filled shapes on the map
 
 ## Types
 
