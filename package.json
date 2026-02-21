@@ -148,7 +148,8 @@
         "LuggMapView": "LuggMapView",
         "LuggMarkerView": "LuggMarkerView",
         "LuggMapWrapperView": "LuggMapWrapperView",
-        "LuggPolylineView": "LuggPolylineView"
+        "LuggPolylineView": "LuggPolylineView",
+        "LuggPolygonView": "LuggPolygonView"
       }
     }
   },

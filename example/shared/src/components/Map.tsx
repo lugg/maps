@@ -27,6 +27,19 @@ interface MapProps extends MapViewProps {
 
 const INITIAL_ZOOM = 14;
 
+const CIRCLE_CENTER = { latitude: 37.78, longitude: -122.43 };
+const CIRCLE_RADIUS = 0.003;
+const CIRCLE_COORDS = Array.from({ length: 36 }, (_, i) => {
+  const angle = (i * 10 * Math.PI) / 180;
+  return {
+    latitude: CIRCLE_CENTER.latitude + CIRCLE_RADIUS * Math.cos(angle),
+    longitude:
+      CIRCLE_CENTER.longitude +
+      (CIRCLE_RADIUS * Math.sin(angle)) /
+        Math.cos((CIRCLE_CENTER.latitude * Math.PI) / 180),
+  };
+});
+
 const renderMarker = (marker: MarkerData) => {
   const {
     id,
@@ -142,13 +155,8 @@ export const Map = forwardRef<MapView, MapProps>(
           <Route coordinates={smoothedRoute} />
           <CrewMarker route={smoothedRoute} zoom={zoom} />
           <Polygon
-            coordinates={[
-              { latitude: 37.784, longitude: -122.428 },
-              { latitude: 37.784, longitude: -122.422 },
-              { latitude: 37.779, longitude: -122.422 },
-              { latitude: 37.779, longitude: -122.428 },
-            ]}
-            fillColor="rgba(66, 133, 244, 0.3)"
+            coordinates={CIRCLE_COORDS}
+            fillColor="rgba(66, 133, 244, 0.15)"
             strokeColor="#4285F4"
             strokeWidth={2}
           />
