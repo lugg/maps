@@ -21,6 +21,7 @@ using namespace luggmaps::events;
   UIColor *_fillColor;
   CGFloat _strokeWidth;
   NSInteger _zIndex;
+  BOOL _tappable;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -76,14 +77,14 @@ using namespace luggmaps::events;
 
   _strokeWidth = newViewProps.strokeWidth > 0 ? newViewProps.strokeWidth : 1.0;
   _zIndex = newViewProps.zIndex.value_or(0);
+  _tappable = newViewProps.tappable;
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
   [super finalizeUpdates:updateMask];
 
   if (updateMask & RNComponentViewUpdateMaskProps) {
-    if ([self.delegate
-            respondsToSelector:@selector(polygonViewDidUpdate:)]) {
+    if ([self.delegate respondsToSelector:@selector(polygonViewDidUpdate:)]) {
       [self.delegate polygonViewDidUpdate:self];
     }
   }
@@ -107,6 +108,10 @@ using namespace luggmaps::events;
 
 - (NSInteger)zIndex {
   return _zIndex;
+}
+
+- (BOOL)tappable {
+  return _tappable;
 }
 
 - (void)emitPressEvent {

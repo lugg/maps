@@ -28,6 +28,9 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
   var zIndex: Float = 0f
     private set
 
+  var tappable: Boolean = false
+    private set
+
   var delegate: LuggPolygonViewDelegate? = null
   var polygon: Polygon? = null
 
@@ -53,6 +56,10 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
 
   fun setZIndex(value: Float) {
     zIndex = value
+  }
+
+  fun setTappable(value: Boolean) {
+    tappable = value
   }
 
   fun emitPressEvent() {

@@ -1,12 +1,19 @@
 package com.luggmaps
 
 import android.annotation.SuppressLint
-import android.util.Log
+import android.view.MotionEvent
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.views.view.ReactViewGroup
 
 @SuppressLint("ViewConstructor")
 class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) {
+
+  var touchEventHandler: ((MotionEvent) -> Unit)? = null
+
+  override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+    touchEventHandler?.invoke(event)
+    return super.dispatchTouchEvent(event)
+  }
 
   override fun requestLayout() {
     super.requestLayout()

@@ -59,6 +59,11 @@ class LuggPolygonViewManager :
     view.setStrokeWidth(value.toFloat())
   }
 
+  @ReactProp(name = "tappable")
+  override fun setTappable(view: LuggPolygonView, value: Boolean) {
+    view.setTappable(value)
+  }
+
   @ReactProp(name = "zIndex", defaultFloat = 0f)
   override fun setZIndex(view: LuggPolygonView, value: Float) {
     super.setZIndex(view, value)

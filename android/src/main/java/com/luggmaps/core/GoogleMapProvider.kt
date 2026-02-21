@@ -2,9 +2,10 @@ package com.luggmaps.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
+import android.view.MotionEvent
 import android.view.View
 import com.facebook.react.uimanager.PixelUtil.dpToPx
-import com.facebook.react.util.RNLog
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMapOptions
@@ -17,6 +18,7 @@ import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.luggmaps.LuggMapWrapperView
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggMarkerViewDelegate
 import com.luggmaps.LuggPolygonView
@@ -40,6 +42,7 @@ class GoogleMapProvider(private val context: Context) :
 
   var mapId: String = DEMO_MAP_ID
 
+  private var wrapperView: LuggMapWrapperView? = null
   private var mapView: MapView? = null
   private var googleMap: GoogleMap? = null
   private var _isMapReady = false
@@ -49,6 +52,8 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
+  private var pressedPolygon: Polygon? = null
+  private var pressedPolygonView: LuggPolygonView? = null
 
   // Initial camera settings
   private var initialLatitude: Double = 0.0
@@ -82,12 +87,16 @@ class GoogleMapProvider(private val context: Context) :
     initialLongitude = longitude
     initialZoom = zoom
 
+    val wrapper = wrapperView as LuggMapWrapperView
+    this.wrapperView = wrapper
+    wrapper.touchEventHandler = { event -> handleMapTouch(event) }
+
     val options = GoogleMapOptions().mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
       view.getMapAsync(this)
-      (wrapperView as android.view.ViewGroup).addView(view)
+      wrapper.addView(view)
     }
   }
 
@@ -98,6 +107,10 @@ class GoogleMapProvider(private val context: Context) :
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
     polygonToViewMap.clear()
+    pressedPolygon = null
+    pressedPolygonView = null
+    wrapperView?.touchEventHandler = null
+    wrapperView = null
     googleMap?.setOnCameraMoveStartedListener(null)
     googleMap?.setOnCameraMoveListener(null)
     googleMap?.setOnCameraIdleListener(null)
@@ -162,7 +175,74 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun onPolygonClick(polygon: Polygon) {
-    polygonToViewMap[polygon]?.emitPressEvent()
+    val polygonView = polygonToViewMap[polygon]
+    restorePolygonHighlight()
+    polygonView?.emitPressEvent()
+  }
+
+  private fun handleMapTouch(event: MotionEvent) {
+    when (event.actionMasked) {
+      MotionEvent.ACTION_DOWN -> {
+        val map = googleMap ?: return
+        val point = android.graphics.Point(event.x.toInt(), event.y.toInt())
+        val latLng = map.projection.fromScreenLocation(point)
+
+        for ((polygon, view) in polygonToViewMap) {
+          if (!view.tappable) continue
+          if (containsLocation(latLng, polygon.points)) {
+            pressedPolygon = polygon
+            pressedPolygonView = view
+            applyPolygonHighlight()
+            return
+          }
+        }
+      }
+
+      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+        restorePolygonHighlight()
+      }
+    }
+  }
+
+  private fun containsLocation(point: LatLng, polygon: List<LatLng>): Boolean {
+    if (polygon.isEmpty()) return false
+    var inside = false
+    var j = polygon.size - 1
+    for (i in polygon.indices) {
+      val pi = polygon[i]
+      val pj = polygon[j]
+      if ((pi.latitude > point.latitude) != (pj.latitude > point.latitude) &&
+        point.longitude < (pj.longitude - pi.longitude) *
+        (point.latitude - pi.latitude) /
+        (pj.latitude - pi.latitude) +
+        pi.longitude
+      ) {
+        inside = !inside
+      }
+      j = i
+    }
+    return inside
+  }
+
+  private fun applyPolygonHighlight() {
+    val polygon = pressedPolygon ?: return
+    val view = pressedPolygonView ?: return
+    polygon.fillColor = fadeColor(view.fillColor)
+    polygon.strokeColor = fadeColor(view.strokeColor)
+  }
+
+  private fun fadeColor(color: Int): Int {
+    val alpha = (Color.alpha(color) * 0.5).toInt()
+    return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
+  }
+
+  private fun restorePolygonHighlight() {
+    val polygon = pressedPolygon ?: return
+    val view = pressedPolygonView ?: return
+    polygon.fillColor = view.fillColor
+    polygon.strokeColor = view.strokeColor
+    pressedPolygon = null
+    pressedPolygonView = null
   }
 
   // endregion
@@ -459,6 +539,7 @@ class GoogleMapProvider(private val context: Context) :
       strokeColor = polygonView.strokeColor
       strokeWidth = polygonView.strokeWidth.dpToPx()
       zIndex = polygonView.zIndex
+      isClickable = polygonView.tappable
     }
   }
 
@@ -479,7 +560,7 @@ class GoogleMapProvider(private val context: Context) :
       .zIndex(polygonView.zIndex)
 
     val polygon = map.addPolygon(options)
-    polygon.isClickable = true
+    polygon.isClickable = polygonView.tappable
     polygonView.polygon = polygon
     polygonToViewMap[polygon] = polygonView
   }

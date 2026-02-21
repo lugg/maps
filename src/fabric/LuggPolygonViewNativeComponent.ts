@@ -15,6 +15,7 @@ export interface NativeProps extends ViewProps {
   strokeColor?: ColorValue;
   strokeWidth?: Double;
   fillColor?: ColorValue;
+  tappable?: boolean;
   onPress?: BubblingEventHandler<null>;
 }
 

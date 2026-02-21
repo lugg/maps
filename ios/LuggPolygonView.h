@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) UIColor *fillColor;
 @property(nonatomic, readonly) CGFloat strokeWidth;
 @property(nonatomic, readonly) NSInteger zIndex;
+@property(nonatomic, readonly) BOOL tappable;
 @property(nonatomic, weak, nullable) id<LuggPolygonViewDelegate> delegate;
 @property(nonatomic, strong, nullable) NSObject *polygon;
 @property(nonatomic, weak, nullable) NSObject *renderer;

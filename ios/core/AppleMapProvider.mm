@@ -19,9 +19,9 @@
 @implementation LuggAppleMapViewContent
 @end
 
-@interface AppleMapProvider () <LuggMarkerViewDelegate,
-                                LuggPolylineViewDelegate,
-                                LuggPolygonViewDelegate>
+@interface AppleMapProvider () <
+    LuggMarkerViewDelegate, LuggPolylineViewDelegate, LuggPolygonViewDelegate,
+    UIGestureRecognizerDelegate>
 @end
 
 @implementation AppleMapProvider {
@@ -32,7 +32,8 @@
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
-  UITapGestureRecognizer *_tapGesture;
+  UILongPressGestureRecognizer *_polygonPressGesture;
+  LuggPolygonView *_pressedPolygonView;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -76,11 +77,13 @@
 
   [self applyZoomRange];
 
-  _tapGesture =
-      [[UITapGestureRecognizer alloc] initWithTarget:self
-                                              action:@selector(handleMapTap:)];
-  _tapGesture.cancelsTouchesInView = NO;
-  [_mapView addGestureRecognizer:_tapGesture];
+  _polygonPressGesture = [[UILongPressGestureRecognizer alloc]
+      initWithTarget:self
+              action:@selector(handlePolygonPress:)];
+  _polygonPressGesture.minimumPressDuration = 0;
+  _polygonPressGesture.cancelsTouchesInView = NO;
+  _polygonPressGesture.delegate = self;
+  [_mapView addGestureRecognizer:_polygonPressGesture];
 
   [wrapperView addSubview:_mapView];
 
@@ -95,10 +98,11 @@
 
 - (void)destroy {
   [self stopEdgeInsetsAnimation];
-  if (_tapGesture) {
-    [_mapView removeGestureRecognizer:_tapGesture];
-    _tapGesture = nil;
+  if (_polygonPressGesture) {
+    [_mapView removeGestureRecognizer:_polygonPressGesture];
+    _polygonPressGesture = nil;
   }
+  _pressedPolygonView = nil;
   [_mapView removeFromSuperview];
   _mapView = nil;
   _isMapReady = NO;
@@ -242,13 +246,9 @@
   _mapView.cameraZoomRange = zoomRange;
 }
 
-- (void)handleMapTap:(UITapGestureRecognizer *)gesture {
-  if (gesture.state != UIGestureRecognizerStateEnded)
-    return;
-
-  CGPoint tapPoint = [gesture locationInView:_mapView];
-  CLLocationCoordinate2D tapCoordinate =
-      [_mapView convertPoint:tapPoint toCoordinateFromView:_mapView];
+- (LuggPolygonView *)hitTestPolygonAtPoint:(CGPoint)point {
+  CLLocationCoordinate2D tapCoordinate = [_mapView convertPoint:point
+                                           toCoordinateFromView:_mapView];
   MKMapPoint mapPoint = MKMapPointForCoordinate(tapCoordinate);
   CGPoint mapPointAsCGP = CGPointMake(mapPoint.x, mapPoint.y);
 
@@ -258,9 +258,8 @@
     if (![overlay isKindOfClass:[MKPolygon class]])
       continue;
 
-    LuggPolygonView *polygonView =
-        [_overlayToPolygonMap objectForKey:overlay];
-    if (!polygonView)
+    LuggPolygonView *polygonView = [_overlayToPolygonMap objectForKey:overlay];
+    if (!polygonView || !polygonView.tappable)
       continue;
 
     NSArray<CLLocation *> *coordinates = polygonView.coordinates;
@@ -281,11 +280,66 @@
     BOOL contains = CGPathContainsPoint(path, NULL, mapPointAsCGP, NO);
     CGPathRelease(path);
 
-    if (contains) {
-      [polygonView emitPressEvent];
-      return;
+    if (contains)
+      return polygonView;
+  }
+  return nil;
+}
+
+- (void)handlePolygonPress:(UILongPressGestureRecognizer *)gesture {
+  if (gesture.state == UIGestureRecognizerStateBegan) {
+    CGPoint point = [gesture locationInView:_mapView];
+    LuggPolygonView *hit = [self hitTestPolygonAtPoint:point];
+    if (hit) {
+      _pressedPolygonView = hit;
+      [self applyPolygonHighlight];
+    }
+  } else if (gesture.state == UIGestureRecognizerStateEnded) {
+    if (_pressedPolygonView) {
+      [self restorePolygonHighlight];
+      [_pressedPolygonView emitPressEvent];
+      _pressedPolygonView = nil;
+    }
+  } else if (gesture.state == UIGestureRecognizerStateCancelled ||
+             gesture.state == UIGestureRecognizerStateFailed) {
+    if (_pressedPolygonView) {
+      [self restorePolygonHighlight];
+      _pressedPolygonView = nil;
     }
   }
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
+    shouldRecognizeSimultaneouslyWithGestureRecognizer:
+        (UIGestureRecognizer *)otherGestureRecognizer {
+  return YES;
+}
+
+- (void)applyPolygonHighlight {
+  MKPolygonRenderer *renderer =
+      (MKPolygonRenderer *)_pressedPolygonView.renderer;
+  if (!renderer)
+    return;
+
+  UIColor *fill = _pressedPolygonView.fillColor;
+  UIColor *stroke = _pressedPolygonView.strokeColor;
+  CGFloat fillAlpha = 0, strokeAlpha = 0;
+  [fill getRed:NULL green:NULL blue:NULL alpha:&fillAlpha];
+  [stroke getRed:NULL green:NULL blue:NULL alpha:&strokeAlpha];
+  renderer.fillColor = [fill colorWithAlphaComponent:fillAlpha * 0.5];
+  renderer.strokeColor = [stroke colorWithAlphaComponent:strokeAlpha * 0.5];
+  [renderer setNeedsDisplay];
+}
+
+- (void)restorePolygonHighlight {
+  MKPolygonRenderer *renderer =
+      (MKPolygonRenderer *)_pressedPolygonView.renderer;
+  if (!renderer)
+    return;
+
+  renderer.fillColor = _pressedPolygonView.fillColor;
+  renderer.strokeColor = _pressedPolygonView.strokeColor;
+  [renderer setNeedsDisplay];
 }
 
 #pragma mark - MKMapViewDelegate
@@ -399,8 +453,7 @@
   }
 
   if ([overlay isKindOfClass:[MKPolygon class]]) {
-    LuggPolygonView *polygonView =
-        [_overlayToPolygonMap objectForKey:overlay];
+    LuggPolygonView *polygonView = [_overlayToPolygonMap objectForKey:overlay];
     MKPolygon *polygon = (MKPolygon *)overlay;
 
     MKPolygonRenderer *renderer =
@@ -670,8 +723,8 @@
   for (NSUInteger i = 0; i < coordinates.count; i++) {
     coords[i] = coordinates[i].coordinate;
   }
-  MKPolygon *newPolygon =
-      [MKPolygon polygonWithCoordinates:coords count:coordinates.count];
+  MKPolygon *newPolygon = [MKPolygon polygonWithCoordinates:coords
+                                                      count:coordinates.count];
   free(coords);
 
   polygonView.polygon = newPolygon;
@@ -708,7 +761,7 @@
   }
 
   MKPolygon *polygon = [MKPolygon polygonWithCoordinates:coords
-                                                    count:coordinates.count];
+                                                   count:coordinates.count];
   free(coords);
 
   polygonView.polygon = polygon;

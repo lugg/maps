@@ -98,12 +98,14 @@ function HomeContent() {
     (event: { nativeEvent: CameraEventPayload }, idle: boolean) => {
       const { coordinate, zoom, gesture } = event.nativeEvent;
       lastCoordinate.current = coordinate;
-      const pos = `${coordinate.latitude.toFixed(5)}, ${coordinate.longitude.toFixed(5)} (z${zoom.toFixed(1)})`;
+      const pos = `${coordinate.latitude.toFixed(
+        5
+      )}, ${coordinate.longitude.toFixed(5)} (z${zoom.toFixed(1)})`;
       const suffix = idle
         ? ` (idle${gesture ? ', gesture' : ''})`
         : gesture
-          ? ' (gesture)'
-          : '';
+        ? ' (gesture)'
+        : '';
       setStatusText(pos + suffix);
     },
     []

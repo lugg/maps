@@ -45,8 +45,14 @@ export class Polygon extends React.PureComponent<PolygonProps> {
   }
 
   render() {
-    const { coordinates, strokeColor, strokeWidth, fillColor, zIndex, onPress } =
-      this.props;
+    const {
+      coordinates,
+      strokeColor,
+      strokeWidth,
+      fillColor,
+      zIndex,
+      onPress,
+    } = this.props;
 
     return (
       <LuggPolygonViewNativeComponent
@@ -55,6 +61,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
         strokeColor={strokeColor}
         strokeWidth={strokeWidth}
         fillColor={fillColor}
+        tappable={!!onPress}
         onPress={onPress}
       />
     );
