@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react';
 import type { NativeSyntheticEvent, ViewProps } from 'react-native';
-import type { MapProvider, Coordinate, EdgeInsets, MapTheme } from './types';
+import type {
+  MapProvider,
+  Coordinate,
+  EdgeInsets,
+  MapTheme,
+  PressEventPayload,
+} from './types';
 
 /**
  * Options for moving the camera
@@ -47,6 +53,7 @@ export interface CameraEventPayload {
 }
 
 export type MapCameraEvent = NativeSyntheticEvent<CameraEventPayload>;
+export type MapPressEvent = NativeSyntheticEvent<PressEventPayload>;
 
 /**
  * MapView component props
@@ -119,6 +126,14 @@ export interface MapViewProps extends ViewProps {
    * @default 'system'
    */
   theme?: MapTheme;
+  /**
+   * Called when the map is pressed
+   */
+  onPress?: (event: MapPressEvent) => void;
+  /**
+   * Called when the map is long pressed
+   */
+  onLongPress?: (event: MapPressEvent) => void;
   /**
    * Called when camera moves
    */

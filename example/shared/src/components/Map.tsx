@@ -105,6 +105,8 @@ export const Map = forwardRef<MapView, MapProps>(
       animatedPosition,
       onCameraIdle,
       onCameraMove,
+      onPress,
+      onLongPress,
       onPolygonPress,
       ...props
     },
@@ -148,6 +150,8 @@ export const Map = forwardRef<MapView, MapProps>(
           initialZoom={INITIAL_ZOOM}
           userLocationEnabled
           edgeInsets={edgeInsets}
+          onPress={onPress}
+          onLongPress={onLongPress}
           onCameraMove={handleCameraMove}
           onCameraIdle={handleCameraIdle}
           {...props}

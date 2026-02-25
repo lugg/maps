@@ -93,6 +93,8 @@ export class MapView
       userLocationEnabled,
       userLocationButtonEnabled,
       theme,
+      onPress,
+      onLongPress,
       onCameraMove,
       onCameraIdle,
       onReady,
@@ -118,6 +120,8 @@ export class MapView
         userLocationEnabled={userLocationEnabled}
         userLocationButtonEnabled={userLocationButtonEnabled}
         theme={theme}
+        onPress={onPress}
+        onLongPress={onLongPress}
         onCameraMove={onCameraMove}
         onCameraIdle={onCameraIdle}
         onReady={onReady}

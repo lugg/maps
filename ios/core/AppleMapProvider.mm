@@ -32,7 +32,8 @@
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
-  UITapGestureRecognizer *_polygonPressGesture;
+  UITapGestureRecognizer *_tapGesture;
+  UILongPressGestureRecognizer *_longPressGesture;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -76,12 +77,18 @@
 
   [self applyZoomRange];
 
-  _polygonPressGesture = [[UITapGestureRecognizer alloc]
+  _tapGesture = [[UITapGestureRecognizer alloc]
       initWithTarget:self
-              action:@selector(handlePolygonPress:)];
-  _polygonPressGesture.cancelsTouchesInView = NO;
-  _polygonPressGesture.delegate = self;
-  [_mapView addGestureRecognizer:_polygonPressGesture];
+              action:@selector(handleTap:)];
+  _tapGesture.cancelsTouchesInView = NO;
+  _tapGesture.delegate = self;
+  [_mapView addGestureRecognizer:_tapGesture];
+
+  _longPressGesture = [[UILongPressGestureRecognizer alloc]
+      initWithTarget:self
+              action:@selector(handleLongPress:)];
+  _longPressGesture.delegate = self;
+  [_mapView addGestureRecognizer:_longPressGesture];
 
   [wrapperView addSubview:_mapView];
 
@@ -96,9 +103,13 @@
 
 - (void)destroy {
   [self stopEdgeInsetsAnimation];
-  if (_polygonPressGesture) {
-    [_mapView removeGestureRecognizer:_polygonPressGesture];
-    _polygonPressGesture = nil;
+  if (_tapGesture) {
+    [_mapView removeGestureRecognizer:_tapGesture];
+    _tapGesture = nil;
+  }
+  if (_longPressGesture) {
+    [_mapView removeGestureRecognizer:_longPressGesture];
+    _longPressGesture = nil;
   }
   [_mapView removeFromSuperview];
   _mapView = nil;
@@ -283,13 +294,35 @@
   return nil;
 }
 
-- (void)handlePolygonPress:(UITapGestureRecognizer *)gesture {
+- (void)handleTap:(UITapGestureRecognizer *)gesture {
   if (gesture.state != UIGestureRecognizerStateEnded)
     return;
 
   CGPoint point = [gesture locationInView:_mapView];
   LuggPolygonView *polygonView = [self hitTestPolygonAtPoint:point];
-  [polygonView emitPressEvent];
+  if (polygonView) {
+    [polygonView emitPressEvent];
+  } else {
+    CLLocationCoordinate2D coordinate = [_mapView convertPoint:point
+                                         toCoordinateFromView:_mapView];
+    [_delegate mapProviderDidPress:coordinate.latitude
+                         longitude:coordinate.longitude
+                                 x:point.x
+                                 y:point.y];
+  }
+}
+
+- (void)handleLongPress:(UILongPressGestureRecognizer *)gesture {
+  if (gesture.state != UIGestureRecognizerStateBegan)
+    return;
+
+  CGPoint point = [gesture locationInView:_mapView];
+  CLLocationCoordinate2D coordinate = [_mapView convertPoint:point
+                                       toCoordinateFromView:_mapView];
+  [_delegate mapProviderDidLongPress:coordinate.latitude
+                           longitude:coordinate.longitude
+                                   x:point.x
+                                   y:point.y];
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer

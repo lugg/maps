@@ -17,6 +17,14 @@ NS_ASSUME_NONNULL_BEGIN
                        longitude:(double)longitude
                             zoom:(double)zoom
                          gesture:(BOOL)gesture;
+- (void)mapProviderDidPress:(double)latitude
+                  longitude:(double)longitude
+                          x:(double)x
+                          y:(double)y;
+- (void)mapProviderDidLongPress:(double)latitude
+                      longitude:(double)longitude
+                              x:(double)x
+                              y:(double)y;
 @end
 
 @protocol MapProvider <NSObject>

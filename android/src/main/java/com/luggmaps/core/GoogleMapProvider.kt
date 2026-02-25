@@ -33,6 +33,8 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnCameraMoveStartedListener,
   GoogleMap.OnCameraMoveListener,
   GoogleMap.OnCameraIdleListener,
+  GoogleMap.OnMapClickListener,
+  GoogleMap.OnMapLongClickListener,
   GoogleMap.OnPolygonClickListener {
 
   override var delegate: MapProviderDelegate? = null
@@ -107,6 +109,8 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnCameraMoveStartedListener(null)
     googleMap?.setOnCameraMoveListener(null)
     googleMap?.setOnCameraIdleListener(null)
+    googleMap?.setOnMapClickListener(null)
+    googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
     googleMap?.clear()
     googleMap = null
@@ -126,6 +130,8 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnCameraMoveStartedListener(this)
     map.setOnCameraMoveListener(this)
     map.setOnCameraIdleListener(this)
+    map.setOnMapClickListener(this)
+    map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
 
     applyUiSettings()
@@ -165,6 +171,18 @@ class GoogleMapProvider(private val context: Context) :
       polylineAnimators.values.forEach { it.resume() }
     }
     isDragging = false
+  }
+
+  override fun onMapClick(latLng: LatLng) {
+    val map = googleMap ?: return
+    val point = map.projection.toScreenLocation(latLng)
+    delegate?.mapProviderDidPress(latLng.latitude, latLng.longitude, point.x.toFloat(), point.y.toFloat())
+  }
+
+  override fun onMapLongClick(latLng: LatLng) {
+    val map = googleMap ?: return
+    val point = map.projection.toScreenLocation(latLng)
+    delegate?.mapProviderDidLongPress(latLng.latitude, latLng.longitude, point.x.toFloat(), point.y.toFloat())
   }
 
   override fun onPolygonClick(polygon: Polygon) {

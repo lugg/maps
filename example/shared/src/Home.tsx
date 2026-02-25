@@ -11,6 +11,7 @@ import {
   MapProvider,
   type MapProviderType,
   type MapCameraEvent,
+  type MapPressEvent,
 } from '@lugg/maps';
 import {
   TrueSheet,
@@ -94,6 +95,18 @@ function HomeContent() {
     [getSheetBottom]
   );
 
+  const formatPressEvent = useCallback(
+    (event: MapPressEvent, label: string) => {
+      const { coordinate, point } = event.nativeEvent;
+      const lat = coordinate.latitude.toFixed(5);
+      const lng = coordinate.longitude.toFixed(5);
+      const px = point.x.toFixed(0);
+      const py = point.y.toFixed(0);
+      setStatusText(`${label}: ${lat}, ${lng} (${px}, ${py})`);
+    },
+    []
+  );
+
   const formatCameraEvent = useCallback(
     (event: MapCameraEvent, idle: boolean) => {
       const { coordinate, zoom, gesture } = event.nativeEvent;
@@ -166,6 +179,8 @@ function HomeContent() {
           animatedPosition={animatedPosition}
           userLocationEnabled={locationPermission}
           onReady={handleMapReady}
+          onPress={(e) => formatPressEvent(e, 'Press')}
+          onLongPress={(e) => formatPressEvent(e, 'Long press')}
           onCameraMove={(e) => formatCameraEvent(e, false)}
           onCameraIdle={(e) => formatCameraEvent(e, true)}
           onPolygonPress={() => setStatusText('Polygon pressed')}

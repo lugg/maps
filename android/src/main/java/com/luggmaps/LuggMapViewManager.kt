@@ -13,6 +13,8 @@ import com.facebook.react.viewmanagers.LuggMapViewManagerInterface
 import com.google.android.gms.maps.model.LatLng
 import com.luggmaps.events.CameraIdleEvent
 import com.luggmaps.events.CameraMoveEvent
+import com.luggmaps.events.LongPressEvent
+import com.luggmaps.events.PressEvent
 import com.luggmaps.events.ReadyEvent
 import com.luggmaps.extensions.dispatchEvent
 
@@ -35,6 +37,8 @@ class LuggMapViewManager :
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
     mapOf(
+      "topPress" to mapOf("registrationName" to "onPress"),
+      "topLongPress" to mapOf("registrationName" to "onLongPress"),
       "topCameraMove" to mapOf("registrationName" to "onCameraMove"),
       "topCameraIdle" to mapOf("registrationName" to "onCameraIdle"),
       "topReady" to mapOf("registrationName" to "onReady")
@@ -62,6 +66,14 @@ class LuggMapViewManager :
 
   override fun onReady(view: LuggMapView) {
     view.dispatchEvent(ReadyEvent(view))
+  }
+
+  override fun onPress(view: LuggMapView, latitude: Double, longitude: Double, x: Float, y: Float) {
+    view.dispatchEvent(PressEvent(view, latitude, longitude, x, y))
+  }
+
+  override fun onLongPress(view: LuggMapView, latitude: Double, longitude: Double, x: Float, y: Float) {
+    view.dispatchEvent(LongPressEvent(view, latitude, longitude, x, y))
   }
 
   @ReactProp(name = "provider")

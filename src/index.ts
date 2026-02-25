@@ -19,6 +19,7 @@ export type {
   SetEdgeInsetsOptions,
   CameraEventPayload,
   MapCameraEvent,
+  MapPressEvent,
 } from './MapView.types';
 export type {
   MapProvider as MapProviderType,

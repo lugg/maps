@@ -11,6 +11,8 @@ interface MapProviderDelegate {
   fun mapProviderDidReady()
   fun mapProviderDidMoveCamera(latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
   fun mapProviderDidIdleCamera(latitude: Double, longitude: Double, zoom: Float, gesture: Boolean)
+  fun mapProviderDidPress(latitude: Double, longitude: Double, x: Float, y: Float)
+  fun mapProviderDidLongPress(latitude: Double, longitude: Double, x: Float, y: Float)
 }
 
 interface MapProvider {

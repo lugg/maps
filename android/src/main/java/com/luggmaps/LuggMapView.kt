@@ -28,6 +28,8 @@ interface LuggMapViewEventDelegate {
     gesture: Boolean
   )
   fun onReady(view: LuggMapView)
+  fun onPress(view: LuggMapView, latitude: Double, longitude: Double, x: Float, y: Float)
+  fun onLongPress(view: LuggMapView, latitude: Double, longitude: Double, x: Float, y: Float)
 }
 
 @SuppressLint("ViewConstructor")
@@ -139,6 +141,14 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
   override fun mapProviderDidIdleCamera(latitude: Double, longitude: Double, zoom: Float, gesture: Boolean) {
     eventDelegate?.onCameraIdle(this, latitude, longitude, zoom, gesture)
+  }
+
+  override fun mapProviderDidPress(latitude: Double, longitude: Double, x: Float, y: Float) {
+    eventDelegate?.onPress(this, latitude, longitude, x, y)
+  }
+
+  override fun mapProviderDidLongPress(latitude: Double, longitude: Double, x: Float, y: Float) {
+    eventDelegate?.onLongPress(this, latitude, longitude, x, y)
   }
 
   // endregion

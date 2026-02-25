@@ -8,6 +8,8 @@
 #import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
+#import "events/LongPressEvent.h"
+#import "events/PressEvent.h"
 #import "events/ReadyEvent.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
@@ -200,6 +202,22 @@ using namespace luggmaps::events;
                             zoom:(double)zoom
                          gesture:(BOOL)gesture {
   CameraIdleEvent{latitude, longitude, zoom, static_cast<bool>(gesture)}
+      .emit<LuggMapViewEventEmitter>(_eventEmitter);
+}
+
+- (void)mapProviderDidPress:(double)latitude
+                  longitude:(double)longitude
+                          x:(double)x
+                          y:(double)y {
+  PressEvent{latitude, longitude, x, y}
+      .emit<LuggMapViewEventEmitter>(_eventEmitter);
+}
+
+- (void)mapProviderDidLongPress:(double)latitude
+                      longitude:(double)longitude
+                              x:(double)x
+                              y:(double)y {
+  LongPressEvent{latitude, longitude, x, y}
       .emit<LuggMapViewEventEmitter>(_eventEmitter);
 }
 

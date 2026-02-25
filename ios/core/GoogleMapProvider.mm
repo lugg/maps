@@ -262,6 +262,24 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
                               gesture:wasDragging];
 }
 
+- (void)mapView:(GMSMapView *)mapView
+    didTapAtCoordinate:(CLLocationCoordinate2D)coordinate {
+  CGPoint point = [mapView.projection pointForCoordinate:coordinate];
+  [_delegate mapProviderDidPress:coordinate.latitude
+                       longitude:coordinate.longitude
+                               x:point.x
+                               y:point.y];
+}
+
+- (void)mapView:(GMSMapView *)mapView
+    didLongPressAtCoordinate:(CLLocationCoordinate2D)coordinate {
+  CGPoint point = [mapView.projection pointForCoordinate:coordinate];
+  [_delegate mapProviderDidLongPress:coordinate.latitude
+                           longitude:coordinate.longitude
+                                   x:point.x
+                                   y:point.y];
+}
+
 - (void)mapView:(GMSMapView *)mapView didTapOverlay:(GMSOverlay *)overlay {
   if (![overlay isKindOfClass:[GMSPolygon class]])
     return;
