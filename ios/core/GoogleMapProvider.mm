@@ -22,6 +22,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMutableArray<LuggPolygonView *> *_pendingPolygonViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
   NSMapTable<GMSPolygon *, LuggPolygonView *> *_polygonToViewMap;
+  NSMapTable<GMSMarker *, LuggMarkerView *> *_markerToViewMap;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -42,6 +43,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _pendingPolygonViews = [NSMutableArray array];
     _polylineAnimators = [NSMapTable weakToStrongObjectsMapTable];
     _polygonToViewMap = [NSMapTable strongToWeakObjectsMapTable];
+    _markerToViewMap = [NSMapTable strongToWeakObjectsMapTable];
   }
   return self;
 }
@@ -105,6 +107,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_pendingPolygonViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
   [_polygonToViewMap removeAllObjects];
+  [_markerToViewMap removeAllObjects];
   [_mapView clear];
   [_mapView removeFromSuperview];
   _mapView = nil;
@@ -292,6 +295,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [polygonView emitPressEvent];
 }
 
+- (BOOL)mapView:(GMSMapView *)mapView didTapMarker:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (markerView) {
+    [markerView emitPressEvent];
+  }
+  return NO;
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {
@@ -324,6 +335,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (void)removeMarkerView:(LuggMarkerView *)markerView {
   GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
   if (marker) {
+    [_markerToViewMap removeObjectForKey:marker];
     marker.iconView = nil;
     marker.map = nil;
     markerView.marker = nil;
@@ -376,6 +388,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   marker.map = _mapView;
   markerView.marker = marker;
+  [_markerToViewMap setObject:markerView forKey:marker];
 }
 
 - (void)applyMarkerStyle:(LuggMarkerView *)markerView

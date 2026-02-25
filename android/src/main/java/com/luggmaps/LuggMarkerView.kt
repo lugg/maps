@@ -11,6 +11,8 @@ import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.luggmaps.events.MarkerPressEvent
+import com.luggmaps.extensions.dispatchEvent
 
 interface LuggMarkerViewDelegate {
   fun markerViewDidUpdate(markerView: LuggMarkerView)
@@ -236,6 +238,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun setRasterize(rasterize: Boolean) {
     this.rasterize = rasterize
+  }
+
+  fun emitPressEvent() {
+    dispatchEvent(MarkerPressEvent(this))
   }
 
   fun setName(name: String?) {

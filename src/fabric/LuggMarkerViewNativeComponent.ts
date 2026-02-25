@@ -3,6 +3,7 @@ import type { ViewProps, HostComponent } from 'react-native';
 import type {
   Double,
   WithDefault,
+  DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Coordinate {
@@ -24,6 +25,7 @@ export interface NativeProps extends ViewProps {
   rotate?: WithDefault<Double, 0>;
   scale?: WithDefault<Double, 1>;
   rasterize?: WithDefault<boolean, true>;
+  onMarkerPress?: DirectEventHandler<null>;
 }
 
 export default codegenNativeComponent<NativeProps>(

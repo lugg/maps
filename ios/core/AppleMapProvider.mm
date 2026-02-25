@@ -461,6 +461,20 @@
   return nil;
 }
 
+- (void)mapView:(MKMapView *)mapView
+    didSelectAnnotationView:(MKAnnotationView *)view {
+  if (![view.annotation isKindOfClass:[AppleMarkerAnnotation class]])
+    return;
+
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)view.annotation;
+  LuggMarkerView *markerView = annotation.markerView;
+
+  if (markerView) {
+    [markerView emitPressEvent];
+  }
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {

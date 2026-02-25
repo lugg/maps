@@ -47,6 +47,10 @@ export interface MarkerProps {
    */
   rasterize?: boolean;
   /**
+   * Called when the marker is pressed
+   */
+  onPress?: () => void;
+  /**
    * Custom marker view
    */
   children?: ReactNode;
@@ -76,6 +80,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
       rotate = 0,
       scale = 1,
       rasterize = true,
+      onPress,
       children,
     } = this.props;
 
@@ -90,6 +95,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
         rotate={rotate}
         scale={scale}
         rasterize={rasterize}
+        onMarkerPress={onPress}
       >
         {children}
       </LuggMarkerViewNativeComponent>

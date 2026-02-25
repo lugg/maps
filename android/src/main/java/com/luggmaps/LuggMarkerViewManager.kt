@@ -20,6 +20,9 @@ class LuggMarkerViewManager :
   override fun getName(): String = NAME
   override fun createViewInstance(context: ThemedReactContext): LuggMarkerView = LuggMarkerView(context)
 
+  override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
+    mapOf("topMarkerPress" to mapOf("registrationName" to "onMarkerPress"))
+
   override fun onDropViewInstance(view: LuggMarkerView) {
     super.onDropViewInstance(view)
     view.onDropViewInstance()

@@ -6,6 +6,7 @@
 2. YOU MUST NOT commit changes yourself until I explicitly tell you to.
 3. YOU MUST NOT create summary documents unless you are told to.
 4. YOU MUST NOT add code comments that are obvious.
+5. Always update relevant docs in `docs/` when making changes to components or APIs.
 
 ## Project Overview
 

@@ -12,6 +12,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
@@ -35,7 +36,8 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnCameraIdleListener,
   GoogleMap.OnMapClickListener,
   GoogleMap.OnMapLongClickListener,
-  GoogleMap.OnPolygonClickListener {
+  GoogleMap.OnPolygonClickListener,
+  GoogleMap.OnMarkerClickListener {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -52,6 +54,7 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
+  private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private var tapLocation: LatLng? = null
 
   // Initial camera settings
@@ -105,6 +108,7 @@ class GoogleMapProvider(private val context: Context) :
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
     polygonToViewMap.clear()
+    markerToViewMap.clear()
     wrapperView?.touchEventHandler = null
     wrapperView = null
     googleMap?.setOnCameraMoveStartedListener(null)
@@ -113,6 +117,7 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnMapClickListener(null)
     googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
+    googleMap?.setOnMarkerClickListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false
@@ -134,6 +139,7 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMapClickListener(this)
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
+    map.setOnMarkerClickListener(this)
 
     wrapperView?.touchEventHandler = { event ->
       if (event.action == android.view.MotionEvent.ACTION_DOWN) {
@@ -199,6 +205,11 @@ class GoogleMapProvider(private val context: Context) :
     } else {
       onMapClick(tapLocation ?: return)
     }
+  }
+
+  override fun onMarkerClick(marker: Marker): Boolean {
+    markerToViewMap[marker]?.emitPressEvent()
+    return false
   }
 
   // endregion
@@ -339,6 +350,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun removeMarkerView(markerView: LuggMarkerView) {
+    markerView.marker?.let { markerToViewMap.remove(it) }
     markerView.marker?.remove()
     markerView.marker = null
   }
@@ -391,6 +403,7 @@ class GoogleMapProvider(private val context: Context) :
     marker.rotation = markerView.rotate
 
     markerView.marker = marker
+    markerToViewMap[marker] = markerView
     markerView.applyIconToMarker()
   }
 

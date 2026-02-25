@@ -39,6 +39,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
 | `scale` | `number` | `1` | Scale factor for the marker |
 | `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android only) |
+| `onPress` | `() => void` | - | Called when the marker is pressed |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Custom Markers
