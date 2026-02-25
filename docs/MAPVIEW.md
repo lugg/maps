@@ -35,8 +35,11 @@ import { MapView } from '@lugg/maps';
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Map color theme |
-| `onCameraMove` | `(event) => void` | - | Called when camera moves |
-| `onCameraIdle` | `(event) => void` | - | Called when camera stops moving |
+| `onPress` | `(event: MapPressEvent) => void` | - | Called when the map is pressed |
+| `onLongPress` | `(event: MapPressEvent) => void` | - | Called when the map is long pressed |
+| `onCameraMove` | `(event: MapCameraEvent) => void` | - | Called when camera moves |
+| `onCameraIdle` | `(event: MapCameraEvent) => void` | - | Called when camera stops moving |
+| `onReady` | `() => void` | - | Called when map is loaded and ready |
 
 ## Ref Methods
 
@@ -107,6 +110,17 @@ interface SetEdgeInsetsOptions {
 ```
 
 ## Events
+
+### onPress / onLongPress
+
+Called when the map is pressed or long pressed. Event includes the geographic coordinate and screen point.
+
+```ts
+interface PressEventPayload {
+  coordinate: Coordinate;
+  point: Point;
+}
+```
 
 ### onCameraMove
 
