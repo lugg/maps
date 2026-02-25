@@ -471,7 +471,10 @@
   LuggMarkerView *markerView = annotation.markerView;
 
   if (markerView) {
-    [markerView emitPressEvent];
+    CGPoint point = [_mapView convertCoordinate:markerView.coordinate
+                                  toPointToView:_mapView];
+    [markerView emitPressEventWithPoint:point];
+    [_mapView setCenterCoordinate:markerView.coordinate animated:YES];
   }
 }
 

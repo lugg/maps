@@ -25,7 +25,16 @@ export interface NativeProps extends ViewProps {
   rotate?: WithDefault<Double, 0>;
   scale?: WithDefault<Double, 1>;
   rasterize?: WithDefault<boolean, true>;
-  onMarkerPress?: DirectEventHandler<null>;
+  onMarkerPress?: DirectEventHandler<{
+    coordinate: {
+      latitude: Double;
+      longitude: Double;
+    };
+    point: {
+      x: Double;
+      y: Double;
+    };
+  }>;
 }
 
 export default codegenNativeComponent<NativeProps>(

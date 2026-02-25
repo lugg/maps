@@ -210,8 +210,14 @@ using namespace luggmaps::events;
   }];
 }
 
-- (void)emitPressEvent {
-  MarkerPressEvent::emit<LuggMarkerViewEventEmitter>(_eventEmitter);
+- (void)emitPressEventWithPoint:(CGPoint)point {
+  MarkerPressEvent event{
+      .latitude = _coordinate.latitude,
+      .longitude = _coordinate.longitude,
+      .x = point.x,
+      .y = point.y,
+  };
+  event.emit<LuggMarkerViewEventEmitter>(_eventEmitter);
 }
 
 - (void)resetIconViewTransform {

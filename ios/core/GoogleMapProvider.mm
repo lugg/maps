@@ -298,7 +298,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 - (BOOL)mapView:(GMSMapView *)mapView didTapMarker:(GMSMarker *)marker {
   LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
   if (markerView) {
-    [markerView emitPressEvent];
+    CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
+    [markerView emitPressEventWithPoint:point];
   }
   return NO;
 }

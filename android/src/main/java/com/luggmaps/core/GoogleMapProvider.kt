@@ -208,7 +208,10 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun onMarkerClick(marker: Marker): Boolean {
-    markerToViewMap[marker]?.emitPressEvent()
+    markerToViewMap[marker]?.let { view ->
+      val point = googleMap?.projection?.toScreenLocation(marker.position)
+      view.emitPressEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+    }
     return false
   }
 

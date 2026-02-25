@@ -6,6 +6,7 @@ import {
   Polygon,
   type MapViewProps,
   type MapCameraEvent,
+  type MarkerPressEvent,
 } from '@lugg/maps';
 import Animated, {
   useAnimatedStyle,
@@ -23,6 +24,7 @@ interface MapProps extends MapViewProps {
   markers: MarkerData[];
   animatedPosition?: SharedValue<number>;
   onPolygonPress?: () => void;
+  onMarkerPress?: (event: MarkerPressEvent, marker: MarkerData) => void;
 }
 
 const INITIAL_ZOOM = 14;
@@ -40,7 +42,10 @@ const CIRCLE_COORDS = Array.from({ length: 36 }, (_, i) => {
   };
 });
 
-const renderMarker = (marker: MarkerData) => {
+const renderMarker = (
+  marker: MarkerData,
+  onPress?: (event: MarkerPressEvent, marker: MarkerData) => void
+) => {
   const {
     id,
     name,
@@ -54,9 +59,20 @@ const renderMarker = (marker: MarkerData) => {
     imageUrl,
   } = marker;
 
+  const handlePress = onPress
+    ? (e: MarkerPressEvent) => onPress(e, marker)
+    : undefined;
+
   switch (type) {
     case 'icon':
-      return <MarkerIcon key={id} name={name} coordinate={coordinate} />;
+      return (
+        <MarkerIcon
+          key={id}
+          name={name}
+          coordinate={coordinate}
+          onPress={handlePress}
+        />
+      );
     case 'text':
       return (
         <MarkerText
@@ -65,6 +81,7 @@ const renderMarker = (marker: MarkerData) => {
           coordinate={coordinate}
           text={text ?? 'X'}
           color={color}
+          onPress={handlePress}
         />
       );
     case 'image':
@@ -74,11 +91,18 @@ const renderMarker = (marker: MarkerData) => {
           name={name}
           coordinate={coordinate}
           source={{ uri: imageUrl }}
+          onPress={handlePress}
         />
       );
     case 'custom':
       return (
-        <Marker key={id} name={name} coordinate={coordinate} anchor={anchor}>
+        <Marker
+          key={id}
+          name={name}
+          coordinate={coordinate}
+          anchor={anchor}
+          onPress={handlePress}
+        >
           <View
             style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}
           />
@@ -92,6 +116,7 @@ const renderMarker = (marker: MarkerData) => {
           coordinate={coordinate}
           title={title}
           description={description}
+          onPress={handlePress}
         />
       );
   }
@@ -108,6 +133,7 @@ export const Map = forwardRef<MapView, MapProps>(
       onPress,
       onLongPress,
       onPolygonPress,
+      onMarkerPress,
       ...props
     },
     ref
@@ -156,7 +182,7 @@ export const Map = forwardRef<MapView, MapProps>(
           onCameraIdle={handleCameraIdle}
           {...props}
         >
-          {markers.map(renderMarker)}
+          {markers.map((m) => renderMarker(m, onMarkerPress))}
           <Route coordinates={smoothedRoute} />
           <CrewMarker route={smoothedRoute} zoom={zoom} />
           <Polygon

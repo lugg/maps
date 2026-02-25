@@ -240,8 +240,8 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     this.rasterize = rasterize
   }
 
-  fun emitPressEvent() {
-    dispatchEvent(MarkerPressEvent(this))
+  fun emitPressEvent(x: Float, y: Float) {
+    dispatchEvent(MarkerPressEvent(this, latitude, longitude, x, y))
   }
 
   fun setName(name: String?) {

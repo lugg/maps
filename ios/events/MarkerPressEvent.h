@@ -6,12 +6,21 @@ namespace luggmaps {
 namespace events {
 
 struct MarkerPressEvent {
+  double latitude;
+  double longitude;
+  double x;
+  double y;
+
   template <typename Emitter>
-  static void emit(const facebook::react::SharedEventEmitter &eventEmitter) {
+  void emit(const facebook::react::SharedEventEmitter &eventEmitter) const {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
     typename Emitter::OnMarkerPress event;
+    event.coordinate.latitude = latitude;
+    event.coordinate.longitude = longitude;
+    event.point.x = x;
+    event.point.y = y;
     emitter->onMarkerPress(event);
   }
 };

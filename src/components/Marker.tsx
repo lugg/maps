@@ -1,8 +1,10 @@
 import React from 'react';
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type NativeSyntheticEvent } from 'react-native';
 import LuggMarkerViewNativeComponent from '../fabric/LuggMarkerViewNativeComponent';
-import type { Coordinate, Point } from '../types';
+import type { Coordinate, Point, PressEventPayload } from '../types';
+
+export type MarkerPressEvent = NativeSyntheticEvent<PressEventPayload>;
 
 export interface MarkerProps {
   /**
@@ -49,7 +51,7 @@ export interface MarkerProps {
   /**
    * Called when the marker is pressed
    */
-  onPress?: () => void;
+  onPress?: (event: MarkerPressEvent) => void;
   /**
    * Custom marker view
    */
