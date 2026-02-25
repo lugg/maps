@@ -52,6 +52,7 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
+  private var tapLocation: LatLng? = null
 
   // Initial camera settings
   private var initialLatitude: Double = 0.0
@@ -134,6 +135,12 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
 
+    wrapperView?.touchEventHandler = { event ->
+      if (event.action == android.view.MotionEvent.ACTION_DOWN) {
+        tapLocation = map.projection.fromScreenLocation(android.graphics.Point(event.x.toInt(), event.y.toInt()))
+      }
+    }
+
     applyUiSettings()
     applyZoomLimits()
     applyEdgeInsets()
@@ -186,7 +193,12 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun onPolygonClick(polygon: Polygon) {
-    polygonToViewMap[polygon]?.emitPressEvent()
+    val polygonView = polygonToViewMap[polygon]
+    if (polygonView?.tappable == true) {
+      polygonView.emitPressEvent()
+    } else {
+      onMapClick(tapLocation ?: return)
+    }
   }
 
   // endregion
@@ -483,7 +495,7 @@ class GoogleMapProvider(private val context: Context) :
       strokeColor = polygonView.strokeColor
       strokeWidth = polygonView.strokeWidth.dpToPx()
       zIndex = polygonView.zIndex
-      isClickable = polygonView.tappable
+      isClickable = true
     }
   }
 
@@ -502,9 +514,9 @@ class GoogleMapProvider(private val context: Context) :
       .strokeColor(polygonView.strokeColor)
       .strokeWidth(polygonView.strokeWidth.dpToPx())
       .zIndex(polygonView.zIndex)
+      .clickable(true)
 
     val polygon = map.addPolygon(options)
-    polygon.isClickable = polygonView.tappable
     polygonView.polygon = polygon
     polygonToViewMap[polygon] = polygonView
   }
