@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { useMapContext } from '../MapProvider.web';
 import type { MarkerProps } from './Marker';
 
 const toWebAnchor = (value: number) => `-${value * 100}%`;
@@ -14,12 +15,15 @@ export function Marker({
   onPress,
   children,
 }: MarkerProps) {
+  const { moveCamera } = useMapContext();
   const transforms: string[] = [];
   if (rotate) transforms.push(`rotate(${rotate}deg)`);
   if (scale && scale !== 1) transforms.push(`scale(${scale})`);
 
   const handleClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
+      moveCamera(coordinate);
+
       if (!onPress) return;
       const latLng = e.latLng;
       const domEvent = e.domEvent as MouseEvent;
@@ -36,7 +40,7 @@ export function Marker({
         },
       } as any);
     },
-    [onPress, coordinate]
+    [moveCamera, onPress, coordinate]
   );
 
   return (
@@ -46,8 +50,8 @@ export function Marker({
       zIndex={zIndex}
       anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
       anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
-      clickable={!!onPress}
-      onClick={onPress ? handleClick : undefined}
+      clickable
+      onClick={handleClick}
       style={
         transforms.length > 0 ? { transform: transforms.join(' ') } : undefined
       }

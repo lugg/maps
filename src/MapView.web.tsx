@@ -189,6 +189,16 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     [map, initialZoom, offsetCenter]
   );
 
+  const panToCoordinate = useCallback(
+    (coordinate: Coordinate) => {
+      if (!map) return;
+      const zoom = map.getZoom() || initialZoom;
+      const center = offsetCenter(coordinate, zoom, undefined, false);
+      map.panTo(center);
+    },
+    [map, initialZoom, offsetCenter]
+  );
+
   useImperativeHandle(
     ref,
     () => ({
@@ -336,7 +346,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     : undefined;
 
   return (
-    <MapContext.Provider value={{ map, isDragging }}>
+    <MapContext.Provider value={{ map, isDragging, moveCamera: panToCoordinate }}>
       <View ref={containerRef} style={style}>
         <Map
           id={id}

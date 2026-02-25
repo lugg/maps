@@ -5,7 +5,8 @@ import type { MapProviderProps } from './MapProvider.types';
 export const MapContext = createContext<{
   map: google.maps.Map | null;
   isDragging: boolean;
-}>({ map: null, isDragging: false });
+  moveCamera: (coordinate: { latitude: number; longitude: number }) => void;
+}>({ map: null, isDragging: false, moveCamera: () => {} });
 
 export const useMapContext = () => useContext(MapContext);
 
