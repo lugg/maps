@@ -12,7 +12,7 @@ class LongPressEvent(
   private val x: Float,
   private val y: Float
 ) : Event<LongPressEvent>(UIManagerHelper.getSurfaceId(view), view.id) {
-  override fun getEventName() = "topLongPress"
+  override fun getEventName() = "topMapLongPress"
 
   override fun getEventData() =
     Arguments.createMap().apply {

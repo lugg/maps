@@ -37,8 +37,8 @@ class LuggMapViewManager :
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
     mapOf(
-      "topPress" to mapOf("registrationName" to "onPress"),
-      "topLongPress" to mapOf("registrationName" to "onLongPress"),
+      "topMapPress" to mapOf("registrationName" to "onMapPress"),
+      "topMapLongPress" to mapOf("registrationName" to "onMapLongPress"),
       "topCameraMove" to mapOf("registrationName" to "onCameraMove"),
       "topCameraIdle" to mapOf("registrationName" to "onCameraIdle"),
       "topReady" to mapOf("registrationName" to "onReady")

@@ -16,12 +16,12 @@ struct PressEvent {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
-    typename Emitter::OnPress event;
+    typename Emitter::OnMapPress event;
     event.coordinate.latitude = latitude;
     event.coordinate.longitude = longitude;
     event.point.x = x;
     event.point.y = y;
-    emitter->onPress(event);
+    emitter->onMapPress(event);
   }
 };
 

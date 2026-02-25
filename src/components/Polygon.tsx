@@ -62,7 +62,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
         strokeWidth={strokeWidth}
         fillColor={fillColor}
         tappable={!!onPress}
-        onPress={onPress}
+        onPolygonPress={onPress}
       />
     );
   }

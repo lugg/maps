@@ -16,12 +16,12 @@ struct LongPressEvent {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
-    typename Emitter::OnLongPress event;
+    typename Emitter::OnMapLongPress event;
     event.coordinate.latitude = latitude;
     event.coordinate.longitude = longitude;
     event.point.x = x;
     event.point.y = y;
-    emitter->onLongPress(event);
+    emitter->onMapLongPress(event);
   }
 };
 

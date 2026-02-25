@@ -20,6 +20,9 @@ class LuggPolygonViewManager :
   override fun getName(): String = NAME
   override fun createViewInstance(context: ThemedReactContext): LuggPolygonView = LuggPolygonView(context)
 
+  override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
+    mapOf("topPolygonPress" to mapOf("registrationName" to "onPolygonPress"))
+
   override fun onDropViewInstance(view: LuggPolygonView) {
     super.onDropViewInstance(view)
     view.onDropViewInstance()

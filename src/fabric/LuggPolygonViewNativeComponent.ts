@@ -2,7 +2,7 @@ import { codegenNativeComponent } from 'react-native';
 import type { ViewProps, HostComponent, ColorValue } from 'react-native';
 import type {
   Double,
-  BubblingEventHandler,
+  DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Coordinate {
@@ -16,7 +16,7 @@ export interface NativeProps extends ViewProps {
   strokeWidth?: Double;
   fillColor?: ColorValue;
   tappable?: boolean;
-  onPress?: BubblingEventHandler<null>;
+  onPolygonPress?: DirectEventHandler<null>;
 }
 
 export default codegenNativeComponent<NativeProps>(

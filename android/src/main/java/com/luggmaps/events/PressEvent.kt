@@ -12,7 +12,7 @@ class PressEvent(
   private val x: Float,
   private val y: Float
 ) : Event<PressEvent>(UIManagerHelper.getSurfaceId(view), view.id) {
-  override fun getEventName() = "topPress"
+  override fun getEventName() = "topMapPress"
 
   override fun getEventData() =
     Arguments.createMap().apply {

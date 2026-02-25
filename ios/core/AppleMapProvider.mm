@@ -90,6 +90,8 @@
   _longPressGesture.delegate = self;
   [_mapView addGestureRecognizer:_longPressGesture];
 
+  [_tapGesture requireGestureRecognizerToFail:_longPressGesture];
+
   [wrapperView addSubview:_mapView];
 
   MKCoordinateRegion region = [_mapView regionForCenterCoordinate:coordinate

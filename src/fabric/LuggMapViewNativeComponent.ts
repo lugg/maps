@@ -3,7 +3,6 @@ import type { ViewProps, HostComponent } from 'react-native';
 import type {
   Double,
   WithDefault,
-  BubblingEventHandler,
   DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
 
@@ -76,8 +75,8 @@ export interface NativeProps extends ViewProps {
   userLocationEnabled?: boolean;
   userLocationButtonEnabled?: boolean;
   theme?: WithDefault<'light' | 'dark' | 'system', 'system'>;
-  onPress?: BubblingEventHandler<PressEvent>;
-  onLongPress?: BubblingEventHandler<LongPressEvent>;
+  onMapPress?: DirectEventHandler<PressEvent>;
+  onMapLongPress?: DirectEventHandler<LongPressEvent>;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;
   onCameraIdle?: DirectEventHandler<CameraIdleEvent>;
   onReady?: DirectEventHandler<ReadyEvent>;

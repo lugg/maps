@@ -11,8 +11,8 @@ struct PolygonPressEvent {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
-    typename Emitter::OnPress event;
-    emitter->onPress(event);
+    typename Emitter::OnPolygonPress event;
+    emitter->onPolygonPress(event);
   }
 };
 
