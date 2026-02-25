@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { MarkerProps } from './Marker';
 
@@ -10,11 +11,33 @@ export function Marker({
   zIndex,
   rotate,
   scale,
+  onPress,
   children,
 }: MarkerProps) {
   const transforms: string[] = [];
   if (rotate) transforms.push(`rotate(${rotate}deg)`);
   if (scale && scale !== 1) transforms.push(`scale(${scale})`);
+
+  const handleClick = useCallback(
+    (e: google.maps.MapMouseEvent) => {
+      if (!onPress) return;
+      const latLng = e.latLng;
+      const domEvent = e.domEvent as MouseEvent;
+      onPress({
+        nativeEvent: {
+          coordinate: {
+            latitude: latLng?.lat() ?? coordinate.latitude,
+            longitude: latLng?.lng() ?? coordinate.longitude,
+          },
+          point: {
+            x: domEvent?.clientX ?? 0,
+            y: domEvent?.clientY ?? 0,
+          },
+        },
+      } as any);
+    },
+    [onPress, coordinate]
+  );
 
   return (
     <AdvancedMarker
@@ -23,6 +46,8 @@ export function Marker({
       zIndex={zIndex}
       anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
       anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
+      clickable={!!onPress}
+      onClick={onPress ? handleClick : undefined}
       style={
         transforms.length > 0 ? { transform: transforms.join(' ') } : undefined
       }
