@@ -5,6 +5,7 @@ import LuggMarkerViewNativeComponent from '../fabric/LuggMarkerViewNativeCompone
 import type { Coordinate, Point, PressEventPayload } from '../types';
 
 export type MarkerPressEvent = NativeSyntheticEvent<PressEventPayload>;
+export type MarkerDragEvent = NativeSyntheticEvent<PressEventPayload>;
 
 export interface MarkerProps {
   /**
@@ -49,9 +50,26 @@ export interface MarkerProps {
    */
   rasterize?: boolean;
   /**
+   * Whether the marker can be dragged by the user.
+   * @default false
+   */
+  draggable?: boolean;
+  /**
    * Called when the marker is pressed
    */
   onPress?: (event: MarkerPressEvent) => void;
+  /**
+   * Called when marker drag starts
+   */
+  onDragStart?: (event: MarkerDragEvent) => void;
+  /**
+   * Called continuously as the marker is dragged
+   */
+  onDragChange?: (event: MarkerDragEvent) => void;
+  /**
+   * Called when marker drag ends
+   */
+  onDragEnd?: (event: MarkerDragEvent) => void;
   /**
    * Custom marker view
    */
@@ -82,7 +100,11 @@ export class Marker extends React.PureComponent<MarkerProps> {
       rotate = 0,
       scale = 1,
       rasterize = true,
+      draggable = false,
       onPress,
+      onDragStart,
+      onDragChange,
+      onDragEnd,
       children,
     } = this.props;
 
@@ -97,7 +119,11 @@ export class Marker extends React.PureComponent<MarkerProps> {
         rotate={rotate}
         scale={scale}
         rasterize={rasterize}
+        draggable={draggable}
         onMarkerPress={onPress}
+        onMarkerDragStart={onDragStart}
+        onMarkerDragChange={onDragChange}
+        onMarkerDragEnd={onDragEnd}
       >
         {children}
       </LuggMarkerViewNativeComponent>

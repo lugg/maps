@@ -39,8 +39,26 @@ import { MapView, Marker } from '@lugg/maps';
 | `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
 | `scale` | `number` | `1` | Scale factor for the marker |
 | `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android only) |
+| `draggable` | `boolean` | `false` | Whether the marker can be dragged by the user |
 | `onPress` | `(event: MarkerPressEvent) => void` | - | Called when the marker is pressed. Event includes `coordinate` and `point` |
+| `onDragStart` | `(event: MarkerDragEvent) => void` | - | Called when marker drag starts. Event includes `coordinate` and `point` |
+| `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
+| `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
 | `children` | `ReactNode` | - | Custom marker view |
+
+## Draggable Markers
+
+Set `draggable` to enable marker dragging. Use the drag event callbacks to track position changes.
+
+```tsx
+<Marker
+  coordinate={markerCoordinate}
+  draggable
+  onDragStart={(e) => console.log('Drag started', e.nativeEvent.coordinate)}
+  onDragChange={(e) => console.log('Dragging', e.nativeEvent.coordinate)}
+  onDragEnd={(e) => setMarkerCoordinate(e.nativeEvent.coordinate)}
+/>
+```
 
 ## Custom Markers
 

@@ -304,6 +304,36 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   return NO;
 }
 
+- (void)mapView:(GMSMapView *)mapView
+    didBeginDraggingMarker:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (markerView) {
+    [markerView updateCoordinate:marker.position];
+    CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
+    [markerView emitDragStartEventWithPoint:point];
+  }
+}
+
+- (void)mapView:(GMSMapView *)mapView
+    didDragMarker:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (markerView) {
+    [markerView updateCoordinate:marker.position];
+    CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
+    [markerView emitDragChangeEventWithPoint:point];
+  }
+}
+
+- (void)mapView:(GMSMapView *)mapView
+    didEndDraggingMarker:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (markerView) {
+    [markerView updateCoordinate:marker.position];
+    CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
+    [markerView emitDragEndEventWithPoint:point];
+  }
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {
@@ -362,6 +392,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
   marker.zIndex = (int)markerView.zIndex;
+  marker.draggable = markerView.draggable;
   [self applyMarkerStyle:markerView marker:marker];
 }
 
@@ -384,6 +415,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   marker.title = markerView.title;
   marker.snippet = markerView.markerDescription;
   marker.zIndex = (int)markerView.zIndex;
+  marker.draggable = markerView.draggable;
 
   [self applyMarkerStyle:markerView marker:marker];
 

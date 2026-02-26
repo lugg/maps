@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) CLLocationDegrees rotate;
 @property(nonatomic, readonly) CGFloat scale;
 @property(nonatomic, readonly) BOOL rasterize;
+@property(nonatomic, readonly) BOOL draggable;
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;
 @property(nonatomic, readonly) UIView *iconView;
@@ -33,6 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable UIImage *)createScaledIconImage;
 - (void)resetIconViewTransform;
 - (void)emitPressEventWithPoint:(CGPoint)point;
+- (void)emitDragStartEventWithPoint:(CGPoint)point;
+- (void)emitDragChangeEventWithPoint:(CGPoint)point;
+- (void)emitDragEndEventWithPoint:(CGPoint)point;
+- (void)updateCoordinate:(CLLocationCoordinate2D)coordinate;
 
 @end
 

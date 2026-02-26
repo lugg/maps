@@ -21,7 +21,12 @@ class LuggMarkerViewManager :
   override fun createViewInstance(context: ThemedReactContext): LuggMarkerView = LuggMarkerView(context)
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
-    mapOf("topMarkerPress" to mapOf("registrationName" to "onMarkerPress"))
+    mapOf(
+      "topMarkerPress" to mapOf("registrationName" to "onMarkerPress"),
+      "topMarkerDragStart" to mapOf("registrationName" to "onMarkerDragStart"),
+      "topMarkerDragChange" to mapOf("registrationName" to "onMarkerDragChange"),
+      "topMarkerDragEnd" to mapOf("registrationName" to "onMarkerDragEnd"),
+    )
 
   override fun onDropViewInstance(view: LuggMarkerView) {
     super.onDropViewInstance(view)
@@ -85,6 +90,11 @@ class LuggMarkerViewManager :
   @ReactProp(name = "rasterize", defaultBoolean = true)
   override fun setRasterize(view: LuggMarkerView, value: Boolean) {
     view.setRasterize(value)
+  }
+
+  @ReactProp(name = "draggable", defaultBoolean = false)
+  override fun setDraggable(view: LuggMarkerView, value: Boolean) {
+    view.setDraggable(value)
   }
 
   companion object {

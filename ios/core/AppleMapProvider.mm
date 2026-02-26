@@ -416,6 +416,7 @@
                                    reuseIdentifier:nil];
   annotationView.canShowCallout = YES;
   annotationView.displayPriority = MKFeatureDisplayPriorityRequired;
+  annotationView.draggable = markerView.draggable;
   annotationView.layer.zPosition = markerView.zIndex;
   annotationView.zPriority = markerView.zIndex;
 
@@ -494,6 +495,45 @@
   }
 }
 
+- (void)mapView:(MKMapView *)mapView
+        annotationView:(MKAnnotationView *)view
+    didChangeDragState:(MKAnnotationViewDragState)newState
+          fromOldState:(MKAnnotationViewDragState)oldState {
+  if (![view.annotation isKindOfClass:[AppleMarkerAnnotation class]])
+    return;
+
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)view.annotation;
+  LuggMarkerView *markerView = annotation.markerView;
+  if (!markerView)
+    return;
+
+  CLLocationCoordinate2D coord = annotation.coordinate;
+  CGPoint point = [_mapView convertCoordinate:coord toPointToView:_mapView];
+
+  switch (newState) {
+  case MKAnnotationViewDragStateStarting:
+    [markerView updateCoordinate:coord];
+    [markerView emitDragStartEventWithPoint:point];
+    [view setDragState:MKAnnotationViewDragStateDragging animated:YES];
+    break;
+  case MKAnnotationViewDragStateDragging:
+    [markerView updateCoordinate:coord];
+    [markerView emitDragChangeEventWithPoint:point];
+    break;
+  case MKAnnotationViewDragStateEnding:
+    [markerView updateCoordinate:coord];
+    [markerView emitDragEndEventWithPoint:point];
+    [view setDragState:MKAnnotationViewDragStateNone animated:YES];
+    break;
+  case MKAnnotationViewDragStateCanceling:
+    [view setDragState:MKAnnotationViewDragStateNone animated:YES];
+    break;
+  default:
+    break;
+  }
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {
@@ -517,6 +557,7 @@
 
   MKAnnotationView *annotationView = annotation.annotationView;
   if (annotationView) {
+    annotationView.draggable = markerView.draggable;
     annotationView.layer.zPosition = markerView.zIndex;
     annotationView.zPriority = markerView.zIndex;
   }

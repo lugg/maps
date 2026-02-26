@@ -25,7 +25,38 @@ export interface NativeProps extends ViewProps {
   rotate?: WithDefault<Double, 0>;
   scale?: WithDefault<Double, 1>;
   rasterize?: WithDefault<boolean, true>;
+  draggable?: WithDefault<boolean, false>;
   onMarkerPress?: DirectEventHandler<{
+    coordinate: {
+      latitude: Double;
+      longitude: Double;
+    };
+    point: {
+      x: Double;
+      y: Double;
+    };
+  }>;
+  onMarkerDragStart?: DirectEventHandler<{
+    coordinate: {
+      latitude: Double;
+      longitude: Double;
+    };
+    point: {
+      x: Double;
+      y: Double;
+    };
+  }>;
+  onMarkerDragChange?: DirectEventHandler<{
+    coordinate: {
+      latitude: Double;
+      longitude: Double;
+    };
+    point: {
+      x: Double;
+      y: Double;
+    };
+  }>;
+  onMarkerDragEnd?: DirectEventHandler<{
     coordinate: {
       latitude: Double;
       longitude: Double;

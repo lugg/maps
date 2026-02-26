@@ -1,4 +1,5 @@
 #import "LuggMarkerView.h"
+#import "events/MarkerDragEvent.h"
 #import "events/MarkerPressEvent.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
@@ -24,6 +25,7 @@ using namespace luggmaps::events;
   CLLocationDegrees _rotate;
   CGFloat _scale;
   BOOL _rasterize;
+  BOOL _draggable;
   BOOL _didLayout;
   UIView *_iconView;
 }
@@ -74,6 +76,7 @@ using namespace luggmaps::events;
   _rotate = newViewProps.rotate;
   _scale = newViewProps.scale;
   _rasterize = newViewProps.rasterize;
+  _draggable = newViewProps.draggable;
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
@@ -161,6 +164,10 @@ using namespace luggmaps::events;
   return _rasterize;
 }
 
+- (BOOL)draggable {
+  return _draggable;
+}
+
 - (BOOL)hasCustomView {
   return _iconView.subviews.count > 0;
 }
@@ -218,6 +225,40 @@ using namespace luggmaps::events;
       .y = point.y,
   };
   event.emit<LuggMarkerViewEventEmitter>(_eventEmitter);
+}
+
+- (void)emitDragStartEventWithPoint:(CGPoint)point {
+  MarkerDragStartEvent event{
+      .latitude = _coordinate.latitude,
+      .longitude = _coordinate.longitude,
+      .x = point.x,
+      .y = point.y,
+  };
+  event.emit<LuggMarkerViewEventEmitter>(_eventEmitter);
+}
+
+- (void)emitDragChangeEventWithPoint:(CGPoint)point {
+  MarkerDragChangeEvent event{
+      .latitude = _coordinate.latitude,
+      .longitude = _coordinate.longitude,
+      .x = point.x,
+      .y = point.y,
+  };
+  event.emit<LuggMarkerViewEventEmitter>(_eventEmitter);
+}
+
+- (void)emitDragEndEventWithPoint:(CGPoint)point {
+  MarkerDragEndEvent event{
+      .latitude = _coordinate.latitude,
+      .longitude = _coordinate.longitude,
+      .x = point.x,
+      .y = point.y,
+  };
+  event.emit<LuggMarkerViewEventEmitter>(_eventEmitter);
+}
+
+- (void)updateCoordinate:(CLLocationCoordinate2D)coordinate {
+  _coordinate = coordinate;
 }
 
 - (void)resetIconViewTransform {

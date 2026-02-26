@@ -37,7 +37,8 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnMapClickListener,
   GoogleMap.OnMapLongClickListener,
   GoogleMap.OnPolygonClickListener,
-  GoogleMap.OnMarkerClickListener {
+  GoogleMap.OnMarkerClickListener,
+  GoogleMap.OnMarkerDragListener {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -118,6 +119,7 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
     googleMap?.setOnMarkerClickListener(null)
+    googleMap?.setOnMarkerDragListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false
@@ -140,6 +142,7 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
     map.setOnMarkerClickListener(this)
+    map.setOnMarkerDragListener(this)
 
     wrapperView?.touchEventHandler = { event ->
       if (event.action == android.view.MotionEvent.ACTION_DOWN) {
@@ -213,6 +216,30 @@ class GoogleMapProvider(private val context: Context) :
       view.emitPressEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
     }
     return false
+  }
+
+  override fun onMarkerDragStart(marker: Marker) {
+    markerToViewMap[marker]?.let { view ->
+      view.setCoordinate(marker.position.latitude, marker.position.longitude)
+      val point = googleMap?.projection?.toScreenLocation(marker.position)
+      view.emitDragStartEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+    }
+  }
+
+  override fun onMarkerDrag(marker: Marker) {
+    markerToViewMap[marker]?.let { view ->
+      view.setCoordinate(marker.position.latitude, marker.position.longitude)
+      val point = googleMap?.projection?.toScreenLocation(marker.position)
+      view.emitDragChangeEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+    }
+  }
+
+  override fun onMarkerDragEnd(marker: Marker) {
+    markerToViewMap[marker]?.let { view ->
+      view.setCoordinate(marker.position.latitude, marker.position.longitude)
+      val point = googleMap?.projection?.toScreenLocation(marker.position)
+      view.emitDragEndEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+    }
   }
 
   // endregion
@@ -377,6 +404,7 @@ class GoogleMapProvider(private val context: Context) :
       setAnchor(markerView.anchorX, markerView.anchorY)
       zIndex = markerView.zIndex
       rotation = markerView.rotate
+      isDraggable = markerView.draggable
     }
 
     if (markerView.hasCustomView && markerView.scaleChanged) {
@@ -404,6 +432,7 @@ class GoogleMapProvider(private val context: Context) :
     marker.setAnchor(markerView.anchorX, markerView.anchorY)
     marker.zIndex = markerView.zIndex
     marker.rotation = markerView.rotate
+    marker.isDraggable = markerView.draggable
 
     markerView.marker = marker
     markerToViewMap[marker] = markerView
