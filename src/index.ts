@@ -2,7 +2,11 @@ export { MapView } from './MapView';
 export { MapProvider } from './MapProvider';
 export type { MapProviderProps } from './MapProvider.types';
 export { Marker } from './components';
-export type { MarkerProps, MarkerPressEvent, MarkerDragEvent } from './components';
+export type {
+  MarkerProps,
+  MarkerPressEvent,
+  MarkerDragEvent,
+} from './components';
 export { Polygon } from './components';
 export type { PolygonProps } from './components';
 export { Polyline } from './components';
