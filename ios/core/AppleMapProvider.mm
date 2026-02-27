@@ -34,7 +34,6 @@
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
   UITapGestureRecognizer *_tapGesture;
   UILongPressGestureRecognizer *_longPressGesture;
-
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
@@ -407,8 +406,21 @@
   AppleMarkerAnnotation *markerAnnotation = (AppleMarkerAnnotation *)annotation;
   LuggMarkerView *markerView = markerAnnotation.markerView;
 
-  if (!markerView || !markerView.hasCustomView) {
+  if (!markerView) {
     return nil;
+  }
+
+  if (!markerView.hasCustomView) {
+    MKMarkerAnnotationView *markerAnnotationView =
+        [[MKMarkerAnnotationView alloc] initWithAnnotation:annotation
+                                           reuseIdentifier:nil];
+    markerAnnotationView.canShowCallout = YES;
+    markerAnnotationView.displayPriority = MKFeatureDisplayPriorityRequired;
+    markerAnnotationView.draggable = markerView.draggable;
+    markerAnnotationView.layer.zPosition = markerView.zIndex;
+    markerAnnotationView.zPriority = markerView.zIndex;
+    markerAnnotation.annotationView = markerAnnotationView;
+    return markerAnnotationView;
   }
 
   MKAnnotationView *annotationView =
@@ -491,7 +503,9 @@
     CGPoint point = [_mapView convertCoordinate:markerView.coordinate
                                   toPointToView:_mapView];
     [markerView emitPressEventWithPoint:point];
-    [_mapView setCenterCoordinate:markerView.coordinate animated:YES];
+    if (!markerView.draggable) {
+      [_mapView setCenterCoordinate:markerView.coordinate animated:YES];
+    }
   }
 }
 
