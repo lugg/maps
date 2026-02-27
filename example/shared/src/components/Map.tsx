@@ -70,6 +70,7 @@ const renderMarker = (
           key={id}
           name={name}
           coordinate={coordinate}
+          draggable
           onPress={handlePress}
         />
       );
@@ -81,6 +82,7 @@ const renderMarker = (
           coordinate={coordinate}
           text={text ?? 'X'}
           color={color}
+          draggable
           onPress={handlePress}
         />
       );
@@ -91,6 +93,7 @@ const renderMarker = (
           name={name}
           coordinate={coordinate}
           source={{ uri: imageUrl }}
+          draggable
           onPress={handlePress}
         />
       );
@@ -101,6 +104,7 @@ const renderMarker = (
           name={name}
           coordinate={coordinate}
           anchor={anchor}
+          draggable
           onPress={handlePress}
         >
           <View
@@ -116,6 +120,7 @@ const renderMarker = (
           coordinate={coordinate}
           title={title}
           description={description}
+          draggable
           onPress={handlePress}
         />
       );
