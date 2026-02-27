@@ -416,9 +416,10 @@
                                            reuseIdentifier:nil];
     markerAnnotationView.canShowCallout = YES;
     markerAnnotationView.displayPriority = MKFeatureDisplayPriorityRequired;
-    markerAnnotationView.draggable = markerView.draggable;
     markerAnnotationView.layer.zPosition = markerView.zIndex;
     markerAnnotationView.zPriority = markerView.zIndex;
+    markerAnnotationView.draggable = markerView.draggable;
+    [self addCenterTapGesture:markerAnnotationView];
     markerAnnotation.annotationView = markerAnnotationView;
     return markerAnnotationView;
   }
@@ -428,9 +429,10 @@
                                    reuseIdentifier:nil];
   annotationView.canShowCallout = YES;
   annotationView.displayPriority = MKFeatureDisplayPriorityRequired;
-  annotationView.draggable = markerView.draggable;
   annotationView.layer.zPosition = markerView.zIndex;
   annotationView.zPriority = markerView.zIndex;
+  annotationView.draggable = markerView.draggable;
+  [self addCenterTapGesture:annotationView];
 
   if (!markerView.rasterize) {
     UIView *iconView = markerView.iconView;
@@ -503,9 +505,6 @@
     CGPoint point = [_mapView convertCoordinate:markerView.coordinate
                                   toPointToView:_mapView];
     [markerView emitPressEventWithPoint:point];
-    if (!markerView.draggable) {
-      [_mapView setCenterCoordinate:markerView.coordinate animated:YES];
-    }
   }
 }
 
@@ -545,6 +544,23 @@
     break;
   default:
     break;
+  }
+}
+
+- (void)addCenterTapGesture:(MKAnnotationView *)view {
+  UITapGestureRecognizer *tap =
+      [[UITapGestureRecognizer alloc] initWithTarget:self
+                                              action:@selector(handleAnnotationTap:)];
+  tap.cancelsTouchesInView = NO;
+  [view addGestureRecognizer:tap];
+}
+
+- (void)handleAnnotationTap:(UITapGestureRecognizer *)gesture {
+  MKAnnotationView *view = (MKAnnotationView *)gesture.view;
+  if ([view.annotation isKindOfClass:[AppleMarkerAnnotation class]]) {
+    AppleMarkerAnnotation *annotation =
+        (AppleMarkerAnnotation *)view.annotation;
+    [_mapView setCenterCoordinate:annotation.coordinate animated:YES];
   }
 }
 
