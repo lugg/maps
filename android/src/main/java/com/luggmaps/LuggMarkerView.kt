@@ -62,6 +62,8 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var draggable: Boolean = false
     private set
 
+  var isDragging: Boolean = false
+
   var didLayout: Boolean = false
     private set
 

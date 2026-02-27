@@ -194,6 +194,13 @@ function HomeContent() {
           onCameraMove={(e) => formatCameraEvent(e, false)}
           onCameraIdle={(e) => formatCameraEvent(e, true)}
           onMarkerPress={(e, m) => formatPressEvent(e, `Marker(${m.name})`)}
+          onMarkerDragStart={(e, m) =>
+            formatPressEvent(e, `Drag start(${m.name})`)
+          }
+          onMarkerDragChange={(e, m) =>
+            formatPressEvent(e, `Dragging(${m.name})`)
+          }
+          onMarkerDragEnd={(e, m) => formatPressEvent(e, `Drag end(${m.name})`)}
           onPolygonPress={() => {
             lockStatus();
             setStatusText('Polygon pressed');

@@ -7,6 +7,7 @@ import {
   type MapViewProps,
   type MapCameraEvent,
   type MarkerPressEvent,
+  type MarkerDragEvent,
 } from '@lugg/maps';
 import Animated, {
   useAnimatedStyle,
@@ -25,6 +26,9 @@ interface MapProps extends MapViewProps {
   animatedPosition?: SharedValue<number>;
   onPolygonPress?: () => void;
   onMarkerPress?: (event: MarkerPressEvent, marker: MarkerData) => void;
+  onMarkerDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void;
+  onMarkerDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void;
+  onMarkerDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void;
 }
 
 const INITIAL_ZOOM = 14;
@@ -44,7 +48,10 @@ const CIRCLE_COORDS = Array.from({ length: 36 }, (_, i) => {
 
 const renderMarker = (
   marker: MarkerData,
-  onPress?: (event: MarkerPressEvent, marker: MarkerData) => void
+  onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
+  onDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void,
+  onDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void,
+  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void
 ) => {
   const {
     id,
@@ -62,6 +69,15 @@ const renderMarker = (
   const handlePress = onPress
     ? (e: MarkerPressEvent) => onPress(e, marker)
     : undefined;
+  const handleDragStart = onDragStart
+    ? (e: MarkerDragEvent) => onDragStart(e, marker)
+    : undefined;
+  const handleDragChange = onDragChange
+    ? (e: MarkerDragEvent) => onDragChange(e, marker)
+    : undefined;
+  const handleDragEnd = onDragEnd
+    ? (e: MarkerDragEvent) => onDragEnd(e, marker)
+    : undefined;
 
   switch (type) {
     case 'icon':
@@ -72,6 +88,9 @@ const renderMarker = (
           coordinate={coordinate}
           draggable
           onPress={handlePress}
+          onDragStart={handleDragStart}
+          onDragChange={handleDragChange}
+          onDragEnd={handleDragEnd}
         />
       );
     case 'text':
@@ -84,6 +103,9 @@ const renderMarker = (
           color={color}
           draggable
           onPress={handlePress}
+          onDragStart={handleDragStart}
+          onDragChange={handleDragChange}
+          onDragEnd={handleDragEnd}
         />
       );
     case 'image':
@@ -95,6 +117,9 @@ const renderMarker = (
           source={{ uri: imageUrl }}
           draggable
           onPress={handlePress}
+          onDragStart={handleDragStart}
+          onDragChange={handleDragChange}
+          onDragEnd={handleDragEnd}
         />
       );
     case 'custom':
@@ -106,6 +131,9 @@ const renderMarker = (
           anchor={anchor}
           draggable
           onPress={handlePress}
+          onDragStart={handleDragStart}
+          onDragChange={handleDragChange}
+          onDragEnd={handleDragEnd}
         >
           <View
             style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}
@@ -122,6 +150,9 @@ const renderMarker = (
           description={description}
           draggable
           onPress={handlePress}
+          onDragStart={handleDragStart}
+          onDragChange={handleDragChange}
+          onDragEnd={handleDragEnd}
         />
       );
   }
@@ -139,6 +170,9 @@ export const Map = forwardRef<MapView, MapProps>(
       onLongPress,
       onPolygonPress,
       onMarkerPress,
+      onMarkerDragStart,
+      onMarkerDragChange,
+      onMarkerDragEnd,
       ...props
     },
     ref
@@ -187,7 +221,15 @@ export const Map = forwardRef<MapView, MapProps>(
           onCameraIdle={handleCameraIdle}
           {...props}
         >
-          {markers.map((m) => renderMarker(m, onMarkerPress))}
+          {markers.map((m) =>
+            renderMarker(
+              m,
+              onMarkerPress,
+              onMarkerDragStart,
+              onMarkerDragChange,
+              onMarkerDragEnd
+            )
+          )}
           <Route coordinates={smoothedRoute} />
           <CrewMarker route={smoothedRoute} zoom={zoom} />
           <Polygon

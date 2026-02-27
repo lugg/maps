@@ -220,6 +220,7 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun onMarkerDragStart(marker: Marker) {
     markerToViewMap[marker]?.let { view ->
+      view.isDragging = true
       view.setCoordinate(marker.position.latitude, marker.position.longitude)
       val point = googleMap?.projection?.toScreenLocation(marker.position)
       view.emitDragStartEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
@@ -236,6 +237,7 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun onMarkerDragEnd(marker: Marker) {
     markerToViewMap[marker]?.let { view ->
+      view.isDragging = false
       view.setCoordinate(marker.position.latitude, marker.position.longitude)
       val point = googleMap?.projection?.toScreenLocation(marker.position)
       view.emitDragEndEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
@@ -398,7 +400,9 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     markerView.marker?.apply {
-      position = LatLng(markerView.latitude, markerView.longitude)
+      if (!markerView.isDragging) {
+        position = LatLng(markerView.latitude, markerView.longitude)
+      }
       title = markerView.title
       snippet = markerView.description
       setAnchor(markerView.anchorX, markerView.anchorY)
