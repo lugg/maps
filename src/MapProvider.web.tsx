@@ -10,6 +10,6 @@ export const MapContext = createContext<{
 
 export const useMapContext = () => useContext(MapContext);
 
-export function MapProvider({ apiKey = '', children }: MapProviderProps) {
-  return <APIProvider apiKey={apiKey}>{children}</APIProvider>;
-}
+export const MapProvider = ({ apiKey = '', children }: MapProviderProps) => (
+  <APIProvider apiKey={apiKey}>{children}</APIProvider>
+);

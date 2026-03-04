@@ -4,11 +4,11 @@ interface ThemedTextProps extends TextProps {
   variant?: 'body' | 'title' | 'caption';
 }
 
-export function ThemedText({
+export const ThemedText = ({
   variant = 'body',
   style,
   ...props
-}: ThemedTextProps) {
+}: ThemedTextProps) => {
   const isDark = useColorScheme() === 'dark';
 
   return (
@@ -17,7 +17,7 @@ export function ThemedText({
       {...props}
     />
   );
-}
+};
 
 const styles = StyleSheet.create({
   body: {

@@ -17,15 +17,15 @@ import type { PolylineProps } from './Polyline.types';
 
 export type { GeoJsonProps } from './GeoJson.types';
 
-function toCoordinate(position: Position): Coordinate {
-  return { latitude: position[1], longitude: position[0] };
-}
+const toCoordinate = (position: Position): Coordinate => ({
+  latitude: position[1],
+  longitude: position[0],
+});
 
-function toCoordinates(positions: Position[]): Coordinate[] {
-  return positions.map(toCoordinate);
-}
+const toCoordinates = (positions: Position[]): Coordinate[] =>
+  positions.map(toCoordinate);
 
-function normalizeFeatures(geojson: GeoJSON): Feature[] {
+const normalizeFeatures = (geojson: GeoJSON): Feature[] => {
   switch (geojson.type) {
     case 'FeatureCollection':
       return (geojson as FeatureCollection).features;
@@ -36,14 +36,14 @@ function normalizeFeatures(geojson: GeoJSON): Feature[] {
         { type: 'Feature', geometry: geojson as Geometry, properties: null },
       ];
   }
-}
+};
 
-function renderGeometry(
+const renderGeometry = (
   geometry: Geometry,
   feature: Feature,
   props: GeoJsonProps,
   keyPrefix: string
-): ReactElement[] {
+): ReactElement[] => {
   const elements: ReactElement[] = [];
 
   switch (geometry.type) {
@@ -183,9 +183,9 @@ function renderGeometry(
   }
 
   return elements;
-}
+};
 
-export function GeoJson(props: GeoJsonProps) {
+export const GeoJson = (props: GeoJsonProps) => {
   const { geojson } = props;
 
   const elements = useMemo(() => {
@@ -197,13 +197,11 @@ export function GeoJson(props: GeoJsonProps) {
       if (!feature.geometry) continue;
 
       const key = feature.id != null ? String(feature.id) : String(i);
-      result.push(
-        ...renderGeometry(feature.geometry, feature, props, key)
-      );
+      result.push(...renderGeometry(feature.geometry, feature, props, key));
     }
 
     return result;
   }, [geojson, props]);
 
   return <>{elements}</>;
-}
+};

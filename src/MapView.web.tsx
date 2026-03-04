@@ -59,7 +59,7 @@ const userLocationDotStyle: CSSProperties = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
 };
 
-function UserLocationMarker({ enabled }: { enabled?: boolean }) {
+const UserLocationMarker = ({ enabled }: { enabled?: boolean }) => {
   const [coordinate, setCoordinate] = useState<Coordinate | null>(null);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ function UserLocationMarker({ enabled }: { enabled?: boolean }) {
       <div style={userLocationDotStyle} />
     </Marker>
   );
-}
+};
 
 export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   props,

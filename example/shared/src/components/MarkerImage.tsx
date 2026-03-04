@@ -6,12 +6,12 @@ interface MarkerImageProps extends MarkerProps {
   size?: number;
 }
 
-export function MarkerImage({
+export const MarkerImage = ({
   source,
   size = 40,
   anchor = { x: 0.5, y: 0.5 },
   ...rest
-}: MarkerImageProps) {
+}: MarkerImageProps) => {
   return (
     <Marker anchor={anchor} rasterize={false} {...rest}>
       <Image
@@ -23,7 +23,7 @@ export function MarkerImage({
       />
     </Marker>
   );
-}
+};
 
 const styles = StyleSheet.create({
   image: {

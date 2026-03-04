@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 
-export function useLocationPermission() {
+export const useLocationPermission = () => {
   const [granted, setGranted] = useState(false);
 
   useEffect(() => {
@@ -32,4 +32,4 @@ export function useLocationPermission() {
   }, []);
 
   return granted;
-}
+};

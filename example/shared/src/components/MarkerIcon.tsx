@@ -3,10 +3,10 @@ import { Marker, type MarkerProps } from '@lugg/maps';
 
 interface MarkerIconProps extends MarkerProps {}
 
-export function MarkerIcon({
+export const MarkerIcon = ({
   anchor = { x: 0.5, y: 1 },
   ...rest
-}: MarkerIconProps) {
+}: MarkerIconProps) => {
   return (
     <Marker anchor={anchor} {...rest}>
       <Svg width={32} height={40} viewBox="0 0 32 40" fill="none">
@@ -18,4 +18,4 @@ export function MarkerIcon({
       </Svg>
     </Marker>
   );
-}
+};

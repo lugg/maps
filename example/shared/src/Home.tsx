@@ -37,7 +37,7 @@ import {
 import { useLocationPermission } from './useLocationPermission';
 
 const GEOJSON_PRESETS = [
-{
+  {
     name: 'California Counties',
     url: 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/california-counties.geojson',
   },
@@ -54,7 +54,7 @@ const bottomEdgeInsets = (bottom: number) => ({
   right: 0,
 });
 
-export function Home() {
+export const Home = () => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   return (
@@ -66,9 +66,9 @@ export function Home() {
       </ReanimatedTrueSheetProvider>
     </TrueSheetProvider>
   );
-}
+};
 
-function HomeContent() {
+const HomeContent = () => {
   const mapRef = useRef<MapView>(null);
   const sheetRef = useRef<TrueSheet>(null);
   const geojsonSheetRef = useRef<TrueSheet>(null);
@@ -364,7 +364,7 @@ function HomeContent() {
       </TrueSheet>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

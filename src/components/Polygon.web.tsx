@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { PolygonProps } from './Polygon.types';
 
-export function Polygon({
+export const Polygon = ({
   coordinates,
   holes,
   strokeColor = '#000000',
@@ -10,7 +10,7 @@ export function Polygon({
   fillColor = 'rgba(0, 0, 0, 0.3)',
   zIndex = 0,
   onPress,
-}: PolygonProps) {
+}: PolygonProps) => {
   const { map } = useMapContext();
   const polygonRef = useRef<google.maps.Polygon | null>(null);
   const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
@@ -131,4 +131,4 @@ export function Polygon({
   ]);
 
   return null;
-}
+};

@@ -52,12 +52,12 @@ const getScaleForZoom = (zoom: number) => {
   return MIN_SCALE + t * (MAX_SCALE - MIN_SCALE);
 };
 
-export function CrewMarker({
+export const CrewMarker = ({
   route,
   loaded = false,
   speed = 1,
   zoom = BASE_ZOOM,
-}: CrewMarkerProps) {
+}: CrewMarkerProps) => {
   const latitude = useSharedValue(route[0]?.latitude ?? 0);
   const longitude = useSharedValue(route[0]?.longitude ?? 0);
   const bearingValue = useSharedValue(0);
@@ -143,4 +143,4 @@ export function CrewMarker({
       <PickupIcon loaded={loaded} />
     </AnimatedMarker>
   );
-}
+};

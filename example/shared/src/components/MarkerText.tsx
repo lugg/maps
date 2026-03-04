@@ -6,12 +6,12 @@ interface MarkerTextProps extends MarkerProps {
   color?: string;
 }
 
-export function MarkerText({
+export const MarkerText = ({
   text,
   color = '#EA4335',
   anchor = { x: 0.5, y: 0.5 },
   ...rest
-}: MarkerTextProps) {
+}: MarkerTextProps) => {
   return (
     <Marker key={text} anchor={anchor} {...rest}>
       <View style={[styles.container, { backgroundColor: color }]}>
@@ -19,7 +19,7 @@ export function MarkerText({
       </View>
     </Marker>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

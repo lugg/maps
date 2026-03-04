@@ -40,12 +40,12 @@ const getScaleForZoom = (zoom: number) => {
   return MIN_SCALE + t * (MAX_SCALE - MIN_SCALE);
 };
 
-export function CrewMarker({
+export const CrewMarker = ({
   route,
   loaded = false,
   speed = 1,
   zoom = BASE_ZOOM,
-}: CrewMarkerProps) {
+}: CrewMarkerProps) => {
   const [coordinate, setCoordinate] = useState<Coordinate>(
     route[0] ?? { latitude: 0, longitude: 0 }
   );
@@ -128,4 +128,4 @@ export function CrewMarker({
       <PickupIcon loaded={loaded} />
     </Marker>
   );
-}
+};

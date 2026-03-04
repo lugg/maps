@@ -11,7 +11,7 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   style?: ViewStyle;
 }
 
-export function Button({ title, disabled, style, ...props }: ButtonProps) {
+export const Button = ({ title, disabled, style, ...props }: ButtonProps) => {
   return (
     <Pressable
       style={({ pressed }) => [
@@ -26,7 +26,7 @@ export function Button({ title, disabled, style, ...props }: ButtonProps) {
       <Text style={styles.text}>{title}</Text>
     </Pressable>
   );
-}
+};
 
 const styles = StyleSheet.create({
   button: {

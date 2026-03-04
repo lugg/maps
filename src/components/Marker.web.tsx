@@ -5,27 +5,24 @@ import type { MarkerProps } from './Marker.types';
 
 const toWebAnchor = (value: number) => `-${value * 100}%`;
 
-function createEvent(
+const createEvent = (
   e: google.maps.MapMouseEvent,
   coordinate: MarkerProps['coordinate']
-) {
-  const latLng = e.latLng;
-  const domEvent = e.domEvent as MouseEvent;
-  return {
+) =>
+  ({
     nativeEvent: {
       coordinate: {
-        latitude: latLng?.lat() ?? coordinate.latitude,
-        longitude: latLng?.lng() ?? coordinate.longitude,
+        latitude: e.latLng?.lat() ?? coordinate.latitude,
+        longitude: e.latLng?.lng() ?? coordinate.longitude,
       },
       point: {
-        x: domEvent?.clientX ?? 0,
-        y: domEvent?.clientY ?? 0,
+        x: (e.domEvent as MouseEvent)?.clientX ?? 0,
+        y: (e.domEvent as MouseEvent)?.clientY ?? 0,
       },
     },
-  } as any;
-}
+  } as any);
 
-export function Marker({
+export const Marker = ({
   coordinate,
   title,
   anchor,
@@ -38,7 +35,7 @@ export function Marker({
   onDragChange,
   onDragEnd,
   children,
-}: MarkerProps) {
+}: MarkerProps) => {
   const { moveCamera } = useMapContext();
   const dragPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
 
@@ -120,4 +117,4 @@ export function Marker({
       {children}
     </AdvancedMarker>
   );
-}
+};

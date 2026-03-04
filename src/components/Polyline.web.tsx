@@ -4,7 +4,7 @@ import type { PolylineProps, PolylineEasing } from './Polyline.types';
 
 const DEFAULT_DURATION = 2150;
 
-function applyEasing(t: number, easing: PolylineEasing = 'linear'): number {
+const applyEasing = (t: number, easing: PolylineEasing = 'linear'): number => {
   switch (easing) {
     case 'easeIn':
       return t * t;
@@ -15,9 +15,13 @@ function applyEasing(t: number, easing: PolylineEasing = 'linear'): number {
     default:
       return t;
   }
-}
+};
 
-function interpolateColor(color1: string, color2: string, t: number): string {
+const interpolateColor = (
+  color1: string,
+  color2: string,
+  t: number
+): string => {
   const hex = (c: string) => parseInt(c, 16);
   const r1 = hex(color1.slice(1, 3));
   const g1 = hex(color1.slice(3, 5));
@@ -33,9 +37,9 @@ function interpolateColor(color1: string, color2: string, t: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g
     .toString(16)
     .padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
+};
 
-function getGradientColor(colors: string[], position: number): string {
+const getGradientColor = (colors: string[], position: number): string => {
   if (colors.length === 0) return '#000000';
   if (colors.length === 1 || position <= 0) return colors[0]!;
   if (position >= 1) return colors[colors.length - 1]!;
@@ -45,16 +49,16 @@ function getGradientColor(colors: string[], position: number): string {
   const t = scaledPos - index;
 
   return interpolateColor(colors[index]!, colors[index + 1]!, t);
-}
+};
 
-export function Polyline({
+export const Polyline = ({
   coordinates,
   strokeColors,
   strokeWidth = 1,
   animated,
   animatedOptions,
   zIndex,
-}: PolylineProps) {
+}: PolylineProps) => {
   const resolvedZIndex = zIndex ?? (animated ? 1 : 0);
   const { map, isDragging } = useMapContext();
 
@@ -313,4 +317,4 @@ export function Polyline({
   ]);
 
   return null;
-}
+};
