@@ -264,6 +264,41 @@ export const Map = forwardRef<MapView, MapProps>(
             text="LO"
             color="#34A853"
           />
+          <GeoJson
+            geojson={{
+              type: 'FeatureCollection',
+              features: [
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [-122.435, 37.785],
+                        [-122.425, 37.785],
+                        [-122.425, 37.775],
+                        [-122.435, 37.775],
+                        [-122.435, 37.785],
+                      ],
+                    ],
+                  },
+                  properties: {
+                    fill: 'rgba(255, 0, 0, 0.3)',
+                    stroke: '#FF0000',
+                    'stroke-width': 2,
+                  },
+                },
+                {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [-122.43, 37.78],
+                  },
+                  properties: { title: 'Test Marker' },
+                },
+              ],
+            }}
+          />
           {geojson && <GeoJson geojson={geojson} />}
         </MapView>
         <Animated.View style={[styles.centerPin, centerPinStyle]}>

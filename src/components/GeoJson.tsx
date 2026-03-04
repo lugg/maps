@@ -87,8 +87,11 @@ const renderGeometry = (
       break;
     }
     case 'LineString': {
+      const p = feature.properties;
       const polylineProps: PolylineProps = {
         coordinates: toCoordinates(geometry.coordinates),
+        strokeColors: p?.stroke ? [p.stroke] : undefined,
+        strokeWidth: p?.['stroke-width'],
         zIndex: props.zIndex,
       };
       elements.push(
@@ -103,9 +106,12 @@ const renderGeometry = (
       break;
     }
     case 'MultiLineString': {
+      const p = feature.properties;
       for (let i = 0; i < geometry.coordinates.length; i++) {
         const polylineProps: PolylineProps = {
           coordinates: toCoordinates(geometry.coordinates[i]!),
+          strokeColors: p?.stroke ? [p.stroke] : undefined,
+          strokeWidth: p?.['stroke-width'],
           zIndex: props.zIndex,
         };
         const key = `${keyPrefix}-${i}`;
@@ -127,9 +133,13 @@ const renderGeometry = (
         geometry.coordinates.length > 1
           ? geometry.coordinates.slice(1).map(toCoordinates)
           : undefined;
+      const p = feature.properties;
       const polygonProps: PolygonProps = {
         coordinates: outer,
         holes,
+        fillColor: p?.fill,
+        strokeColor: p?.stroke,
+        strokeWidth: p?.['stroke-width'],
         zIndex: props.zIndex,
       };
       elements.push(
@@ -144,6 +154,7 @@ const renderGeometry = (
       break;
     }
     case 'MultiPolygon': {
+      const p = feature.properties;
       for (let i = 0; i < geometry.coordinates.length; i++) {
         const rings = geometry.coordinates[i]!;
         const outer = toCoordinates(rings[0]!);
@@ -152,6 +163,9 @@ const renderGeometry = (
         const polygonProps: PolygonProps = {
           coordinates: outer,
           holes,
+          fillColor: p?.fill,
+          strokeColor: p?.stroke,
+          strokeWidth: p?.['stroke-width'],
           zIndex: props.zIndex,
         };
         const key = `${keyPrefix}-${i}`;
