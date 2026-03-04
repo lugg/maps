@@ -19,24 +19,6 @@ export const Polygon = ({
     onPress?.();
   }, [onPress]);
 
-  const applyHighlight = useCallback(() => {
-    const polygon = polygonRef.current;
-    if (!polygon) return;
-    polygon.setOptions({
-      fillOpacity: 0.5,
-      strokeOpacity: 0.5,
-    });
-  }, []);
-
-  const restoreHighlight = useCallback(() => {
-    const polygon = polygonRef.current;
-    if (!polygon) return;
-    polygon.setOptions({
-      fillOpacity: 1,
-      strokeOpacity: 1,
-    });
-  }, []);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -56,15 +38,10 @@ export const Polygon = ({
     listenersRef.current = [];
 
     if (onPress) {
-      listenersRef.current.push(
-        polygon.addListener('click', handleClick),
-        polygon.addListener('mousedown', applyHighlight),
-        polygon.addListener('mouseup', restoreHighlight),
-        polygon.addListener('mouseout', restoreHighlight)
-      );
+      listenersRef.current.push(polygon.addListener('click', handleClick));
     }
     polygon.set('clickable', !!onPress);
-  }, [onPress, handleClick, applyHighlight, restoreHighlight]);
+  }, [onPress, handleClick]);
 
   // Sync polygon with props
   useEffect(() => {
@@ -108,12 +85,7 @@ export const Polygon = ({
       polygonRef.current = polygon;
 
       if (onPress) {
-        listenersRef.current.push(
-          polygon.addListener('click', handleClick),
-          polygon.addListener('mousedown', applyHighlight),
-          polygon.addListener('mouseup', restoreHighlight),
-          polygon.addListener('mouseout', restoreHighlight)
-        );
+        listenersRef.current.push(polygon.addListener('click', handleClick));
       }
     }
   }, [
@@ -126,8 +98,6 @@ export const Polygon = ({
     zIndex,
     onPress,
     handleClick,
-    applyHighlight,
-    restoreHighlight,
   ]);
 
   return null;
