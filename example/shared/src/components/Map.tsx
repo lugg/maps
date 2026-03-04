@@ -22,6 +22,7 @@ import { MarkerText } from './MarkerText';
 import { MarkerImage } from './MarkerImage';
 import type { MarkerData } from './index';
 import { Route, smoothCoordinates } from './Route';
+import { SAMPLE_GEOJSON } from '../geojson';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
@@ -264,42 +265,21 @@ export const Map = forwardRef<MapView, MapProps>(
             text="LO"
             color="#34A853"
           />
-          <GeoJson
-            geojson={{
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: [
-                      [
-                        [-122.435, 37.785],
-                        [-122.425, 37.785],
-                        [-122.425, 37.775],
-                        [-122.435, 37.775],
-                        [-122.435, 37.785],
-                      ],
-                    ],
-                  },
-                  properties: {
-                    fill: 'rgba(255, 0, 0, 0.3)',
-                    stroke: '#FF0000',
-                    'stroke-width': 2,
-                  },
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [-122.43, 37.78],
-                  },
-                  properties: { title: 'Test Marker' },
-                },
-              ],
-            }}
-          />
-          {geojson && <GeoJson geojson={geojson} />}
+          <GeoJson geojson={SAMPLE_GEOJSON} />
+          {geojson && (
+            <GeoJson
+              geojson={geojson}
+              renderPolygon={(props) => (
+                <Polygon
+                  key={`geojson-${props.coordinates[0]?.latitude}`}
+                  {...props}
+                  fillColor="rgba(66, 133, 244, 0.2)"
+                  strokeColor="#4285F4"
+                  strokeWidth={1}
+                />
+              )}
+            />
+          )}
         </MapView>
         <Animated.View style={[styles.centerPin, centerPinStyle]}>
           <View style={styles.centerPinDot} />
