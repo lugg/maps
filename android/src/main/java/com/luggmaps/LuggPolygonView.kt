@@ -16,6 +16,9 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
   var coordinates: List<LatLng> = emptyList()
     private set
 
+  var holes: List<List<LatLng>> = emptyList()
+    private set
+
   var strokeColor: Int = Color.BLACK
     private set
 
@@ -40,6 +43,10 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
 
   fun setCoordinates(coords: List<LatLng>) {
     coordinates = coords
+  }
+
+  fun setHoles(value: List<List<LatLng>>) {
+    holes = value
   }
 
   fun setStrokeColor(color: Int) {

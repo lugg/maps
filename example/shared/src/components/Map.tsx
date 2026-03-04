@@ -46,6 +46,20 @@ const CIRCLE_COORDS = Array.from({ length: 36 }, (_, i) => {
   };
 });
 
+const HOLE_RADIUS = 0.0015;
+const CIRCLE_HOLES = [
+  Array.from({ length: 36 }, (_, i) => {
+    const angle = (i * 10 * Math.PI) / 180;
+    return {
+      latitude: CIRCLE_CENTER.latitude + HOLE_RADIUS * Math.cos(angle),
+      longitude:
+        CIRCLE_CENTER.longitude +
+        (HOLE_RADIUS * Math.sin(angle)) /
+          Math.cos((CIRCLE_CENTER.latitude * Math.PI) / 180),
+    };
+  }),
+];
+
 const renderMarker = (
   marker: MarkerData,
   onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
@@ -234,6 +248,7 @@ export const Map = forwardRef<MapView, MapProps>(
           <CrewMarker route={smoothedRoute} zoom={zoom} />
           <Polygon
             coordinates={CIRCLE_COORDS}
+            holes={CIRCLE_HOLES}
             fillColor="rgba(66, 133, 244, 0.15)"
             strokeColor="#4285F4"
             strokeWidth={2}

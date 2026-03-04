@@ -4,6 +4,7 @@ import type { PolygonProps } from './Polygon';
 
 export function Polygon({
   coordinates,
+  holes,
   strokeColor = '#000000',
   strokeWidth = 1,
   fillColor = 'rgba(0, 0, 0, 0.3)',
@@ -72,13 +73,20 @@ export function Polygon({
       return;
     }
 
-    const path = coordinates.map((c) => ({
+    const outerPath = coordinates.map((c) => ({
       lat: c.latitude,
       lng: c.longitude,
     }));
 
+    const paths = [
+      outerPath,
+      ...(holes ?? []).map((hole) =>
+        hole.map((c) => ({ lat: c.latitude, lng: c.longitude }))
+      ),
+    ];
+
     if (polygonRef.current) {
-      polygonRef.current.setPath(path);
+      polygonRef.current.setPaths(paths);
       polygonRef.current.setOptions({
         strokeColor: strokeColor as string,
         strokeWeight: strokeWidth,
@@ -87,7 +95,7 @@ export function Polygon({
       });
     } else {
       const polygon = new google.maps.Polygon({
-        paths: path,
+        paths,
         strokeColor: strokeColor as string,
         strokeWeight: strokeWidth,
         strokeOpacity: 1,
@@ -111,6 +119,7 @@ export function Polygon({
   }, [
     map,
     coordinates,
+    holes,
     strokeColor,
     strokeWidth,
     fillColor,

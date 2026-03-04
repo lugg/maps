@@ -10,6 +10,10 @@ export interface PolygonProps {
    */
   coordinates: Coordinate[];
   /**
+   * Array of coordinate arrays representing interior holes
+   */
+  holes?: Coordinate[][];
+  /**
    * Stroke (outline) color
    */
   strokeColor?: ColorValue;
@@ -47,6 +51,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
   render() {
     const {
       coordinates,
+      holes,
       strokeColor,
       strokeWidth,
       fillColor,
@@ -58,6 +63,7 @@ export class Polygon extends React.PureComponent<PolygonProps> {
       <LuggPolygonViewNativeComponent
         style={this.getStyle(zIndex)}
         coordinates={coordinates}
+        holes={holes}
         strokeColor={strokeColor}
         strokeWidth={strokeWidth}
         fillColor={fillColor}

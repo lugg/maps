@@ -286,7 +286,19 @@
     }
     CGPathCloseSubpath(path);
 
-    BOOL contains = CGPathContainsPoint(path, NULL, mapPointAsCGP, NO);
+    for (NSArray<CLLocation *> *hole in polygonView.holes) {
+      for (NSUInteger j = 0; j < hole.count; j++) {
+        MKMapPoint mp = MKMapPointForCoordinate(hole[j].coordinate);
+        if (j == 0) {
+          CGPathMoveToPoint(path, NULL, mp.x, mp.y);
+        } else {
+          CGPathAddLineToPoint(path, NULL, mp.x, mp.y);
+        }
+      }
+      CGPathCloseSubpath(path);
+    }
+
+    BOOL contains = CGPathContainsPoint(path, NULL, mapPointAsCGP, YES);
     CGPathRelease(path);
 
     if (contains)
@@ -816,8 +828,12 @@
   for (NSUInteger i = 0; i < coordinates.count; i++) {
     coords[i] = coordinates[i].coordinate;
   }
-  MKPolygon *newPolygon = [MKPolygon polygonWithCoordinates:coords
-                                                      count:coordinates.count];
+  NSArray<MKPolygon *> *interiorPolygons =
+      [self interiorPolygonsFromHoles:polygonView.holes];
+  MKPolygon *newPolygon =
+      [MKPolygon polygonWithCoordinates:coords
+                                  count:coordinates.count
+                       interiorPolygons:interiorPolygons];
   free(coords);
 
   polygonView.polygon = newPolygon;
@@ -853,13 +869,39 @@
     coords[i] = coordinates[i].coordinate;
   }
 
-  MKPolygon *polygon = [MKPolygon polygonWithCoordinates:coords
-                                                   count:coordinates.count];
+  NSArray<MKPolygon *> *interiorPolygons =
+      [self interiorPolygonsFromHoles:polygonView.holes];
+  MKPolygon *polygon =
+      [MKPolygon polygonWithCoordinates:coords
+                                  count:coordinates.count
+                       interiorPolygons:interiorPolygons];
   free(coords);
 
   polygonView.polygon = polygon;
   [_overlayToPolygonMap setObject:polygonView forKey:polygon];
   [self insertOverlay:polygon withZIndex:polygonView.zIndex];
+}
+
+- (NSArray<MKPolygon *> *)interiorPolygonsFromHoles:
+    (NSArray<NSArray<CLLocation *> *> *)holes {
+  if (holes.count == 0)
+    return @[];
+
+  NSMutableArray<MKPolygon *> *interiorPolygons = [NSMutableArray array];
+  for (NSArray<CLLocation *> *hole in holes) {
+    if (hole.count == 0)
+      continue;
+    CLLocationCoordinate2D *holeCoords = (CLLocationCoordinate2D *)malloc(
+        sizeof(CLLocationCoordinate2D) * hole.count);
+    for (NSUInteger i = 0; i < hole.count; i++) {
+      holeCoords[i] = hole[i].coordinate;
+    }
+    MKPolygon *interiorPolygon =
+        [MKPolygon polygonWithCoordinates:holeCoords count:hole.count];
+    free(holeCoords);
+    [interiorPolygons addObject:interiorPolygon];
+  }
+  return [interiorPolygons copy];
 }
 
 - (void)insertOverlay:(id<MKOverlay>)overlay withZIndex:(NSInteger)zIndex {

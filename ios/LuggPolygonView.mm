@@ -17,6 +17,7 @@ using namespace luggmaps::events;
 
 @implementation LuggPolygonView {
   NSArray<CLLocation *> *_coordinates;
+  NSArray<NSArray<CLLocation *> *> *_holes;
   UIColor *_strokeColor;
   UIColor *_fillColor;
   CGFloat _strokeWidth;
@@ -36,6 +37,7 @@ using namespace luggmaps::events;
     _props = defaultProps;
 
     _coordinates = @[];
+    _holes = @[];
     _strokeColor = [UIColor blackColor];
     _fillColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.3];
     _strokeWidth = 1.0;
@@ -60,6 +62,19 @@ using namespace luggmaps::events;
     [coords addObject:location];
   }
   _coordinates = [coords copy];
+
+  NSMutableArray<NSArray<CLLocation *> *> *holesArray = [NSMutableArray array];
+  for (const auto &hole : newViewProps.holes) {
+    NSMutableArray<CLLocation *> *holeCoords = [NSMutableArray array];
+    for (const auto &coord : hole) {
+      CLLocation *location =
+          [[CLLocation alloc] initWithLatitude:coord.latitude
+                                     longitude:coord.longitude];
+      [holeCoords addObject:location];
+    }
+    [holesArray addObject:[holeCoords copy]];
+  }
+  _holes = [holesArray copy];
 
   if (newViewProps.strokeColor) {
     UIColor *color = RCTUIColorFromSharedColor(newViewProps.strokeColor);
@@ -92,6 +107,10 @@ using namespace luggmaps::events;
 
 - (NSArray<CLLocation *> *)coordinates {
   return _coordinates;
+}
+
+- (NSArray<NSArray<CLLocation *> *> *)holes {
+  return _holes;
 }
 
 - (UIColor *)strokeColor {

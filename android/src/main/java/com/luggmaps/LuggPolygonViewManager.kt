@@ -47,6 +47,27 @@ class LuggPolygonViewManager :
     }
   }
 
+  @ReactProp(name = "holes")
+  override fun setHoles(view: LuggPolygonView, value: ReadableArray?) {
+    value?.let { array ->
+      val holesList = mutableListOf<List<LatLng>>()
+      for (i in 0 until array.size()) {
+        val holeArray = array.getArray(i)
+        val hole = mutableListOf<LatLng>()
+        if (holeArray != null) {
+          for (j in 0 until holeArray.size()) {
+            val coord = holeArray.getMap(j)
+            val lat = coord?.getDouble("latitude") ?: 0.0
+            val lng = coord?.getDouble("longitude") ?: 0.0
+            hole.add(LatLng(lat, lng))
+          }
+        }
+        holesList.add(hole)
+      }
+      view.setHoles(holesList)
+    }
+  }
+
   @ReactProp(name = "strokeColor", customType = "Color")
   override fun setStrokeColor(view: LuggPolygonView, value: Int?) {
     view.setStrokeColor(value ?: android.graphics.Color.BLACK)

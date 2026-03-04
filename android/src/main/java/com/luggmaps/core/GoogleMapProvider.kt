@@ -540,6 +540,7 @@ class GoogleMapProvider(private val context: Context) :
 
     polygonView.polygon?.apply {
       points = polygonView.coordinates
+      holes = polygonView.holes
       fillColor = polygonView.fillColor
       strokeColor = polygonView.strokeColor
       strokeWidth = polygonView.strokeWidth.dpToPx()
@@ -564,6 +565,10 @@ class GoogleMapProvider(private val context: Context) :
       .strokeWidth(polygonView.strokeWidth.dpToPx())
       .zIndex(polygonView.zIndex)
       .clickable(true)
+
+    for (hole in polygonView.holes) {
+      options.addHole(hole)
+    }
 
     val polygon = map.addPolygon(options)
     polygonView.polygon = polygon

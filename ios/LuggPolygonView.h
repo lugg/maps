@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LuggPolygonView : RCTViewComponentView
 
 @property(nonatomic, readonly) NSArray<CLLocation *> *coordinates;
+@property(nonatomic, readonly) NSArray<NSArray<CLLocation *> *> *holes;
 @property(nonatomic, readonly) UIColor *strokeColor;
 @property(nonatomic, readonly) UIColor *fillColor;
 @property(nonatomic, readonly) CGFloat strokeWidth;

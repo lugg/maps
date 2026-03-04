@@ -562,11 +562,25 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     [path addCoordinate:location.coordinate];
   }
   polygon.path = path;
+  polygon.holes = [self holesPathsFromPolygonView:polygonView];
   polygon.fillColor = polygonView.fillColor;
   polygon.strokeColor = polygonView.strokeColor;
   polygon.strokeWidth = polygonView.strokeWidth;
   polygon.zIndex = (int)polygonView.zIndex;
   polygon.tappable = polygonView.tappable;
+}
+
+- (NSArray<GMSPath *> *)holesPathsFromPolygonView:
+    (LuggPolygonView *)polygonView {
+  NSMutableArray<GMSPath *> *holePaths = [NSMutableArray array];
+  for (NSArray<CLLocation *> *hole in polygonView.holes) {
+    GMSMutablePath *holePath = [GMSMutablePath path];
+    for (CLLocation *location in hole) {
+      [holePath addCoordinate:location.coordinate];
+    }
+    [holePaths addObject:holePath];
+  }
+  return [holePaths copy];
 }
 
 - (void)processPendingPolygons {
@@ -589,6 +603,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
 
   GMSPolygon *polygon = [GMSPolygon polygonWithPath:path];
+  polygon.holes = [self holesPathsFromPolygonView:polygonView];
   polygon.fillColor = polygonView.fillColor;
   polygon.strokeColor = polygonView.strokeColor;
   polygon.strokeWidth = polygonView.strokeWidth;

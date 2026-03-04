@@ -12,6 +12,7 @@ export interface Coordinate {
 
 export interface NativeProps extends ViewProps {
   coordinates: ReadonlyArray<Coordinate>;
+  holes?: ReadonlyArray<ReadonlyArray<Coordinate>>;
   strokeColor?: ColorValue;
   strokeWidth?: Double;
   fillColor?: ColorValue;
