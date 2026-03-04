@@ -264,14 +264,7 @@ export const Map = forwardRef<MapView, MapProps>(
             text="LO"
             color="#34A853"
           />
-          {geojson && (
-            <GeoJson
-              geojson={geojson}
-              strokeColor="#FF5722"
-              strokeWidth={2}
-              fillColor="rgba(255, 87, 34, 0.2)"
-            />
-          )}
+          {geojson && <GeoJson geojson={geojson} />}
         </MapView>
         <Animated.View style={[styles.centerPin, centerPinStyle]}>
           <View style={styles.centerPinDot} />

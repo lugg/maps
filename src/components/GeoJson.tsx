@@ -1,12 +1,11 @@
 import React, { useMemo, type ReactElement } from 'react';
-import type { ColorValue } from 'react-native';
 import type {
   Feature,
   FeatureCollection,
   GeoJSON,
   Geometry,
   Position,
-} from '../geojson.types';
+} from './GeoJson.types';
 import type { Coordinate } from '../types';
 import type { GeoJsonProps } from './GeoJson.types';
 import { Marker } from './Marker';
@@ -39,27 +38,9 @@ function normalizeFeatures(geojson: GeoJSON): Feature[] {
   }
 }
 
-interface StyleProps {
-  strokeColor?: ColorValue;
-  strokeWidth?: number;
-  fillColor?: ColorValue;
-}
-
-function resolveStyle(
-  props: GeoJsonProps,
-  properties: Record<string, any> | null
-): StyleProps {
-  return {
-    strokeColor: properties?.stroke ?? props.strokeColor,
-    strokeWidth: properties?.['stroke-width'] ?? props.strokeWidth,
-    fillColor: properties?.fill ?? props.fillColor,
-  };
-}
-
 function renderGeometry(
   geometry: Geometry,
   feature: Feature,
-  style: StyleProps,
   props: GeoJsonProps,
   keyPrefix: string
 ): ReactElement[] {
@@ -108,8 +89,6 @@ function renderGeometry(
     case 'LineString': {
       const polylineProps: PolylineProps = {
         coordinates: toCoordinates(geometry.coordinates),
-        strokeColors: style.strokeColor ? [style.strokeColor] : undefined,
-        strokeWidth: style.strokeWidth,
         zIndex: props.zIndex,
       };
       elements.push(
@@ -127,8 +106,6 @@ function renderGeometry(
       for (let i = 0; i < geometry.coordinates.length; i++) {
         const polylineProps: PolylineProps = {
           coordinates: toCoordinates(geometry.coordinates[i]!),
-          strokeColors: style.strokeColor ? [style.strokeColor] : undefined,
-          strokeWidth: style.strokeWidth,
           zIndex: props.zIndex,
         };
         const key = `${keyPrefix}-${i}`;
@@ -153,9 +130,6 @@ function renderGeometry(
       const polygonProps: PolygonProps = {
         coordinates: outer,
         holes,
-        strokeColor: style.strokeColor,
-        strokeWidth: style.strokeWidth,
-        fillColor: style.fillColor,
         zIndex: props.zIndex,
       };
       elements.push(
@@ -178,9 +152,6 @@ function renderGeometry(
         const polygonProps: PolygonProps = {
           coordinates: outer,
           holes,
-          strokeColor: style.strokeColor,
-          strokeWidth: style.strokeWidth,
-          fillColor: style.fillColor,
           zIndex: props.zIndex,
         };
         const key = `${keyPrefix}-${i}`;
@@ -202,7 +173,6 @@ function renderGeometry(
           ...renderGeometry(
             geometry.geometries[i]!,
             feature,
-            style,
             props,
             `${keyPrefix}-${i}`
           )
@@ -227,9 +197,8 @@ export function GeoJson(props: GeoJsonProps) {
       if (!feature.geometry) continue;
 
       const key = feature.id != null ? String(feature.id) : String(i);
-      const style = resolveStyle(props, feature.properties);
       result.push(
-        ...renderGeometry(feature.geometry, feature, style, props, key)
+        ...renderGeometry(feature.geometry, feature, props, key)
       );
     }
 

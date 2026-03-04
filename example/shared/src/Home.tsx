@@ -37,11 +37,7 @@ import {
 import { useLocationPermission } from './useLocationPermission';
 
 const GEOJSON_PRESETS = [
-  {
-    name: 'Sample (Mixed)',
-    url: 'https://gist.githubusercontent.com/wavded/1200773/raw/e122cf709898c09758aecfef349964a8d73a83f3/sample.json',
-  },
-  {
+{
     name: 'California Counties',
     url: 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/california-counties.geojson',
   },

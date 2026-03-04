@@ -41,4 +41,4 @@ export type {
   FeatureCollection,
   Geometry,
   Position,
-} from './geojson.types';
+} from './components/GeoJson.types';
