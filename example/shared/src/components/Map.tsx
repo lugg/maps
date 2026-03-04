@@ -261,7 +261,9 @@ export const Map = forwardRef<MapView, MapProps>(
             color="#34A853"
           />
         </MapView>
-        <Animated.View style={[styles.centerPin, centerPinStyle]} />
+        <Animated.View style={[styles.centerPin, centerPinStyle]}>
+          <View style={styles.centerPinDot} />
+        </Animated.View>
       </View>
     );
   }
@@ -274,10 +276,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerPin: {
-    backgroundColor: 'blue',
-    height: 20,
-    width: 20,
-    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(66, 133, 244, 0.2)',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  centerPinDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4285F4',
   },
   customMarker: {
     height: 30,
