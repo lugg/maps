@@ -8,26 +8,15 @@ import type {
   Position,
 } from '../geojson.types';
 import type { Coordinate } from '../types';
-import { Marker, type MarkerProps } from './Marker';
-import { Polygon, type PolygonProps } from './Polygon';
-import { Polyline, type PolylineProps } from './Polyline';
+import type { GeoJsonProps } from './GeoJson.types';
+import { Marker } from './Marker';
+import type { MarkerProps } from './Marker.types';
+import { Polygon } from './Polygon';
+import type { PolygonProps } from './Polygon.types';
+import { Polyline } from './Polyline';
+import type { PolylineProps } from './Polyline.types';
 
-export interface GeoJsonProps {
-  geojson: GeoJSON;
-  strokeColor?: ColorValue;
-  strokeWidth?: number;
-  fillColor?: ColorValue;
-  zIndex?: number;
-  renderMarker?: (props: MarkerProps, feature: Feature) => ReactElement | null;
-  renderPolyline?: (
-    props: PolylineProps,
-    feature: Feature
-  ) => ReactElement | null;
-  renderPolygon?: (
-    props: PolygonProps,
-    feature: Feature
-  ) => ReactElement | null;
-}
+export type { GeoJsonProps } from './GeoJson.types';
 
 function toCoordinate(position: Position): Coordinate {
   return { latitude: position[1], longitude: position[0] };

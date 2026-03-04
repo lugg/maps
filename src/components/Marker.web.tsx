@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { useMapContext } from '../MapProvider.web';
-import type { MarkerProps } from './Marker';
+import type { MarkerProps } from './Marker.types';
 
 const toWebAnchor = (value: number) => `-${value * 100}%`;
 

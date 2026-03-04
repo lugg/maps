@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
-import type { PolygonProps } from './Polygon';
+import type { PolygonProps } from './Polygon.types';
 
 export function Polygon({
   coordinates,

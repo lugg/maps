@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMapContext } from '../MapProvider.web';
-import type { PolylineProps, PolylineEasing } from './Polyline';
+import type { PolylineProps, PolylineEasing } from './Polyline.types';
 
 const DEFAULT_DURATION = 2150;
 
