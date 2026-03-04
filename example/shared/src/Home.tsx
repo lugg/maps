@@ -2,8 +2,9 @@ import { useRef, useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
-  Text,
+  TextInput,
   Platform,
+  useColorScheme,
   useWindowDimensions,
 } from 'react-native';
 import {
@@ -12,6 +13,7 @@ import {
   type MapProviderType,
   type MapCameraEvent,
   type MapPressEvent,
+  type GeoJSON,
 } from '@lugg/maps';
 import {
   TrueSheet,
@@ -24,7 +26,7 @@ import {
   useReanimatedTrueSheet,
 } from '@lodev09/react-native-true-sheet/reanimated';
 
-import { Button, Map } from './components';
+import { Button, Map, ThemedText } from './components';
 import { randomFrom, randomLetter } from './utils';
 import {
   MARKER_COLORS,
@@ -33,6 +35,21 @@ import {
   INITIAL_MARKERS,
 } from './markers';
 import { useLocationPermission } from './useLocationPermission';
+
+const GEOJSON_PRESETS = [
+  {
+    name: 'Sample (Mixed)',
+    url: 'https://gist.githubusercontent.com/wavded/1200773/raw/e122cf709898c09758aecfef349964a8d73a83f3/sample.json',
+  },
+  {
+    name: 'California Counties',
+    url: 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/california-counties.geojson',
+  },
+  {
+    name: 'San Francisco Neighborhoods',
+    url: 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/san-francisco.geojson',
+  },
+];
 
 const bottomEdgeInsets = (bottom: number) => ({
   top: 0,
@@ -58,13 +75,18 @@ export function Home() {
 function HomeContent() {
   const mapRef = useRef<MapView>(null);
   const sheetRef = useRef<TrueSheet>(null);
+  const geojsonSheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
+  const isDark = useColorScheme() === 'dark';
   const locationPermission = useLocationPermission();
   const { animatedPosition } = useReanimatedTrueSheet();
   const [provider, setProvider] = useState<MapProviderType>('apple');
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
-  const [statusText, setStatusText] = useState('Loading...');
+  const [status, setStatus] = useState({ text: 'Loading...', error: false });
+  const [geojson, setGeojson] = useState<GeoJSON | null>(null);
+  const [geojsonUrl, setGeojsonUrl] = useState('');
+  const [loadingGeojson, setLoadingGeojson] = useState(false);
   const lastCoordinate = useRef({ latitude: 37.78, longitude: -122.43 });
   const statusLockRef = useRef(false);
 
@@ -111,7 +133,10 @@ function HomeContent() {
       const lng = coordinate.longitude.toFixed(5);
       const px = point.x.toFixed(0);
       const py = point.y.toFixed(0);
-      setStatusText(`${label}: ${lat}, ${lng} (${px}, ${py})`);
+      setStatus({
+        text: `${label}: ${lat}, ${lng} (${px}, ${py})`,
+        error: false,
+      });
     },
     [lockStatus]
   );
@@ -129,7 +154,7 @@ function HomeContent() {
         : gesture
         ? ' (gesture)'
         : '';
-      setStatusText(pos + suffix);
+      setStatus({ text: pos + suffix, error: false });
     },
     []
   );
@@ -178,6 +203,24 @@ function HomeContent() {
     });
   };
 
+  const loadGeojson = async (url: string) => {
+    if (!url.trim()) return;
+    setLoadingGeojson(true);
+    lockStatus();
+    setStatus({ text: 'Loading GeoJSON...', error: false });
+    try {
+      const res = await fetch(url.trim());
+      const data = await res.json();
+      setGeojson(data);
+      setStatus({ text: 'GeoJSON loaded', error: false });
+      geojsonSheetRef.current?.dismiss();
+    } catch (e: any) {
+      setStatus({ text: `GeoJSON: ${e.message}`, error: true });
+    } finally {
+      setLoadingGeojson(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {showMap && (
@@ -186,6 +229,7 @@ function HomeContent() {
           ref={mapRef}
           provider={provider}
           markers={markers}
+          geojson={geojson}
           animatedPosition={animatedPosition}
           userLocationEnabled={locationPermission}
           onReady={handleMapReady}
@@ -206,7 +250,7 @@ function HomeContent() {
           onMarkerDragEnd={(e, m) => formatPressEvent(e, `Drag end(${m.name})`)}
           onPolygonPress={() => {
             lockStatus();
-            setStatusText('Polygon pressed');
+            setStatus({ text: 'Polygon pressed', error: false });
           }}
         />
       )}
@@ -223,38 +267,105 @@ function HomeContent() {
         onDidPresent={handleSheetPresent}
         onDetentChange={handleDetentChange}
       >
-        <Text style={styles.statusText}>{statusText}</Text>
+        <ThemedText
+          style={[styles.statusText, status.error && styles.statusError]}
+        >
+          {status.text}
+        </ThemedText>
         <View style={styles.sheetContent}>
-          <Button title="Add Marker" onPress={() => addMarker()} />
           <Button
+            style={styles.sheetButton}
+            title="Add Marker"
+            onPress={() => addMarker()}
+          />
+          <Button
+            style={styles.sheetButton}
             title={`Remove Marker (${markers.length})`}
             onPress={removeRandomMarker}
             disabled={markers.length === 0}
           />
           <Button
+            style={styles.sheetButton}
             title="Clear Markers"
             onPress={() => setMarkers([])}
             disabled={markers.length === 0}
           />
-          <Button title="Move Camera" onPress={moveToRandomMarker} />
           <Button
+            style={styles.sheetButton}
+            title="Move Camera"
+            onPress={moveToRandomMarker}
+          />
+          <Button
+            style={styles.sheetButton}
             title="Fit Markers"
             onPress={fitAllMarkers}
             disabled={markers.length === 0}
           />
           <Button
+            style={styles.sheetButton}
             title={showMap ? 'Hide Map' : 'Show Map'}
             onPress={() => setShowMap((prev) => !prev)}
           />
           <Button
+            style={styles.sheetButton}
             title={provider === 'google' ? 'Apple Maps' : 'Google Maps'}
             disabled={Platform.OS !== 'ios'}
             onPress={() =>
               setProvider((p) => (p === 'google' ? 'apple' : 'google'))
             }
           />
+          <Button
+            style={styles.sheetButton}
+            title={geojson ? 'GeoJSON (loaded)' : 'Load GeoJSON'}
+            onPress={() => geojsonSheetRef.current?.present()}
+          />
         </View>
       </ReanimatedTrueSheet>
+
+      <TrueSheet
+        ref={geojsonSheetRef}
+        detents={['auto']}
+        style={styles.geojsonSheet}
+      >
+        <ThemedText variant="title">Load GeoJSON</ThemedText>
+        <TextInput
+          style={[styles.urlInput, isDark && styles.urlInputDark]}
+          placeholder="Enter GeoJSON URL..."
+          placeholderTextColor={isDark ? '#666' : '#999'}
+          value={geojsonUrl}
+          onChangeText={setGeojsonUrl}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Button
+          title={loadingGeojson ? 'Loading...' : 'Fetch'}
+          onPress={() => loadGeojson(geojsonUrl)}
+          disabled={loadingGeojson || !geojsonUrl.trim()}
+        />
+        <ThemedText variant="caption">Presets</ThemedText>
+        {GEOJSON_PRESETS.map((preset) => (
+          <Button
+            key={preset.name}
+            title={preset.name}
+            onPress={() => {
+              setGeojsonUrl(preset.url);
+              loadGeojson(preset.url);
+            }}
+            disabled={loadingGeojson}
+          />
+        ))}
+        {geojson && (
+          <Button
+            title="Clear GeoJSON"
+            onPress={() => {
+              setGeojson(null);
+              setGeojsonUrl('');
+              geojsonSheetRef.current?.dismiss();
+            }}
+          />
+        )}
+      </TrueSheet>
     </View>
   );
 }
@@ -262,8 +373,10 @@ function HomeContent() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   statusText: {
-    fontSize: 14,
     color: '#666',
+  },
+  statusError: {
+    color: '#D32F2F',
   },
   sheet: {
     padding: 24,
@@ -272,6 +385,28 @@ const styles = StyleSheet.create({
   sheetContent: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
+  },
+  sheetButton: {
+    flex: 1,
+    minWidth: '45%',
+  },
+  geojsonSheet: {
+    padding: 24,
     gap: 12,
+  },
+  urlInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  urlInputDark: {
+    backgroundColor: '#1C1C1E',
+    borderColor: '#333',
+    color: '#FFF',
   },
 });

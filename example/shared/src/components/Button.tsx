@@ -1,23 +1,29 @@
-import { Pressable, Text, StyleSheet, type PressableProps } from 'react-native';
+import {
+  Pressable,
+  Text,
+  StyleSheet,
+  type PressableProps,
+  type ViewStyle,
+} from 'react-native';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
+  style?: ViewStyle;
 }
 
-export function Button({ title, disabled, ...props }: ButtonProps) {
+export function Button({ title, disabled, style, ...props }: ButtonProps) {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.button,
         pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
+        style,
       ]}
       disabled={disabled}
       {...props}
     >
-      <Text style={[styles.text, disabled && styles.textDisabled]}>
-        {title}
-      </Text>
+      <Text style={styles.text}>{title}</Text>
     </Pressable>
   );
 }
@@ -25,26 +31,21 @@ export function Button({ title, disabled, ...props }: ButtonProps) {
 const styles = StyleSheet.create({
   button: {
     backgroundColor: '#007AFF',
+    height: 40,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    flexGrow: 1,
-    minWidth: '45%',
   },
   pressed: {
     opacity: 0.7,
   },
   disabled: {
-    backgroundColor: '#A0A0A0',
+    opacity: 0.4,
   },
   text: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  textDisabled: {
-    color: '#E0E0E0',
   },
 });
