@@ -134,7 +134,7 @@ function HomeContent() {
     []
   );
 
-  const addMarker = () => {
+  const addMarker = (coordinate = lastCoordinate.current) => {
     const type = randomFrom(MARKER_TYPES);
     const id = Date.now().toString();
 
@@ -143,7 +143,7 @@ function HomeContent() {
       {
         id,
         name: `marker-${id}`,
-        coordinate: lastCoordinate.current,
+        coordinate,
         type,
         anchor: { x: 0.5, y: type === 'icon' ? 1 : 0.5 },
         text: randomLetter(),
@@ -190,7 +190,10 @@ function HomeContent() {
           userLocationEnabled={locationPermission}
           onReady={handleMapReady}
           onPress={(e) => formatPressEvent(e, 'Press')}
-          onLongPress={(e) => formatPressEvent(e, 'Long press')}
+          onLongPress={(e) => {
+            formatPressEvent(e, 'Long press');
+            addMarker(e.nativeEvent.coordinate);
+          }}
           onCameraMove={(e) => formatCameraEvent(e, false)}
           onCameraIdle={(e) => formatCameraEvent(e, true)}
           onMarkerPress={(e, m) => formatPressEvent(e, `Marker(${m.name})`)}
@@ -222,7 +225,7 @@ function HomeContent() {
       >
         <Text style={styles.statusText}>{statusText}</Text>
         <View style={styles.sheetContent}>
-          <Button title="Add Marker" onPress={addMarker} />
+          <Button title="Add Marker" onPress={() => addMarker()} />
           <Button
             title={`Remove Marker (${markers.length})`}
             onPress={removeRandomMarker}

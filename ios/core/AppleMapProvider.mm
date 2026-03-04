@@ -830,10 +830,9 @@
   }
   NSArray<MKPolygon *> *interiorPolygons =
       [self interiorPolygonsFromHoles:polygonView.holes];
-  MKPolygon *newPolygon =
-      [MKPolygon polygonWithCoordinates:coords
-                                  count:coordinates.count
-                       interiorPolygons:interiorPolygons];
+  MKPolygon *newPolygon = [MKPolygon polygonWithCoordinates:coords
+                                                      count:coordinates.count
+                                           interiorPolygons:interiorPolygons];
   free(coords);
 
   polygonView.polygon = newPolygon;
@@ -871,10 +870,9 @@
 
   NSArray<MKPolygon *> *interiorPolygons =
       [self interiorPolygonsFromHoles:polygonView.holes];
-  MKPolygon *polygon =
-      [MKPolygon polygonWithCoordinates:coords
-                                  count:coordinates.count
-                       interiorPolygons:interiorPolygons];
+  MKPolygon *polygon = [MKPolygon polygonWithCoordinates:coords
+                                                   count:coordinates.count
+                                        interiorPolygons:interiorPolygons];
   free(coords);
 
   polygonView.polygon = polygon;
@@ -896,8 +894,8 @@
     for (NSUInteger i = 0; i < hole.count; i++) {
       holeCoords[i] = hole[i].coordinate;
     }
-    MKPolygon *interiorPolygon =
-        [MKPolygon polygonWithCoordinates:holeCoords count:hole.count];
+    MKPolygon *interiorPolygon = [MKPolygon polygonWithCoordinates:holeCoords
+                                                             count:hole.count];
     free(holeCoords);
     [interiorPolygons addObject:interiorPolygon];
   }

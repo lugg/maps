@@ -16,6 +16,7 @@ import {
   useMap,
   type MapCameraChangedEvent,
   type MapEvent,
+  type MapMouseEvent,
 } from '@vis.gl/react-google-maps';
 import { Marker } from './components/Marker.web';
 import { MapContext } from './MapProvider.web';
@@ -111,6 +112,8 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     edgeInsets,
     userLocationEnabled,
     theme = 'system',
+    onPress,
+    onLongPress,
     onCameraMove,
     onCameraIdle,
     onReady,
@@ -279,7 +282,76 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     }
   }, [map, edgeInsets, applyEdgeInsets]);
 
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  const getPoint = useCallback((domEvent?: Event) => {
+    const el = containerRef.current as unknown as HTMLElement | null;
+    if (!domEvent || !el) return { x: 0, y: 0 };
+    const rect = el.getBoundingClientRect();
+    const e = domEvent as MouseEvent | Touch;
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, []);
+
+  const handleClick = useCallback(
+    (event: MapMouseEvent) => {
+      if (longPressFired.current) {
+        longPressFired.current = false;
+        return;
+      }
+      const latLng = event.detail.latLng;
+      if (!onPress || !latLng) return;
+      onPress(
+        createSyntheticEvent({
+          coordinate: { latitude: latLng.lat, longitude: latLng.lng },
+          point: getPoint(event.domEvent),
+        })
+      );
+    },
+    [onPress, getPoint]
+  );
+
+  const handleMouseDown = useCallback(
+    (event: google.maps.MapMouseEvent) => {
+      if (!onLongPress) return;
+      const point = getPoint(event.domEvent);
+      longPressFired.current = false;
+      longPressTimer.current = setTimeout(() => {
+        longPressFired.current = true;
+        const latLng = event.latLng;
+        if (!latLng) return;
+        onLongPress(
+          createSyntheticEvent({
+            coordinate: { latitude: latLng.lat(), longitude: latLng.lng() },
+            point,
+          })
+        );
+      }, 500);
+    },
+    [onLongPress, getPoint]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!map || !onLongPress) return;
+    const listeners = [
+      map.addListener('mousedown', handleMouseDown),
+      map.addListener('mouseup', handleMouseUp),
+    ];
+    return () => {
+      listeners.forEach((l) => google.maps.event.removeListener(l));
+      handleMouseUp();
+    };
+  }, [map, onLongPress, handleMouseDown, handleMouseUp]);
+
   const handleDragStart = () => {
+    handleMouseUp();
     setIsDragging(true);
     wasGesture.current = true;
   };
@@ -362,6 +434,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           disableDefaultUI
           isFractionalZoomEnabled
           tilt={pitchEnabled === false ? 0 : undefined}
+          onClick={handleClick}
           onDragstart={handleDragStart}
           onDragend={handleDragEnd}
           onCameraChanged={handleCameraChanged}
