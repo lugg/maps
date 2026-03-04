@@ -15,6 +15,8 @@ export type {
   PolylineEasing,
   PolylineAnimatedOptions,
 } from './components';
+export { GeoJson } from './components';
+export type { GeoJsonProps } from './components';
 export type {
   MapViewProps,
   MapViewRef,
@@ -33,3 +35,10 @@ export type {
   EdgeInsets,
   PressEventPayload,
 } from './types';
+export type {
+  GeoJSON,
+  Feature,
+  FeatureCollection,
+  Geometry,
+  Position,
+} from './geojson.types';

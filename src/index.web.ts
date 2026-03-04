@@ -7,6 +7,8 @@ export { Polygon } from './components/index.web';
 export type { PolygonProps } from './components/index.web';
 export { Polyline } from './components/index.web';
 export type { PolylineProps } from './components/index.web';
+export { GeoJson } from './components/index.web';
+export type { GeoJsonProps } from './components/index.web';
 export type {
   MapViewProps,
   MapViewRef,
@@ -20,3 +22,10 @@ export type {
   Point,
   EdgeInsets,
 } from './types';
+export type {
+  GeoJSON,
+  Feature,
+  FeatureCollection,
+  Geometry,
+  Position,
+} from './geojson.types';

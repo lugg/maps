@@ -4,3 +4,5 @@ export { Polyline } from './Polyline.web';
 export type { MarkerProps } from './Marker';
 export type { PolygonProps } from './Polygon';
 export type { PolylineProps } from './Polyline';
+export { GeoJson } from './GeoJson';
+export type { GeoJsonProps } from './GeoJson';

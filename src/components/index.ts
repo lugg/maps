@@ -8,3 +8,5 @@ export type {
   PolylineEasing,
   PolylineAnimatedOptions,
 } from './Polyline';
+export { GeoJson } from './GeoJson';
+export type { GeoJsonProps } from './GeoJson';
