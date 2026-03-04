@@ -81,7 +81,7 @@ export function Polygon({
     const paths = [
       outerPath,
       ...(holes ?? []).map((hole) =>
-        hole.map((c) => ({ lat: c.latitude, lng: c.longitude }))
+        [...hole].reverse().map((c) => ({ lat: c.latitude, lng: c.longitude }))
       ),
     ];
 
