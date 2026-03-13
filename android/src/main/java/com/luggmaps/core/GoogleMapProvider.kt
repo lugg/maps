@@ -3,6 +3,7 @@ package com.luggmaps.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
+import android.widget.ImageView
 import com.facebook.react.uimanager.PixelUtil.dpToPx
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -38,7 +39,9 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnMapLongClickListener,
   GoogleMap.OnPolygonClickListener,
   GoogleMap.OnMarkerClickListener,
-  GoogleMap.OnMarkerDragListener {
+  GoogleMap.OnMarkerDragListener,
+  GoogleMap.InfoWindowAdapter,
+  GoogleMap.OnInfoWindowClickListener {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -120,6 +123,8 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnPolygonClickListener(null)
     googleMap?.setOnMarkerClickListener(null)
     googleMap?.setOnMarkerDragListener(null)
+    googleMap?.setInfoWindowAdapter(null)
+    googleMap?.setOnInfoWindowClickListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false
@@ -143,6 +148,8 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnPolygonClickListener(this)
     map.setOnMarkerClickListener(this)
     map.setOnMarkerDragListener(this)
+    map.setInfoWindowAdapter(this)
+    map.setOnInfoWindowClickListener(this)
 
     wrapperView?.touchEventHandler = { event ->
       if (event.action == android.view.MotionEvent.ACTION_DOWN) {
@@ -242,6 +249,21 @@ class GoogleMapProvider(private val context: Context) :
       val point = googleMap?.projection?.toScreenLocation(marker.position)
       view.emitDragEndEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
     }
+  }
+
+  override fun getInfoWindow(marker: Marker): View? = null
+
+  override fun getInfoContents(marker: Marker): View? {
+    val markerView = markerToViewMap[marker] ?: return null
+    val calloutView = markerView.calloutView ?: return null
+    if (!calloutView.hasCustomContent) return null
+
+    val bitmap = calloutView.createContentBitmap() ?: return null
+    return ImageView(context).apply { setImageBitmap(bitmap) }
+  }
+
+  override fun onInfoWindowClick(marker: Marker) {
+    markerToViewMap[marker]?.calloutView?.emitPressEvent()
   }
 
   // endregion

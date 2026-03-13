@@ -5,6 +5,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class LuggMarkerView;
+@class LuggCalloutView;
 
 @protocol LuggMarkerViewDelegate <NSObject>
 @optional
@@ -27,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;
 @property(nonatomic, readonly) UIView *iconView;
+@property(nonatomic, readonly, nullable) LuggCalloutView *calloutView;
 @property(nonatomic, weak, nullable) id<LuggMarkerViewDelegate> delegate;
 @property(nonatomic, strong, nullable) NSObject *marker;
 

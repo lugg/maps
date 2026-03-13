@@ -147,6 +147,7 @@
       "componentProvider": {
         "LuggMapView": "LuggMapView",
         "LuggMarkerView": "LuggMarkerView",
+        "LuggCalloutView": "LuggCalloutView",
         "LuggMapWrapperView": "LuggMapWrapperView",
         "LuggPolylineView": "LuggPolylineView",
         "LuggPolygonView": "LuggPolygonView"

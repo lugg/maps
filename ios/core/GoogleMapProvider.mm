@@ -1,4 +1,5 @@
 #import "GoogleMapProvider.h"
+#import "../LuggCalloutView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
@@ -329,6 +330,42 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     [markerView updateCoordinate:marker.position];
     CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
     [markerView emitDragEndEventWithPoint:point];
+  }
+}
+
+- (UIView *)mapView:(GMSMapView *)mapView
+    markerInfoContents:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (!markerView || !markerView.calloutView ||
+      !markerView.calloutView.hasCustomContent)
+    return nil;
+
+  UIView *contentView = markerView.calloutView.contentView;
+  [contentView layoutIfNeeded];
+
+  CGSize size = contentView.bounds.size;
+  if (size.width <= 0 || size.height <= 0)
+    return nil;
+
+  UIGraphicsImageRendererFormat *format =
+      [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = [UIScreen mainScreen].scale;
+  UIGraphicsImageRenderer *renderer =
+      [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+  UIImage *image =
+      [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [contentView.layer renderInContext:context.CGContext];
+      }];
+
+  UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+  return imageView;
+}
+
+- (void)mapView:(GMSMapView *)mapView
+    didTapInfoWindowOfMarker:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (markerView && markerView.calloutView) {
+    [markerView.calloutView emitPressEvent];
   }
 }
 

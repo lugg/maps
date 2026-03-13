@@ -1,4 +1,5 @@
 #import "AppleMapProvider.h"
+#import "../LuggCalloutView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
@@ -431,6 +432,7 @@
     markerAnnotationView.layer.zPosition = markerView.zIndex;
     markerAnnotationView.zPriority = markerView.zIndex;
     markerAnnotationView.draggable = markerView.draggable;
+    [self applyCalloutView:markerView annotationView:markerAnnotationView];
     [self addCenterTapGesture:markerAnnotationView];
     markerAnnotation.annotationView = markerAnnotationView;
     return markerAnnotationView;
@@ -445,6 +447,8 @@
   annotationView.zPriority = markerView.zIndex;
   annotationView.draggable = markerView.draggable;
   [self addCenterTapGesture:annotationView];
+
+  [self applyCalloutView:markerView annotationView:annotationView];
 
   if (!markerView.rasterize) {
     UIView *iconView = markerView.iconView;
@@ -574,6 +578,36 @@
   }
 }
 
+- (void)mapView:(MKMapView *)mapView
+               annotationView:(MKAnnotationView *)view
+    calloutAccessoryControlTapped:(UIControl *)control {
+  if (![view.annotation isKindOfClass:[AppleMarkerAnnotation class]])
+    return;
+
+  AppleMarkerAnnotation *annotation = (AppleMarkerAnnotation *)view.annotation;
+  LuggMarkerView *markerView = annotation.markerView;
+
+  if (markerView.calloutView) {
+    [markerView.calloutView emitPressEvent];
+  }
+}
+
+- (void)applyCalloutView:(LuggMarkerView *)markerView
+           annotationView:(MKAnnotationView *)annotationView {
+  LuggCalloutView *calloutView = markerView.calloutView;
+  if (!calloutView)
+    return;
+
+  if (calloutView.hasCustomContent) {
+    annotationView.detailCalloutAccessoryView = calloutView.contentView;
+  }
+
+  // Add info button to enable calloutAccessoryControlTapped
+  UIButton *infoButton =
+      [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
+  annotationView.rightCalloutAccessoryView = infoButton;
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {
@@ -600,6 +634,7 @@
     annotationView.draggable = markerView.draggable;
     annotationView.layer.zPosition = markerView.zIndex;
     annotationView.zPriority = markerView.zIndex;
+    [self applyCalloutView:markerView annotationView:annotationView];
   }
 
   [self updateAnnotationViewFrame:annotation];

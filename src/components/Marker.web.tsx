@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  AdvancedMarker,
+  InfoWindow,
+  useAdvancedMarkerRef,
+} from '@vis.gl/react-google-maps';
 import { useMapContext } from '../MapProvider.web';
+import { Callout } from './Callout.web';
+import type { CalloutProps } from './Callout.types';
 import type { MarkerProps } from './Marker.types';
 
 const toWebAnchor = (value: number) => `-${value * 100}%`;
@@ -22,6 +28,23 @@ const createEvent = (
     },
   } as any);
 
+function extractCallout(
+  children: React.ReactNode
+): { calloutProps: CalloutProps | null; otherChildren: React.ReactNode[] } {
+  let calloutProps: CalloutProps | null = null;
+  const otherChildren: React.ReactNode[] = [];
+
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child) && child.type === Callout) {
+      calloutProps = child.props as CalloutProps;
+    } else {
+      otherChildren.push(child);
+    }
+  });
+
+  return { calloutProps, otherChildren };
+}
+
 export const Marker = ({
   coordinate,
   title,
@@ -38,6 +61,10 @@ export const Marker = ({
 }: MarkerProps) => {
   const { moveCamera } = useMapContext();
   const dragPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
+  const [markerRef, markerElement] = useAdvancedMarkerRef();
+  const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+
+  const { calloutProps, otherChildren } = extractCallout(children);
 
   const transforms: string[] = [];
   if (rotate) transforms.push(`rotate(${rotate}deg)`);
@@ -51,8 +78,11 @@ export const Marker = ({
         : coordinate;
       moveCamera(coord);
       onPress?.(createEvent(e, coordinate));
+      if (calloutProps) {
+        setInfoWindowOpen((prev) => !prev);
+      }
     },
-    [moveCamera, onPress, coordinate]
+    [moveCamera, onPress, coordinate, calloutProps]
   );
 
   const handleDragStart = useCallback(
@@ -98,23 +128,44 @@ export const Marker = ({
   };
 
   return (
-    <AdvancedMarker
-      position={position}
-      title={title}
-      zIndex={zIndex}
-      anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
-      anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
-      clickable
-      draggable={draggable}
-      onClick={handleClick}
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
-      style={
-        transforms.length > 0 ? { transform: transforms.join(' ') } : undefined
-      }
-    >
-      {children}
-    </AdvancedMarker>
+    <>
+      <AdvancedMarker
+        ref={markerRef}
+        position={position}
+        title={title}
+        zIndex={zIndex}
+        anchorLeft={anchor ? toWebAnchor(anchor.x) : undefined}
+        anchorTop={anchor ? toWebAnchor(anchor.y) : undefined}
+        clickable
+        draggable={draggable}
+        onClick={handleClick}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        style={
+          transforms.length > 0
+            ? { transform: transforms.join(' ') }
+            : undefined
+        }
+      >
+        {otherChildren.length > 0 ? otherChildren : undefined}
+      </AdvancedMarker>
+      {calloutProps && infoWindowOpen && markerElement && (
+        <InfoWindow
+          anchor={markerElement}
+          onCloseClick={() => setInfoWindowOpen(false)}
+        >
+          {calloutProps.children ? (
+            <div onClick={() => calloutProps?.onPress?.()}>
+              {calloutProps.children}
+            </div>
+          ) : (
+            <div onClick={() => calloutProps?.onPress?.()}>
+              {title && <strong>{title}</strong>}
+            </div>
+          )}
+        </InfoWindow>
+      )}
+    </>
   );
 };

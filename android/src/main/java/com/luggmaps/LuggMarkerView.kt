@@ -72,6 +72,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   val iconView: ReactViewGroup = ReactViewGroup(context)
 
+  var calloutView: LuggCalloutView? = null
+    private set
+
   private fun measureIconViewBounds(): Pair<Int, Int> {
     var maxWidth = 0
     var maxHeight = 0
@@ -169,23 +172,41 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   }
 
   override fun addView(child: View, index: Int) {
-    iconView.addView(child, index)
+    if (child is LuggCalloutView) {
+      calloutView = child
+    } else {
+      iconView.addView(child, index)
+    }
     didLayout = false
   }
 
   override fun removeView(child: View) {
-    iconView.removeView(child)
+    if (child is LuggCalloutView) {
+      calloutView = null
+    } else {
+      iconView.removeView(child)
+    }
     didLayout = false
   }
 
   override fun removeViewAt(index: Int) {
-    iconView.removeViewAt(index)
+    val child = getChildAt(index)
+    if (child is LuggCalloutView) {
+      calloutView = null
+    } else {
+      iconView.removeViewAt(index)
+    }
     didLayout = false
   }
 
-  override fun getChildCount(): Int = iconView.childCount
+  override fun getChildCount(): Int =
+    iconView.childCount + if (calloutView != null) 1 else 0
 
-  override fun getChildAt(index: Int): View? = iconView.getChildAt(index)
+  override fun getChildAt(index: Int): View? {
+    if (index < iconView.childCount) return iconView.getChildAt(index)
+    if (index == iconView.childCount && calloutView != null) return calloutView
+    return null
+  }
 
   override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     super.onSizeChanged(w, h, oldw, oldh)
@@ -278,6 +299,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     scaleUpdateRunnable?.let { removeCallbacks(it) }
     scaleUpdateRunnable = null
     didLayout = false
+    calloutView = null
     delegate = null
     iconView.removeAllViews()
   }

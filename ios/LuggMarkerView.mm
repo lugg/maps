@@ -1,4 +1,5 @@
 #import "LuggMarkerView.h"
+#import "LuggCalloutView.h"
 #import "events/MarkerDragEvent.h"
 #import "events/MarkerPressEvent.h"
 
@@ -28,6 +29,7 @@ using namespace luggmaps::events;
   BOOL _draggable;
   BOOL _didLayout;
   UIView *_iconView;
+  LuggCalloutView *_calloutView;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -92,14 +94,22 @@ using namespace luggmaps::events;
 - (void)mountChildComponentView:
             (UIView<RCTComponentViewProtocol> *)childComponentView
                           index:(NSInteger)index {
-  [_iconView insertSubview:childComponentView atIndex:index];
+  if ([childComponentView isKindOfClass:[LuggCalloutView class]]) {
+    _calloutView = (LuggCalloutView *)childComponentView;
+  } else {
+    [_iconView insertSubview:childComponentView atIndex:index];
+  }
   _didLayout = NO;
 }
 
 - (void)unmountChildComponentView:
             (UIView<RCTComponentViewProtocol> *)childComponentView
                             index:(NSInteger)index {
-  [childComponentView removeFromSuperview];
+  if ([childComponentView isKindOfClass:[LuggCalloutView class]]) {
+    _calloutView = nil;
+  } else {
+    [childComponentView removeFromSuperview];
+  }
   _didLayout = NO;
 }
 
@@ -178,6 +188,10 @@ using namespace luggmaps::events;
 
 - (UIView *)iconView {
   return _iconView;
+}
+
+- (LuggCalloutView *)calloutView {
+  return _calloutView;
 }
 
 - (UIImage *)createIconImage {
@@ -271,6 +285,7 @@ using namespace luggmaps::events;
 - (void)prepareForRecycle {
   [super prepareForRecycle];
   _didLayout = NO;
+  _calloutView = nil;
   self.marker = nil;
   self.delegate = nil;
   [self resetIconViewTransform];

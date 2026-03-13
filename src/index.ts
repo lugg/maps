@@ -17,6 +17,8 @@ export type {
 } from './components';
 export { GeoJson } from './components';
 export type { GeoJsonProps } from './components';
+export { Callout } from './components';
+export type { CalloutProps } from './components';
 export type {
   MapViewProps,
   MapViewRef,

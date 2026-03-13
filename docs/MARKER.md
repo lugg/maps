@@ -82,3 +82,17 @@ Use the `children` prop to render a custom marker view. The `anchor` prop contro
 - `{ x: 1, y: 0 }` - top right
 - `{ x: 0.5, y: 0.5 }` - center
 - `{ x: 0.5, y: 1 }` - bottom center (default for pins)
+
+## Callout
+
+Use the [`Callout`](./CALLOUT.md) component as a child to display a callout when the marker is tapped.
+
+```tsx
+<Marker
+  coordinate={{ latitude: 37.7749, longitude: -122.4194 }}
+  title="San Francisco"
+  description="California, USA"
+>
+  <Callout onPress={() => console.log('Callout pressed')} />
+</Marker>
+```

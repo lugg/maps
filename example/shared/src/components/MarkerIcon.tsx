@@ -5,6 +5,7 @@ interface MarkerIconProps extends MarkerProps {}
 
 export const MarkerIcon = ({
   anchor = { x: 0.5, y: 1 },
+  children,
   ...rest
 }: MarkerIconProps) => {
   return (
@@ -16,6 +17,7 @@ export const MarkerIcon = ({
         />
         <Circle cx={16} cy={16} r={6} fill="white" />
       </Svg>
+      {children}
     </Marker>
   );
 };
