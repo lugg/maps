@@ -290,10 +290,19 @@ class GoogleMapProvider(private val context: Context) :
       calloutView.emitPressEvent()
     }
 
+    dismissInfoWindows()
     wrapper.addView(contentView)
     activeNonBubbledMarker = marker
     layoutNonBubbledCallout()
     positionNonBubbledCallout()
+  }
+
+  private fun dismissInfoWindows() {
+    for ((marker, _) in markerToViewMap) {
+      if (marker.isInfoWindowShown) {
+        marker.hideInfoWindow()
+      }
+    }
   }
 
   private fun dismissNonBubbledCallout() {
