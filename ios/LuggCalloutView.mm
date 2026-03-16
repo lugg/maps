@@ -43,6 +43,7 @@ using namespace facebook::react;
 
 @implementation LuggCalloutView {
   LuggCalloutContentView *_contentView;
+  BOOL _bubbled;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -56,6 +57,7 @@ using namespace facebook::react;
         std::make_shared<const LuggCalloutViewProps>();
     _props = defaultProps;
 
+    _bubbled = YES;
     _contentView = [[LuggCalloutContentView alloc] init];
     _contentView.backgroundColor = [UIColor clearColor];
 
@@ -64,6 +66,20 @@ using namespace facebook::react;
   }
 
   return self;
+}
+
+- (void)updateProps:(const Props::Shared &)props
+           oldProps:(const Props::Shared &)oldProps {
+  const auto &newViewProps =
+      *std::static_pointer_cast<LuggCalloutViewProps const>(props);
+
+  _bubbled = newViewProps.bubbled;
+
+  [super updateProps:props oldProps:oldProps];
+}
+
+- (BOOL)bubbled {
+  return _bubbled;
 }
 
 - (void)mountChildComponentView:

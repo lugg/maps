@@ -10,7 +10,6 @@ export const MarkerImage = ({
   source,
   size = 40,
   anchor = { x: 0.5, y: 0.5 },
-  children,
   ...rest
 }: MarkerImageProps) => {
   return (
@@ -22,7 +21,6 @@ export const MarkerImage = ({
           { width: size, height: size, borderRadius: size / 2 },
         ]}
       />
-      {children}
     </Marker>
   );
 };

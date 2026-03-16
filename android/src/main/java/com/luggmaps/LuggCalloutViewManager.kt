@@ -17,6 +17,10 @@ class LuggCalloutViewManager :
   override fun getName(): String = NAME
   override fun createViewInstance(context: ThemedReactContext): LuggCalloutView = LuggCalloutView(context)
 
+  override fun setBubbled(view: LuggCalloutView, value: Boolean) {
+    view.bubbled = value
+  }
+
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
     mapOf(
       "topCalloutPress" to mapOf("registrationName" to "onCalloutPress")

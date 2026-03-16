@@ -1,4 +1,5 @@
 #import "AppleMapProvider.h"
+#import "LuggAnnotationView.h"
 #import "../LuggCalloutView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
@@ -26,6 +27,7 @@
 @end
 
 @implementation AppleMapProvider {
+  UIView *_wrapperView;
   LuggAppleMapViewContent *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
@@ -35,6 +37,7 @@
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
   UITapGestureRecognizer *_tapGesture;
   UILongPressGestureRecognizer *_longPressGesture;
+  LuggMarkerView *_activeNonBubbledMarker;
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
@@ -92,6 +95,7 @@
 
   [_tapGesture requireGestureRecognizerToFail:_longPressGesture];
 
+  _wrapperView = wrapperView;
   [wrapperView addSubview:_mapView];
 
   MKCoordinateRegion region = [_mapView regionForCenterCoordinate:coordinate
@@ -324,6 +328,8 @@
   if (gesture.state != UIGestureRecognizerStateEnded)
     return;
 
+  [self dismissNonBubbledCallout];
+
   CGPoint point = [gesture locationInView:_mapView];
 
   if ([self hitTestAnnotationAtPoint:point])
@@ -361,6 +367,7 @@
   return YES;
 }
 
+
 #pragma mark - MKMapViewDelegate
 
 - (BOOL)isUserInteracting {
@@ -391,6 +398,7 @@
                             longitude:mapView.centerCoordinate.longitude
                                  zoom:mapView.zoomLevel
                               gesture:_isDragging];
+  [self positionNonBubbledCallout];
 }
 
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
@@ -424,9 +432,9 @@
   }
 
   if (!markerView.hasCustomView) {
-    MKMarkerAnnotationView *markerAnnotationView =
-        [[MKMarkerAnnotationView alloc] initWithAnnotation:annotation
-                                           reuseIdentifier:nil];
+    LuggMarkerAnnotationView *markerAnnotationView =
+        [[LuggMarkerAnnotationView alloc] initWithAnnotation:annotation
+                                             reuseIdentifier:nil];
     markerAnnotationView.canShowCallout = YES;
     markerAnnotationView.displayPriority = MKFeatureDisplayPriorityRequired;
     markerAnnotationView.layer.zPosition = markerView.zIndex;
@@ -438,9 +446,9 @@
     return markerAnnotationView;
   }
 
-  MKAnnotationView *annotationView =
-      [[MKAnnotationView alloc] initWithAnnotation:annotation
-                                   reuseIdentifier:nil];
+  LuggAnnotationView *annotationView =
+      [[LuggAnnotationView alloc] initWithAnnotation:annotation
+                                     reuseIdentifier:nil];
   annotationView.canShowCallout = YES;
   annotationView.displayPriority = MKFeatureDisplayPriorityRequired;
   annotationView.layer.zPosition = markerView.zIndex;
@@ -520,6 +528,69 @@
     CGPoint point = [_mapView convertCoordinate:markerView.coordinate
                                   toPointToView:_mapView];
     [markerView emitPressEventWithPoint:point];
+
+    LuggCalloutView *calloutView = markerView.calloutView;
+    if (calloutView && !calloutView.bubbled && calloutView.hasCustomContent) {
+      [self showNonBubbledCallout:markerView];
+    }
+  }
+}
+
+- (void)mapView:(MKMapView *)mapView
+    didDeselectAnnotationView:(MKAnnotationView *)view {
+  if (![view.annotation isKindOfClass:[AppleMarkerAnnotation class]])
+    return;
+
+  AppleMarkerAnnotation *annotation = (AppleMarkerAnnotation *)view.annotation;
+  LuggMarkerView *markerView = annotation.markerView;
+
+  if (markerView && _activeNonBubbledMarker == markerView) {
+    [self dismissNonBubbledCallout];
+  }
+}
+
+- (void)showNonBubbledCallout:(LuggMarkerView *)markerView {
+  [self dismissNonBubbledCallout];
+
+  LuggCalloutView *calloutView = markerView.calloutView;
+  UIView *contentView = calloutView.contentView;
+  [contentView removeFromSuperview];
+
+  contentView.userInteractionEnabled = YES;
+  [_wrapperView addSubview:contentView];
+
+  _activeNonBubbledMarker = markerView;
+  [self positionNonBubbledCallout];
+}
+
+- (void)positionNonBubbledCallout {
+  if (!_activeNonBubbledMarker)
+    return;
+
+  UIView *contentView = _activeNonBubbledMarker.calloutView.contentView;
+  CGSize contentSize = contentView.bounds.size;
+  if (contentSize.width <= 0 || contentSize.height <= 0)
+    return;
+
+  CGPoint point = [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
+                                toPointToView:_wrapperView];
+  contentView.center =
+      CGPointMake(point.x, point.y - contentSize.height / 2);
+}
+
+- (void)dismissNonBubbledCallout {
+  if (!_activeNonBubbledMarker)
+    return;
+
+  LuggMarkerView *markerView = _activeNonBubbledMarker;
+  _activeNonBubbledMarker = nil;
+
+  [markerView.calloutView.contentView removeFromSuperview];
+
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)markerView.marker;
+  if (annotation) {
+    [_mapView deselectAnnotation:annotation animated:NO];
   }
 }
 
@@ -598,11 +669,15 @@
   if (!calloutView)
     return;
 
+  if (!calloutView.bubbled) {
+    annotationView.canShowCallout = NO;
+    return;
+  }
+
   if (calloutView.hasCustomContent) {
     annotationView.detailCalloutAccessoryView = calloutView.contentView;
   }
 
-  // Add info button to enable calloutAccessoryControlTapped
   UIButton *infoButton =
       [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
   annotationView.rightCalloutAccessoryView = infoButton;

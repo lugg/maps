@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.luggmaps.LuggCalloutView
 import com.luggmaps.LuggMapWrapperView
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggMarkerViewDelegate
@@ -59,6 +60,7 @@ class GoogleMapProvider(private val context: Context) :
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
+  private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
 
   // Initial camera settings
@@ -106,6 +108,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun destroy() {
+    dismissNonBubbledCallout()
     pendingMarkerViews.clear()
     pendingPolylineViews.clear()
     pendingPolygonViews.clear()
@@ -184,6 +187,7 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
     val position = map.cameraPosition
     delegate?.mapProviderDidMoveCamera(position.target.latitude, position.target.longitude, position.zoom, isDragging)
+    positionNonBubbledCallout()
   }
 
   override fun onCameraIdle() {
@@ -197,6 +201,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun onMapClick(latLng: LatLng) {
+    dismissNonBubbledCallout()
     val map = googleMap ?: return
     val point = map.projection.toScreenLocation(latLng)
     delegate?.mapProviderDidPress(latLng.latitude, latLng.longitude, point.x.toFloat(), point.y.toFloat())
@@ -218,9 +223,17 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun onMarkerClick(marker: Marker): Boolean {
+    dismissNonBubbledCallout()
+
     markerToViewMap[marker]?.let { view ->
       val point = googleMap?.projection?.toScreenLocation(marker.position)
       view.emitPressEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+
+      val calloutView = view.calloutView
+      if (calloutView != null && !calloutView.bubbled && calloutView.hasCustomContent) {
+        showNonBubbledCallout(marker, calloutView)
+        return true
+      }
     }
     return false
   }
@@ -251,12 +264,15 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  override fun getInfoWindow(marker: Marker): View? = null
+  override fun getInfoWindow(marker: Marker): View? {
+    // Non-bubbled callouts are rendered as live views, not info windows
+    return null
+  }
 
   override fun getInfoContents(marker: Marker): View? {
     val markerView = markerToViewMap[marker] ?: return null
     val calloutView = markerView.calloutView ?: return null
-    if (!calloutView.hasCustomContent) return null
+    if (!calloutView.hasCustomContent || !calloutView.bubbled) return null
 
     val bitmap = calloutView.createContentBitmap() ?: return null
     return ImageView(context).apply { setImageBitmap(bitmap) }
@@ -264,6 +280,45 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun onInfoWindowClick(marker: Marker) {
     markerToViewMap[marker]?.calloutView?.emitPressEvent()
+  }
+
+  private fun showNonBubbledCallout(marker: Marker, calloutView: LuggCalloutView) {
+    val wrapper = wrapperView ?: return
+    val contentView = calloutView.contentView
+
+    contentView.setOnClickListener {
+      calloutView.emitPressEvent()
+    }
+
+    wrapper.addView(contentView)
+    activeNonBubbledMarker = marker
+    positionNonBubbledCallout()
+  }
+
+  private fun dismissNonBubbledCallout() {
+    val marker = activeNonBubbledMarker ?: return
+    val markerView = markerToViewMap[marker] ?: return
+    val calloutView = markerView.calloutView ?: return
+    val contentView = calloutView.contentView
+
+    (contentView.parent as? android.view.ViewGroup)?.removeView(contentView)
+    activeNonBubbledMarker = null
+  }
+
+  private fun positionNonBubbledCallout() {
+    val marker = activeNonBubbledMarker ?: return
+    val markerView = markerToViewMap[marker] ?: return
+    val calloutView = markerView.calloutView ?: return
+    val contentView = calloutView.contentView
+    val map = googleMap ?: return
+
+    val point = map.projection.toScreenLocation(marker.position)
+    contentView.post {
+      val x = point.x - contentView.width / 2f
+      val y = point.y - contentView.height.toFloat()
+      contentView.translationX = x
+      contentView.translationY = y
+    }
   }
 
   // endregion

@@ -10,7 +10,6 @@ export const MarkerText = ({
   text,
   color = '#EA4335',
   anchor = { x: 0.5, y: 0.5 },
-  children,
   ...rest
 }: MarkerTextProps) => {
   return (
@@ -18,7 +17,6 @@ export const MarkerText = ({
       <View style={[styles.container, { backgroundColor: color }]}>
         <Text style={styles.text}>{text}</Text>
       </View>
-      {children}
     </Marker>
   );
 };

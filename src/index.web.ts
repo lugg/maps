@@ -9,8 +9,6 @@ export { Polyline } from './components/index.web';
 export type { PolylineProps } from './components/index.web';
 export { GeoJson } from './components/index.web';
 export type { GeoJsonProps } from './components/index.web';
-export { Callout } from './components/index.web';
-export type { CalloutProps } from './components/index.web';
 export type {
   MapViewProps,
   MapViewRef,

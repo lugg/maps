@@ -1,9 +1,8 @@
 import { forwardRef, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import {
   MapView,
   Marker,
-  Callout,
   GeoJson,
   Polygon,
   type MapViewProps,
@@ -21,6 +20,7 @@ import { CrewMarker } from './CrewMarker';
 import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
 import { MarkerImage } from './MarkerImage';
+import { Button } from './Button';
 import type { MarkerData } from './index';
 import { Route, smoothCoordinates } from './Route';
 import { SAMPLE_GEOJSON } from '../geojson';
@@ -100,6 +100,17 @@ const renderMarker = (
     ? (e: MarkerDragEvent) => onDragEnd(e, marker)
     : undefined;
 
+  const calloutEl = (label: string, desc: string) => (
+    <View style={styles.callout}>
+      <Text style={styles.calloutTitle}>{label}</Text>
+      <Text style={styles.calloutDescription}>{desc}</Text>
+    </View>
+  );
+
+  const handleCalloutPress = onCalloutPress
+    ? () => onCalloutPress(marker)
+    : undefined;
+
   switch (type) {
     case 'icon':
       return (
@@ -112,14 +123,9 @@ const renderMarker = (
           onDragStart={handleDragStart}
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
-        >
-          <Callout onPress={() => onCalloutPress?.(marker)}>
-            <View style={styles.callout}>
-              <Text style={styles.calloutTitle}>Icon Marker</Text>
-              <Text style={styles.calloutDescription}>A pin-style marker</Text>
-            </View>
-          </Callout>
-        </MarkerIcon>
+          callout={calloutEl('Icon Marker', 'A pin-style marker')}
+          onCalloutPress={handleCalloutPress}
+        />
       );
     case 'text':
       return (
@@ -134,14 +140,9 @@ const renderMarker = (
           onDragStart={handleDragStart}
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
-        >
-          <Callout onPress={() => onCalloutPress?.(marker)}>
-            <View style={styles.callout}>
-              <Text style={styles.calloutTitle}>Text Marker {text}</Text>
-              <Text style={styles.calloutDescription}>A text badge marker</Text>
-            </View>
-          </Callout>
-        </MarkerText>
+          callout={calloutEl(`Text Marker ${text}`, 'A text badge marker')}
+          onCalloutPress={handleCalloutPress}
+        />
       );
     case 'image':
       return (
@@ -155,14 +156,9 @@ const renderMarker = (
           onDragStart={handleDragStart}
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
-        >
-          <Callout onPress={() => onCalloutPress?.(marker)}>
-            <View style={styles.callout}>
-              <Text style={styles.calloutTitle}>Image Marker</Text>
-              <Text style={styles.calloutDescription}>An avatar marker</Text>
-            </View>
-          </Callout>
-        </MarkerImage>
+          callout={calloutEl('Image Marker', 'An avatar marker')}
+          onCalloutPress={handleCalloutPress}
+        />
       );
     case 'custom':
       return (
@@ -176,18 +172,23 @@ const renderMarker = (
           onDragStart={handleDragStart}
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
+          callout={
+            <View style={styles.customCallout}>
+              <View>
+                <Text style={styles.calloutTitle}>Custom Marker</Text>
+                <Text style={styles.calloutDescription}>
+                Non-bubbled callout
+                </Text>
+              </View>
+              <Button title="Press me" onPress={() => Alert.alert('pressed')} />
+            </View>
+          }
+          onCalloutPress={handleCalloutPress}
+          calloutBubbled={false}
         >
           <View
             style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}
           />
-          <Callout onPress={() => onCalloutPress?.(marker)}>
-            <View style={styles.callout}>
-              <Text style={styles.calloutTitle}>Custom Marker</Text>
-              <Text style={styles.calloutDescription}>
-                This is a custom callout with React content
-              </Text>
-            </View>
-          </Callout>
         </Marker>
       );
     default:
@@ -203,18 +204,9 @@ const renderMarker = (
           onDragStart={handleDragStart}
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
-        >
-          {title ? (
-            <Callout onPress={() => onCalloutPress?.(marker)} />
-          ) : (
-            <Callout onPress={() => onCalloutPress?.(marker)}>
-              <View style={styles.callout}>
-                <Text style={styles.calloutTitle}>Basic Marker</Text>
-                <Text style={styles.calloutDescription}>{name}</Text>
-              </View>
-            </Callout>
-          )}
-        </Marker>
+          callout={title ? undefined : calloutEl('Basic Marker', name ?? '')}
+          onCalloutPress={handleCalloutPress}
+        />
       );
   }
 };
@@ -349,6 +341,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(66, 133, 244, 0.2)',
     borderWidth: 2,
     borderColor: 'white',
+    pointerEvents: 'none',
   },
   centerPinDot: {
     width: 8,
@@ -363,6 +356,18 @@ const styles = StyleSheet.create({
   },
   callout: {
     minWidth: 140,
+  },
+  customCallout: {
+    minWidth: 140,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: 12,
   },
   calloutTitle: {
     fontWeight: 'bold',

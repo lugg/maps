@@ -5,6 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface LuggCalloutView : RCTViewComponentView
 
+@property(nonatomic, readonly) BOOL bubbled;
 @property(nonatomic, readonly) BOOL hasCustomContent;
 @property(nonatomic, readonly) UIView *contentView;
 

@@ -13,6 +13,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 @end
 
 @implementation GoogleMapProvider {
+  UIView *_wrapperView;
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
@@ -24,6 +25,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
   NSMapTable<GMSPolygon *, LuggPolygonView *> *_polygonToViewMap;
   NSMapTable<GMSMarker *, LuggMarkerView *> *_markerToViewMap;
+  LuggMarkerView *_activeNonBubbledMarker;
 
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
@@ -89,6 +91,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.paddingAdjustmentBehavior =
       kGMSMapViewPaddingAdjustmentBehaviorNever;
 
+  _wrapperView = wrapperView;
   [wrapperView addSubview:_mapView];
 
   [self applyTheme];
@@ -249,6 +252,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
                             longitude:position.target.longitude
                                  zoom:position.zoom
                               gesture:_isDragging];
+  [self positionNonBubbledCallout];
 }
 
 - (void)mapView:(GMSMapView *)mapView
@@ -268,6 +272,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)mapView:(GMSMapView *)mapView
     didTapAtCoordinate:(CLLocationCoordinate2D)coordinate {
+  [self dismissNonBubbledCallout];
   CGPoint point = [mapView.projection pointForCoordinate:coordinate];
   [_delegate mapProviderDidPress:coordinate.latitude
                        longitude:coordinate.longitude
@@ -297,10 +302,18 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (BOOL)mapView:(GMSMapView *)mapView didTapMarker:(GMSMarker *)marker {
+  [self dismissNonBubbledCallout];
+
   LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
   if (markerView) {
     CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
     [markerView emitPressEventWithPoint:point];
+
+    LuggCalloutView *calloutView = markerView.calloutView;
+    if (calloutView && !calloutView.bubbled && calloutView.hasCustomContent) {
+      [self showNonBubbledCallout:markerView];
+      return YES;
+    }
   }
   return NO;
 }
@@ -333,14 +346,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
 }
 
-- (UIView *)mapView:(GMSMapView *)mapView
-    markerInfoContents:(GMSMarker *)marker {
-  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
-  if (!markerView || !markerView.calloutView ||
-      !markerView.calloutView.hasCustomContent)
-    return nil;
-
-  UIView *contentView = markerView.calloutView.contentView;
+- (UIView *)rasterizedCalloutView:(LuggCalloutView *)calloutView {
+  UIView *contentView = calloutView.contentView;
   [contentView layoutIfNeeded];
 
   CGSize size = contentView.bounds.size;
@@ -357,8 +364,27 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
         [contentView.layer renderInContext:context.CGContext];
       }];
 
-  UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-  return imageView;
+  return [[UIImageView alloc] initWithImage:image];
+}
+
+- (UIView *)mapView:(GMSMapView *)mapView
+    markerInfoWindow:(GMSMarker *)marker {
+  // Non-bubbled callouts are rendered as live views, not info windows
+  return nil;
+}
+
+- (UIView *)mapView:(GMSMapView *)mapView
+    markerInfoContents:(GMSMarker *)marker {
+  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+  if (!markerView || !markerView.calloutView ||
+      !markerView.calloutView.hasCustomContent)
+    return nil;
+
+  if (markerView.calloutView.bubbled) {
+    return [self rasterizedCalloutView:markerView.calloutView];
+  }
+
+  return nil;
 }
 
 - (void)mapView:(GMSMapView *)mapView
@@ -367,6 +393,44 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (markerView && markerView.calloutView) {
     [markerView.calloutView emitPressEvent];
   }
+}
+
+- (void)showNonBubbledCallout:(LuggMarkerView *)markerView {
+  [self dismissNonBubbledCallout];
+
+  LuggCalloutView *calloutView = markerView.calloutView;
+  UIView *contentView = calloutView.contentView;
+  [contentView removeFromSuperview];
+
+  contentView.userInteractionEnabled = YES;
+  [_wrapperView addSubview:contentView];
+
+  _activeNonBubbledMarker = markerView;
+  [self positionNonBubbledCallout];
+}
+
+- (void)dismissNonBubbledCallout {
+  if (!_activeNonBubbledMarker)
+    return;
+
+  LuggCalloutView *calloutView = _activeNonBubbledMarker.calloutView;
+  [calloutView.contentView removeFromSuperview];
+  _activeNonBubbledMarker = nil;
+}
+
+- (void)positionNonBubbledCallout {
+  if (!_activeNonBubbledMarker)
+    return;
+
+  UIView *contentView = _activeNonBubbledMarker.calloutView.contentView;
+  CGSize contentSize = contentView.bounds.size;
+  if (contentSize.width <= 0 || contentSize.height <= 0)
+    return;
+
+  CGPoint point = [_mapView.projection
+      pointForCoordinate:_activeNonBubbledMarker.coordinate];
+  contentView.center =
+      CGPointMake(point.x, point.y - contentSize.height / 2);
 }
 
 #pragma mark - MarkerViewDelegate

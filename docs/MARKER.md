@@ -44,6 +44,9 @@ import { MapView, Marker } from '@lugg/maps';
 | `onDragStart` | `(event: MarkerDragEvent) => void` | - | Called when marker drag starts. Event includes `coordinate` and `point` |
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
 | `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
+| `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
+| `onCalloutPress` | `() => void` | - | Called when the callout is pressed |
+| `calloutBubbled` | `boolean` | `true` | Whether to wrap the callout in the native platform bubble |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Draggable Markers
@@ -85,14 +88,45 @@ Use the `children` prop to render a custom marker view. The `anchor` prop contro
 
 ## Callout
 
-Use the [`Callout`](./CALLOUT.md) component as a child to display a callout when the marker is tapped.
+Use the `callout` prop to display a callout when the marker is tapped.
 
 ```tsx
+{/* Native callout using title/description */}
 <Marker
   coordinate={{ latitude: 37.7749, longitude: -122.4194 }}
   title="San Francisco"
   description="California, USA"
->
-  <Callout onPress={() => console.log('Callout pressed')} />
-</Marker>
+  onCalloutPress={() => console.log('Callout pressed')}
+/>
+
+{/* Custom callout content */}
+<Marker
+  coordinate={{ latitude: 37.8049, longitude: -122.4094 }}
+  callout={
+    <View style={{ padding: 8 }}>
+      <Text style={{ fontWeight: 'bold' }}>Custom Callout</Text>
+      <Text>With React content</Text>
+    </View>
+  }
+  onCalloutPress={() => console.log('Callout pressed')}
+/>
+
+{/* Non-bubbled callout (no native chrome) */}
+<Marker
+  coordinate={{ latitude: 37.7849, longitude: -122.4294 }}
+  calloutBubbled={false}
+  callout={
+    <View style={{ padding: 12, backgroundColor: 'white', borderRadius: 8 }}>
+      <Text style={{ fontWeight: 'bold' }}>Custom Tooltip</Text>
+      <Text>Rendered without native bubble</Text>
+    </View>
+  }
+  onCalloutPress={() => console.log('Callout pressed')}
+/>
 ```
+
+### Platform Behavior
+
+- **Apple Maps (iOS)**: Custom callout content is rendered as a live interactive view inside the native callout bubble. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker without the native bubble.
+- **Google Maps (iOS & Android)**: Custom callout content is rasterized into the info window. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker (not rasterized), allowing interactive elements like buttons.
+- **Web**: Uses Google Maps `InfoWindow`. With `calloutBubbled={false}`, content is rendered as a positioned element above the marker.

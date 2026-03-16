@@ -13,6 +13,7 @@ import com.luggmaps.extensions.dispatchEvent
 
 class LuggCalloutView(context: Context) : ReactViewGroup(context) {
   val contentView: ReactViewGroup = ReactViewGroup(context)
+  var bubbled: Boolean = true
 
   val hasCustomContent: Boolean
     get() = contentView.isNotEmpty()
