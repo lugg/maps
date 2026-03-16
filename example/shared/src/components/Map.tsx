@@ -34,6 +34,7 @@ interface MapProps extends MapViewProps {
   onMarkerDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void;
   onMarkerDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void;
   onMarkerDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void;
+  onCalloutPress?: (marker: MarkerData) => void;
 }
 
 const INITIAL_ZOOM = 14;
@@ -70,7 +71,8 @@ const renderMarker = (
   onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
   onDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void,
   onDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void,
-  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void
+  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void,
+  onCalloutPress?: (marker: MarkerData) => void
 ) => {
   const {
     id,
@@ -111,7 +113,7 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
         >
-          <Callout onPress={() => console.log('Icon callout pressed')}>
+          <Callout onPress={() => onCalloutPress?.(marker)}>
             <View style={styles.callout}>
               <Text style={styles.calloutTitle}>Icon Marker</Text>
               <Text style={styles.calloutDescription}>A pin-style marker</Text>
@@ -133,7 +135,7 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
         >
-          <Callout onPress={() => console.log('Text callout pressed:', text)}>
+          <Callout onPress={() => onCalloutPress?.(marker)}>
             <View style={styles.callout}>
               <Text style={styles.calloutTitle}>Text Marker {text}</Text>
               <Text style={styles.calloutDescription}>A text badge marker</Text>
@@ -154,7 +156,7 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
         >
-          <Callout onPress={() => console.log('Image callout pressed')}>
+          <Callout onPress={() => onCalloutPress?.(marker)}>
             <View style={styles.callout}>
               <Text style={styles.calloutTitle}>Image Marker</Text>
               <Text style={styles.calloutDescription}>An avatar marker</Text>
@@ -178,7 +180,7 @@ const renderMarker = (
           <View
             style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}
           />
-          <Callout onPress={() => console.log('Custom callout pressed')}>
+          <Callout onPress={() => onCalloutPress?.(marker)}>
             <View style={styles.callout}>
               <Text style={styles.calloutTitle}>Custom Marker</Text>
               <Text style={styles.calloutDescription}>
@@ -203,11 +205,9 @@ const renderMarker = (
           onDragEnd={handleDragEnd}
         >
           {title ? (
-            <Callout onPress={() => console.log('Callout pressed:', title)} />
+            <Callout onPress={() => onCalloutPress?.(marker)} />
           ) : (
-            <Callout
-              onPress={() => console.log('Basic callout pressed:', name)}
-            >
+            <Callout onPress={() => onCalloutPress?.(marker)}>
               <View style={styles.callout}>
                 <Text style={styles.calloutTitle}>Basic Marker</Text>
                 <Text style={styles.calloutDescription}>{name}</Text>
@@ -235,6 +235,7 @@ export const Map = forwardRef<MapView, MapProps>(
       onMarkerDragStart,
       onMarkerDragChange,
       onMarkerDragEnd,
+      onCalloutPress,
       ...props
     },
     ref
@@ -289,7 +290,8 @@ export const Map = forwardRef<MapView, MapProps>(
               onMarkerPress,
               onMarkerDragStart,
               onMarkerDragChange,
-              onMarkerDragEnd
+              onMarkerDragEnd,
+              onCalloutPress
             )
           )}
           <Route coordinates={smoothedRoute} />
@@ -360,7 +362,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   callout: {
-    padding: 8,
     minWidth: 140,
   },
   calloutTitle: {
