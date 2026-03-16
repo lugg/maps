@@ -44,6 +44,7 @@ using namespace facebook::react;
 @implementation LuggCalloutView {
   LuggCalloutContentView *_contentView;
   BOOL _bubbled;
+  CGPoint _anchor;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -58,6 +59,7 @@ using namespace facebook::react;
     _props = defaultProps;
 
     _bubbled = YES;
+    _anchor = CGPointMake(0.5, 1.0);
     _contentView = [[LuggCalloutContentView alloc] init];
     _contentView.backgroundColor = [UIColor clearColor];
 
@@ -74,12 +76,20 @@ using namespace facebook::react;
       *std::static_pointer_cast<LuggCalloutViewProps const>(props);
 
   _bubbled = newViewProps.bubbled;
+  if (newViewProps.anchor.x != 0 || newViewProps.anchor.y != 0) {
+    _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  }
 
   [super updateProps:props oldProps:oldProps];
+  [_delegate calloutViewDidUpdate:self];
 }
 
 - (BOOL)bubbled {
   return _bubbled;
+}
+
+- (CGPoint)anchor {
+  return _anchor;
 }
 
 - (void)mountChildComponentView:
@@ -98,7 +108,12 @@ using namespace facebook::react;
 
 - (void)layoutSubviews {
   [super layoutSubviews];
+  CGSize oldSize = _contentView.bounds.size;
   [_contentView updateContentSize];
+  CGSize newSize = _contentView.bounds.size;
+  if (!CGSizeEqualToSize(oldSize, newSize)) {
+    [_delegate calloutViewDidUpdate:self];
+  }
 }
 
 - (BOOL)hasCustomContent {

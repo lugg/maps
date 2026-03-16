@@ -42,6 +42,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
       callout,
       onCalloutPress,
       calloutBubbled = true,
+      calloutAnchor,
       children,
     } = this.props;
 
@@ -73,6 +74,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
           <LuggCalloutViewNativeComponent
             style={calloutStyles.callout}
             bubbled={calloutBubbled}
+            anchor={calloutAnchor}
             onCalloutPress={onCalloutPress ? () => onCalloutPress() : undefined}
           >
             {calloutContent}

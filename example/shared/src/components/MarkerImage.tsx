@@ -13,7 +13,7 @@ export const MarkerImage = ({
   ...rest
 }: MarkerImageProps) => {
   return (
-    <Marker anchor={anchor} rasterize={false} {...rest}>
+    <Marker anchor={anchor} rasterize {...rest}>
       <Image
         source={source}
         style={[

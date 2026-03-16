@@ -9,7 +9,8 @@
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 @interface GoogleMapProvider () <
-    LuggMarkerViewDelegate, LuggPolylineViewDelegate, LuggPolygonViewDelegate>
+    LuggMarkerViewDelegate, LuggCalloutViewDelegate,
+    LuggPolylineViewDelegate, LuggPolygonViewDelegate>
 @end
 
 @implementation GoogleMapProvider {
@@ -403,9 +404,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [contentView removeFromSuperview];
 
   contentView.userInteractionEnabled = YES;
+  calloutView.delegate = self;
   [_wrapperView addSubview:contentView];
 
   _activeNonBubbledMarker = markerView;
+  [self positionNonBubbledCallout];
+}
+
+- (void)calloutViewDidUpdate:(LuggCalloutView *)calloutView {
   [self positionNonBubbledCallout];
 }
 
@@ -414,6 +420,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
 
   LuggCalloutView *calloutView = _activeNonBubbledMarker.calloutView;
+  calloutView.delegate = nil;
   [calloutView.contentView removeFromSuperview];
   _activeNonBubbledMarker = nil;
 }
@@ -422,15 +429,18 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (!_activeNonBubbledMarker)
     return;
 
-  UIView *contentView = _activeNonBubbledMarker.calloutView.contentView;
+  LuggCalloutView *calloutView = _activeNonBubbledMarker.calloutView;
+  UIView *contentView = calloutView.contentView;
   CGSize contentSize = contentView.bounds.size;
   if (contentSize.width <= 0 || contentSize.height <= 0)
     return;
 
+  CGPoint anchor = calloutView.anchor;
   CGPoint point = [_mapView.projection
       pointForCoordinate:_activeNonBubbledMarker.coordinate];
   contentView.center =
-      CGPointMake(point.x, point.y - contentSize.height / 2);
+      CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
+                  point.y + contentSize.height * (0.5 - anchor.y));
 }
 
 #pragma mark - MarkerViewDelegate

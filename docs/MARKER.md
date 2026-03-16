@@ -47,6 +47,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
 | `onCalloutPress` | `() => void` | - | Called when the callout is pressed |
 | `calloutBubbled` | `boolean` | `true` | Whether to wrap the callout in the native platform bubble |
+| `calloutAnchor` | `Point` | `{x: 0.5, y: 1}` | Anchor point for non-bubbled callout positioning relative to the marker |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Draggable Markers

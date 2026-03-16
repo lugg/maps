@@ -85,6 +85,13 @@ export interface MarkerProps {
    */
   calloutBubbled?: boolean;
   /**
+   * Anchor point for the callout relative to the marker position.
+   * `{x: 0.5, y: 1}` places the bottom-center of the callout at the marker.
+   *
+   * @default {x: 0.5, y: 1}
+   */
+  calloutAnchor?: Point;
+  /**
    * Custom marker view
    */
   children?: ReactNode;

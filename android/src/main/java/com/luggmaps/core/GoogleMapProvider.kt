@@ -231,6 +231,7 @@ class GoogleMapProvider(private val context: Context) :
 
       val calloutView = view.calloutView
       if (calloutView != null && !calloutView.bubbled && calloutView.hasCustomContent) {
+        googleMap?.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
         showNonBubbledCallout(marker, calloutView)
         return true
       }
@@ -290,6 +291,11 @@ class GoogleMapProvider(private val context: Context) :
       calloutView.emitPressEvent()
     }
 
+    calloutView.onUpdate = {
+      layoutNonBubbledCallout()
+      positionNonBubbledCallout()
+    }
+
     dismissInfoWindows()
     wrapper.addView(contentView)
     activeNonBubbledMarker = marker
@@ -311,6 +317,7 @@ class GoogleMapProvider(private val context: Context) :
     val calloutView = markerView.calloutView ?: return
     val contentView = calloutView.contentView
 
+    calloutView.onUpdate = null
     (contentView.parent as? android.view.ViewGroup)?.removeView(contentView)
     activeNonBubbledMarker = null
   }
@@ -346,8 +353,8 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
 
     val point = map.projection.toScreenLocation(marker.position)
-    contentView.translationX = point.x - contentView.width / 2f
-    contentView.translationY = point.y - contentView.height.toFloat()
+    contentView.translationX = point.x - contentView.width * calloutView.anchorX
+    contentView.translationY = point.y - contentView.height * calloutView.anchorY
   }
 
   // endregion

@@ -22,7 +22,8 @@
 @end
 
 @interface AppleMapProvider () <
-    LuggMarkerViewDelegate, LuggPolylineViewDelegate, LuggPolygonViewDelegate,
+    LuggMarkerViewDelegate, LuggCalloutViewDelegate,
+    LuggPolylineViewDelegate, LuggPolygonViewDelegate,
     UIGestureRecognizerDelegate>
 @end
 
@@ -557,9 +558,14 @@
   [contentView removeFromSuperview];
 
   contentView.userInteractionEnabled = YES;
+  calloutView.delegate = self;
   [_wrapperView addSubview:contentView];
 
   _activeNonBubbledMarker = markerView;
+  [self positionNonBubbledCallout];
+}
+
+- (void)calloutViewDidUpdate:(LuggCalloutView *)calloutView {
   [self positionNonBubbledCallout];
 }
 
@@ -567,15 +573,18 @@
   if (!_activeNonBubbledMarker)
     return;
 
-  UIView *contentView = _activeNonBubbledMarker.calloutView.contentView;
+  LuggCalloutView *calloutView = _activeNonBubbledMarker.calloutView;
+  UIView *contentView = calloutView.contentView;
   CGSize contentSize = contentView.bounds.size;
   if (contentSize.width <= 0 || contentSize.height <= 0)
     return;
 
+  CGPoint anchor = calloutView.anchor;
   CGPoint point = [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
                                 toPointToView:_wrapperView];
   contentView.center =
-      CGPointMake(point.x, point.y - contentSize.height / 2);
+      CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
+                  point.y + contentSize.height * (0.5 - anchor.y));
 }
 
 - (void)dismissNonBubbledCallout {
@@ -585,6 +594,7 @@
   LuggMarkerView *markerView = _activeNonBubbledMarker;
   _activeNonBubbledMarker = nil;
 
+  markerView.calloutView.delegate = nil;
   [markerView.calloutView.contentView removeFromSuperview];
 
   AppleMarkerAnnotation *annotation =

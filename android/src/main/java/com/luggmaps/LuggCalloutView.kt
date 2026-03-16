@@ -14,6 +14,11 @@ import com.luggmaps.extensions.dispatchEvent
 class LuggCalloutView(context: Context) : ReactViewGroup(context) {
   val contentView: ReactViewGroup = ReactViewGroup(context)
   var bubbled: Boolean = true
+  var anchorX: Float = 0.5f
+    set(value) { field = value; onUpdate?.invoke() }
+  var anchorY: Float = 1.0f
+    set(value) { field = value; onUpdate?.invoke() }
+  var onUpdate: (() -> Unit)? = null
 
   val hasCustomContent: Boolean
     get() = contentView.isNotEmpty()
@@ -24,6 +29,9 @@ class LuggCalloutView(context: Context) : ReactViewGroup(context) {
 
   override fun addView(child: View, index: Int) {
     contentView.addView(child, index)
+    child.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+      onUpdate?.invoke()
+    }
   }
 
   override fun removeView(child: View) {
