@@ -313,12 +313,19 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
 
     val point = map.projection.toScreenLocation(marker.position)
-    contentView.post {
-      val x = point.x - contentView.width / 2f
-      val y = point.y - contentView.height.toFloat()
-      contentView.translationX = x
-      contentView.translationY = y
+
+    var contentWidth = 0
+    var contentHeight = 0
+    for (i in 0 until contentView.childCount) {
+      val child = contentView.getChildAt(i)
+      val childRight = child.left + child.width
+      val childBottom = child.top + child.height
+      if (childRight > contentWidth) contentWidth = childRight
+      if (childBottom > contentHeight) contentHeight = childBottom
     }
+
+    contentView.translationX = point.x - contentWidth / 2f
+    contentView.translationY = point.y - contentHeight.toFloat()
   }
 
   // endregion
