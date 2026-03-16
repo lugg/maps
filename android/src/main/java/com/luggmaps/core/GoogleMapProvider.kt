@@ -292,6 +292,7 @@ class GoogleMapProvider(private val context: Context) :
 
     wrapper.addView(contentView)
     activeNonBubbledMarker = marker
+    layoutNonBubbledCallout()
     positionNonBubbledCallout()
   }
 
@@ -305,14 +306,11 @@ class GoogleMapProvider(private val context: Context) :
     activeNonBubbledMarker = null
   }
 
-  private fun positionNonBubbledCallout() {
+  private fun layoutNonBubbledCallout() {
     val marker = activeNonBubbledMarker ?: return
     val markerView = markerToViewMap[marker] ?: return
     val calloutView = markerView.calloutView ?: return
     val contentView = calloutView.contentView
-    val map = googleMap ?: return
-
-    val point = map.projection.toScreenLocation(marker.position)
 
     var contentWidth = 0
     var contentHeight = 0
@@ -324,8 +322,23 @@ class GoogleMapProvider(private val context: Context) :
       if (childBottom > contentHeight) contentHeight = childBottom
     }
 
-    contentView.translationX = point.x - contentWidth / 2f
-    contentView.translationY = point.y - contentHeight.toFloat()
+    contentView.measure(
+      View.MeasureSpec.makeMeasureSpec(contentWidth, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(contentHeight, View.MeasureSpec.EXACTLY)
+    )
+    contentView.layout(0, 0, contentWidth, contentHeight)
+  }
+
+  private fun positionNonBubbledCallout() {
+    val marker = activeNonBubbledMarker ?: return
+    val markerView = markerToViewMap[marker] ?: return
+    val calloutView = markerView.calloutView ?: return
+    val contentView = calloutView.contentView
+    val map = googleMap ?: return
+
+    val point = map.projection.toScreenLocation(marker.position)
+    contentView.translationX = point.x - contentView.width / 2f
+    contentView.translationY = point.y - contentView.height.toFloat()
   }
 
   // endregion
