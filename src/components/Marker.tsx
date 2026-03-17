@@ -5,6 +5,7 @@ import LuggCalloutViewNativeComponent from '../fabric/LuggCalloutViewNativeCompo
 import type { MarkerProps } from './Marker.types';
 
 export type {
+  CalloutOptions,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
@@ -40,8 +41,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
       onDragChange,
       onDragEnd,
       callout,
-      calloutBubbled = true,
-      calloutAnchor,
+      calloutOptions,
       children,
     } = this.props;
 
@@ -50,6 +50,8 @@ export class Marker extends React.PureComponent<MarkerProps> {
         ? callout
         : React.createElement(callout)
       : null;
+    const calloutBubbled = calloutOptions?.bubbled ?? true;
+    const calloutAnchor = calloutOptions?.anchor;
 
     return (
       <LuggMarkerViewNativeComponent

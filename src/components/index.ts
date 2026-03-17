@@ -1,5 +1,6 @@
 export { Marker } from './Marker';
 export type {
+  CalloutOptions,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,

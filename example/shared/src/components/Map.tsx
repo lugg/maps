@@ -174,7 +174,7 @@ const renderMarker = (
               <Button title="Press me" onPress={() => Alert.alert('pressed')} />
             </View>
           }
-          calloutBubbled={false}
+          calloutOptions={{ bubbled: false }}
         >
           <View
             style={[styles.customMarker, { backgroundColor: color ?? 'gray' }]}

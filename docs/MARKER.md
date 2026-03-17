@@ -45,8 +45,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
 | `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
 | `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
-| `calloutBubbled` | `boolean` | `true` | Whether to wrap the callout in the native platform bubble |
-| `calloutAnchor` | `Point` | `{x: 0.5, y: 1}` | Anchor point for non-bubbled callout positioning relative to the marker |
+| `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `anchor` |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Draggable Markers
@@ -112,7 +111,7 @@ Use the `callout` prop to display a callout when the marker is tapped.
 {/* Non-bubbled callout (no native chrome) */}
 <Marker
   coordinate={{ latitude: 37.7849, longitude: -122.4294 }}
-  calloutBubbled={false}
+  calloutOptions={{ bubbled: false }}
   callout={
     <View style={{ padding: 12, backgroundColor: 'white', borderRadius: 8 }}>
       <Text style={{ fontWeight: 'bold' }}>Custom Tooltip</Text>
@@ -122,8 +121,13 @@ Use the `callout` prop to display a callout when the marker is tapped.
 />
 ```
 
+### Callout Options
+
+- `bubbled` - Whether to wrap the callout in the native platform bubble. Defaults to `true`.
+- `anchor` - Anchor point for non-bubbled callout positioning relative to the marker. Defaults to `{x: 0.5, y: 1}`.
+
 ### Platform Behavior
 
-- **Apple Maps (iOS)**: Custom callout content is rendered as a live interactive view inside the native callout bubble. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker without the native bubble.
-- **Google Maps (iOS & Android)**: Custom callout content is rasterized into the info window. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker (not rasterized), allowing interactive elements like buttons. Opening a non-bubbled callout hides any visible native info window first. On iOS, tapping the marker still moves the camera to the marker before showing the callout.
-- **Web**: Uses Google Maps `InfoWindow`. With `calloutBubbled={false}`, content is rendered as a positioned element above the marker.
+- **Apple Maps (iOS)**: Custom callout content is rendered as a live interactive view inside the native callout bubble. With `calloutOptions={{ bubbled: false }}`, content is rendered as a live interactive view positioned above the marker without the native bubble.
+- **Google Maps (iOS & Android)**: Custom callout content is rasterized into the info window. With `calloutOptions={{ bubbled: false }}`, content is rendered as a live interactive view positioned above the marker (not rasterized), allowing interactive elements like buttons. Opening a non-bubbled callout hides any visible native info window first. On iOS, tapping the marker still moves the camera to the marker before showing the callout.
+- **Web**: Uses Google Maps `InfoWindow`. With `calloutOptions={{ bubbled: false }}`, content is rendered as a positioned element above the marker.

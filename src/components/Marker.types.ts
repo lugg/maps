@@ -5,6 +5,23 @@ import type { Coordinate, Point, PressEventPayload } from '../types';
 export type MarkerPressEvent = NativeSyntheticEvent<PressEventPayload>;
 export type MarkerDragEvent = NativeSyntheticEvent<PressEventPayload>;
 
+export interface CalloutOptions {
+  /**
+   * Whether to wrap the callout in the native platform bubble.
+   * Set to `false` to render custom content directly without the native callout chrome.
+   *
+   * @default true
+   */
+  bubbled?: boolean;
+  /**
+   * Anchor point for the callout relative to the marker position.
+   * `{x: 0.5, y: 1}` places the bottom-center of the callout at the marker.
+   *
+   * @default {x: 0.5, y: 1}
+   */
+  anchor?: Point;
+}
+
 export interface MarkerProps {
   /**
    * Name used for debugging purposes
@@ -74,19 +91,9 @@ export interface MarkerProps {
    */
   callout?: ComponentType<unknown> | ReactElement;
   /**
-   * Whether to wrap the callout in the native platform bubble.
-   * Set to `false` to render custom content directly without the native callout chrome.
-   *
-   * @default true
+   * Callout configuration options.
    */
-  calloutBubbled?: boolean;
-  /**
-   * Anchor point for the callout relative to the marker position.
-   * `{x: 0.5, y: 1}` places the bottom-center of the callout at the marker.
-   *
-   * @default {x: 0.5, y: 1}
-   */
-  calloutAnchor?: Point;
+  calloutOptions?: CalloutOptions;
   /**
    * Custom marker view
    */

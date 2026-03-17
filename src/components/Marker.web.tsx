@@ -39,13 +39,14 @@ export const Marker = ({
   onDragChange,
   onDragEnd,
   callout,
-  calloutBubbled = true,
+  calloutOptions,
   children,
 }: MarkerProps) => {
   const { moveCamera } = useMapContext();
   const dragPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
   const [markerRef, markerElement] = useAdvancedMarkerRef();
   const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+  const calloutBubbled = calloutOptions?.bubbled ?? true;
 
   const calloutContent = callout
     ? isValidElement(callout)
