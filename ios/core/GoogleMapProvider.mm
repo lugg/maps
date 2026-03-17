@@ -438,6 +438,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   CGPoint anchor = calloutView.anchor;
   CGPoint point = [_mapView.projection
       pointForCoordinate:_activeNonBubbledMarker.coordinate];
+
   contentView.center =
       CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
                   point.y + contentSize.height * (0.5 - anchor.y));

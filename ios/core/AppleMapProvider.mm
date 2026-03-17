@@ -559,7 +559,16 @@
 
   contentView.userInteractionEnabled = YES;
   calloutView.delegate = self;
-  [_wrapperView addSubview:contentView];
+
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)markerView.marker;
+  MKAnnotationView *annotationView = annotation.annotationView;
+  if (annotationView) {
+    annotationView.clipsToBounds = NO;
+    [annotationView addSubview:contentView];
+  } else {
+    [_wrapperView addSubview:contentView];
+  }
 
   _activeNonBubbledMarker = markerView;
   [self positionNonBubbledCallout];
@@ -580,11 +589,26 @@
     return;
 
   CGPoint anchor = calloutView.anchor;
-  CGPoint point = [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
-                                toPointToView:_wrapperView];
-  contentView.center =
-      CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
-                  point.y + contentSize.height * (0.5 - anchor.y));
+
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)_activeNonBubbledMarker.marker;
+  MKAnnotationView *annotationView = annotation.annotationView;
+
+  if (annotationView && contentView.superview == annotationView) {
+    CGPoint center = CGPointMake(
+        annotationView.bounds.size.width / 2.0 +
+            contentSize.width * (0.5 - anchor.x),
+        annotationView.bounds.size.height / 2.0 +
+            contentSize.height * (0.5 - anchor.y));
+    contentView.center = center;
+  } else {
+    CGPoint point =
+        [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
+                      toPointToView:_wrapperView];
+    contentView.center =
+        CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
+                    point.y + contentSize.height * (0.5 - anchor.y));
+  }
 }
 
 - (void)dismissNonBubbledCallout {
