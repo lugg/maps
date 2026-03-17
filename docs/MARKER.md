@@ -129,5 +129,5 @@ Use the `callout` prop to display a callout when the marker is tapped.
 ### Platform Behavior
 
 - **Apple Maps (iOS)**: Custom callout content is rendered as a live interactive view inside the native callout bubble. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker without the native bubble.
-- **Google Maps (iOS & Android)**: Custom callout content is rasterized into the info window. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker (not rasterized), allowing interactive elements like buttons.
+- **Google Maps (iOS & Android)**: Custom callout content is rasterized into the info window. With `calloutBubbled={false}`, content is rendered as a live interactive view positioned above the marker (not rasterized), allowing interactive elements like buttons. Opening a non-bubbled callout hides any visible native info window first. On iOS, tapping the marker still moves the camera to the marker before showing the callout.
 - **Web**: Uses Google Maps `InfoWindow`. With `calloutBubbled={false}`, content is rendered as a positioned element above the marker.

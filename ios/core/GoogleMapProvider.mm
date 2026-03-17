@@ -312,6 +312,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
     LuggCalloutView *calloutView = markerView.calloutView;
     if (calloutView && !calloutView.bubbled && calloutView.hasCustomContent) {
+      [mapView animateToLocation:marker.position];
       [self showNonBubbledCallout:markerView];
       return YES;
     }
@@ -398,6 +399,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)showNonBubbledCallout:(LuggMarkerView *)markerView {
   [self dismissNonBubbledCallout];
+  _mapView.selectedMarker = nil;
 
   LuggCalloutView *calloutView = markerView.calloutView;
   UIView *contentView = calloutView.contentView;
