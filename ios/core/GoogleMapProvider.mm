@@ -493,8 +493,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
   marker.position = markerView.coordinate;
-  marker.title = markerView.title;
-  marker.snippet = markerView.markerDescription;
+  marker.title = markerView.title.length > 0 ? markerView.title : nil;
+  marker.snippet =
+      markerView.markerDescription.length > 0 ? markerView.markerDescription
+                                              : nil;
   marker.zIndex = (int)markerView.zIndex;
   marker.draggable = markerView.draggable;
   [self applyMarkerStyle:markerView marker:marker];
@@ -516,8 +518,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
-  marker.title = markerView.title;
-  marker.snippet = markerView.markerDescription;
+  marker.title = markerView.title.length > 0 ? markerView.title : nil;
+  marker.snippet =
+      markerView.markerDescription.length > 0 ? markerView.markerDescription
+                                              : nil;
   marker.zIndex = (int)markerView.zIndex;
   marker.draggable = markerView.draggable;
 
