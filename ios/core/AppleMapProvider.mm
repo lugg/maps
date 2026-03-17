@@ -1,10 +1,10 @@
 #import "AppleMapProvider.h"
-#import "LuggAnnotationView.h"
 #import "../LuggCalloutView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
 #import "../extensions/MKMapView+Zoom.h"
+#import "LuggAnnotationView.h"
 #import "MKPolylineAnimator.h"
 
 @interface AppleMarkerAnnotation : NSObject <MKAnnotation>
@@ -22,9 +22,8 @@
 @end
 
 @interface AppleMapProvider () <
-    LuggMarkerViewDelegate, LuggCalloutViewDelegate,
-    LuggPolylineViewDelegate, LuggPolygonViewDelegate,
-    UIGestureRecognizerDelegate>
+    LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
+    LuggPolygonViewDelegate, UIGestureRecognizerDelegate>
 @end
 
 @implementation AppleMapProvider {
@@ -379,7 +378,6 @@
   return YES;
 }
 
-
 #pragma mark - MKMapViewDelegate
 
 - (BOOL)isUserInteracting {
@@ -607,11 +605,10 @@
   MKAnnotationView *annotationView = annotation.annotationView;
 
   if (annotationView && contentView.superview == annotationView) {
-    CGPoint center = CGPointMake(
-        annotationView.bounds.size.width / 2.0 +
-            contentSize.width * (0.5 - anchor.x),
-        annotationView.bounds.size.height / 2.0 +
-            contentSize.height * (0.5 - anchor.y));
+    CGPoint center = CGPointMake(annotationView.bounds.size.width / 2.0 +
+                                     contentSize.width * (0.5 - anchor.x),
+                                 annotationView.bounds.size.height / 2.0 +
+                                     contentSize.height * (0.5 - anchor.y));
     contentView.center = center;
   } else {
     CGPoint point =
@@ -696,7 +693,7 @@
 }
 
 - (void)applyCalloutView:(LuggMarkerView *)markerView
-           annotationView:(MKAnnotationView *)annotationView {
+          annotationView:(MKAnnotationView *)annotationView {
   LuggCalloutView *calloutView = markerView.calloutView;
   if (!calloutView) {
     annotationView.detailCalloutAccessoryView = nil;

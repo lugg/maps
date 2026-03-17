@@ -17,6 +17,7 @@ export interface CalloutOptions {
    * Anchor point for the callout relative to the marker position.
    * `{x: 0.5, y: 1}` places the bottom-center of the callout at the marker.
    *
+   * @note Not supported on web.
    * @default {x: 0.5, y: 1}
    */
   anchor?: Point;

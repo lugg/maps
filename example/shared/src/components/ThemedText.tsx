@@ -13,13 +13,19 @@ export const ThemedText = ({
 
   return (
     <Text
-      style={[styles[variant], { color: isDark ? '#FFF' : '#000' }, style]}
+      style={[styles[variant], isDark ? styles.dark : styles.light, style]}
       {...props}
     />
   );
 };
 
 const styles = StyleSheet.create({
+  light: {
+    color: '#000',
+  },
+  dark: {
+    color: '#FFF',
+  },
   body: {
     fontSize: 14,
   },

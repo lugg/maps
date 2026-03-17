@@ -9,8 +9,8 @@
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 @interface GoogleMapProvider () <
-    LuggMarkerViewDelegate, LuggCalloutViewDelegate,
-    LuggPolylineViewDelegate, LuggPolygonViewDelegate>
+    LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
+    LuggPolygonViewDelegate>
 @end
 
 @implementation GoogleMapProvider {
@@ -369,8 +369,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   return [[UIImageView alloc] initWithImage:image];
 }
 
-- (UIView *)mapView:(GMSMapView *)mapView
-    markerInfoWindow:(GMSMarker *)marker {
+- (UIView *)mapView:(GMSMapView *)mapView markerInfoWindow:(GMSMarker *)marker {
   // Non-bubbled callouts are rendered as live views, not info windows
   return nil;
 }
@@ -494,9 +493,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
   marker.position = markerView.coordinate;
   marker.title = markerView.title.length > 0 ? markerView.title : nil;
-  marker.snippet =
-      markerView.markerDescription.length > 0 ? markerView.markerDescription
-                                              : nil;
+  marker.snippet = markerView.markerDescription.length > 0
+                       ? markerView.markerDescription
+                       : nil;
   marker.zIndex = (int)markerView.zIndex;
   marker.draggable = markerView.draggable;
   [self applyMarkerStyle:markerView marker:marker];
@@ -519,9 +518,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
   marker.title = markerView.title.length > 0 ? markerView.title : nil;
-  marker.snippet =
-      markerView.markerDescription.length > 0 ? markerView.markerDescription
-                                              : nil;
+  marker.snippet = markerView.markerDescription.length > 0
+                       ? markerView.markerDescription
+                       : nil;
   marker.zIndex = (int)markerView.zIndex;
   marker.draggable = markerView.draggable;
 

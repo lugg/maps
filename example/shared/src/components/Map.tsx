@@ -1,5 +1,11 @@
 import { forwardRef, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import {
   MapView,
   Marker,
@@ -168,7 +174,7 @@ const renderMarker = (
               <View>
                 <Text style={styles.calloutTitle}>Custom Marker</Text>
                 <Text style={styles.calloutDescription}>
-                Non-bubbled callout
+                  Non-bubbled callout
                 </Text>
               </View>
               <Button title="Press me" onPress={() => Alert.alert('pressed')} />
@@ -293,10 +299,10 @@ export const Map = forwardRef<MapView, MapProps>(
           {geojson && (
             <GeoJson
               geojson={geojson}
-              renderPolygon={(props) => (
+              renderPolygon={(polygonProps) => (
                 <Polygon
-                  key={`geojson-${props.coordinates[0]?.latitude}`}
-                  {...props}
+                  key={`geojson-${polygonProps.coordinates[0]?.latitude}`}
+                  {...polygonProps}
                   fillColor="rgba(66, 133, 244, 0.2)"
                   strokeColor="#4285F4"
                   strokeWidth={1}

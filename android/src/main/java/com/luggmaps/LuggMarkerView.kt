@@ -187,8 +187,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     didLayout = false
   }
 
-  override fun getChildCount(): Int =
-    contentView.childCount + if (calloutView != null) 1 else 0
+  override fun getChildCount(): Int = contentView.childCount + if (calloutView != null) 1 else 0
 
   override fun getChildAt(index: Int): View? {
     if (index < contentView.childCount) return contentView.getChildAt(index)

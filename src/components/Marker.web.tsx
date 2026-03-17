@@ -1,4 +1,10 @@
-import React, { isValidElement, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  isValidElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   AdvancedMarker,
   InfoWindow,
@@ -6,6 +12,32 @@ import {
 } from '@vis.gl/react-google-maps';
 import { useMapContext } from '../MapProvider.web';
 import type { MarkerProps } from './Marker.types';
+
+const CALLOUT_ARROW_HEIGHT = 12;
+const UNBUBBLED_CLASS = 'rnm-callout-unbubbled';
+const UNBUBBLED_STYLE_ID = 'rnm-callout-unbubbled-style';
+
+function injectUnbubbledStyle() {
+  if (document.getElementById(UNBUBBLED_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = UNBUBBLED_STYLE_ID;
+  style.textContent = `
+    .gm-style-iw-c:has(.${UNBUBBLED_CLASS}) {
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+    .gm-style-iw-d:has(.${UNBUBBLED_CLASS}) {
+      overflow: visible !important;
+    }
+    .gm-style-iw-t:has(.${UNBUBBLED_CLASS})::after,
+    .gm-style-iw-t:has(.${UNBUBBLED_CLASS}) .gm-style-iw-tc {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 const toWebAnchor = (value: number) => `-${value * 100}%`;
 
@@ -47,6 +79,9 @@ export const Marker = ({
   const [markerRef, markerElement] = useAdvancedMarkerRef();
   const [infoWindowOpen, setInfoWindowOpen] = useState(false);
   const calloutBubbled = calloutOptions?.bubbled ?? true;
+  useEffect(() => {
+    if (!calloutBubbled) injectUnbubbledStyle();
+  }, [calloutBubbled]);
 
   const calloutContent = callout
     ? isValidElement(callout)
@@ -110,10 +145,12 @@ export const Marker = ({
     dragPositionRef.current = null;
   }, [coordinate.latitude, coordinate.longitude]);
 
-  const position = dragPositionRef.current ?? {
+  const latLngPosition = {
     lat: coordinate.latitude,
     lng: coordinate.longitude,
   };
+
+  const position = dragPositionRef.current ?? latLngPosition;
 
   return (
     <>
@@ -139,30 +176,18 @@ export const Marker = ({
         {children}
       </AdvancedMarker>
       {calloutContent && infoWindowOpen && markerElement && (
-        !calloutBubbled ? (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '100%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              pointerEvents: 'auto',
-            }}
-          >
-            {calloutContent}
-          </div>
-        ) : (
-          <InfoWindow
-            anchor={markerElement}
-            onCloseClick={() => setInfoWindowOpen(false)}
-          >
-            {calloutContent ? (
-              <div>{calloutContent}</div>
-            ) : (
-              <div>{title && <strong>{title}</strong>}</div>
-            )}
-          </InfoWindow>
-        )
+        <InfoWindow
+          anchor={markerElement}
+          pixelOffset={!calloutBubbled ? [0, CALLOUT_ARROW_HEIGHT] : undefined}
+          headerDisabled={!calloutBubbled}
+          onClose={() => setInfoWindowOpen(false)}
+        >
+          {!calloutBubbled ? (
+            <div className={UNBUBBLED_CLASS}>{calloutContent}</div>
+          ) : (
+            calloutContent
+          )}
+        </InfoWindow>
       )}
     </>
   );

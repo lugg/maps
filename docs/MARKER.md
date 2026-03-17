@@ -45,7 +45,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
 | `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
 | `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
-| `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `anchor` |
+| `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `anchor` (native only) |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Draggable Markers
