@@ -30,7 +30,10 @@ export const SAMPLE_GEOJSON: GeoJSON = {
         type: 'Point',
         coordinates: [-122.415, 37.77],
       },
-      properties: { title: 'GeoJSON Point' },
+      properties: {
+        title: 'GeoJSON Point',
+        description: 'A single point feature',
+      },
     },
     {
       type: 'Feature',
@@ -41,7 +44,10 @@ export const SAMPLE_GEOJSON: GeoJSON = {
           [-122.405, 37.768],
         ],
       },
-      properties: { title: 'GeoJSON MultiPoint' },
+      properties: {
+        title: 'GeoJSON MultiPoint',
+        description: 'Multiple point features',
+      },
     },
     {
       type: 'Feature',

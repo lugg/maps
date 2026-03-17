@@ -40,6 +40,7 @@ export type {
   GeoJSON,
   Feature,
   FeatureCollection,
+  FeatureProperties,
   Geometry,
   Position,
 } from './components/GeoJson.types';

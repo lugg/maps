@@ -56,11 +56,22 @@ export type Geometry =
   | MultiPolygon
   | GeometryCollection;
 
+export interface FeatureProperties {
+  'title'?: string;
+  'description'?: string;
+  'fill'?: string;
+  'fill-opacity'?: number;
+  'stroke'?: string;
+  'stroke-width'?: number;
+  'stroke-opacity'?: number;
+  [key: string]: unknown;
+}
+
 export interface Feature<G extends Geometry = Geometry> {
   type: 'Feature';
   id?: string | number;
   geometry: G;
-  properties: Record<string, any> | null;
+  properties: FeatureProperties | null;
 }
 
 export interface FeatureCollection<G extends Geometry = Geometry> {

@@ -285,6 +285,23 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
 
+  const calloutListeners = useRef(new Set<() => void>()).current;
+  const onCalloutClose = useCallback(
+    (listener: () => void) => {
+      calloutListeners.add(listener);
+      return () => calloutListeners.delete(listener);
+    },
+    [calloutListeners]
+  );
+  const closeCallouts = useCallback(
+    (except?: () => void) => {
+      calloutListeners.forEach((l) => {
+        if (l !== except) l();
+      });
+    },
+    [calloutListeners]
+  );
+
   const getPoint = useCallback((domEvent?: Event) => {
     const el = containerRef.current as unknown as HTMLElement | null;
     if (!domEvent || !el) return { x: 0, y: 0 };
@@ -299,6 +316,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         longPressFired.current = false;
         return;
       }
+      closeCallouts();
       const latLng = event.detail.latLng;
       if (!onPress || !latLng) return;
       onPress(
@@ -308,7 +326,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
         })
       );
     },
-    [onPress, getPoint]
+    [onPress, getPoint, closeCallouts]
   );
 
   const handleMouseDown = useCallback(
@@ -412,23 +430,6 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       : theme === 'light'
       ? ColorScheme.LIGHT
       : ColorScheme.FOLLOW_SYSTEM;
-
-  const calloutListeners = useRef(new Set<() => void>()).current;
-  const onCalloutClose = useCallback(
-    (listener: () => void) => {
-      calloutListeners.add(listener);
-      return () => calloutListeners.delete(listener);
-    },
-    [calloutListeners]
-  );
-  const closeCallouts = useCallback(
-    (except?: () => void) => {
-      calloutListeners.forEach((l) => {
-        if (l !== except) l();
-      });
-    },
-    [calloutListeners]
-  );
 
   const defaultCenter = initialCoordinate
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }

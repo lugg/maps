@@ -61,6 +61,7 @@ const createEvent = (
 export const Marker = ({
   coordinate,
   title,
+  description,
   anchor,
   zIndex,
   rotate,
@@ -92,6 +93,13 @@ export const Marker = ({
     ? isValidElement(callout)
       ? callout
       : React.createElement(callout)
+    : title
+    ? React.createElement(
+        'div',
+        { style: { fontSize: 14 } },
+        React.createElement('div', { style: { fontWeight: 500 } }, title),
+        description ? React.createElement('div', null, description) : null
+      )
     : null;
 
   const transforms: string[] = [];
@@ -111,7 +119,14 @@ export const Marker = ({
         setInfoWindowOpen((prev) => !prev);
       }
     },
-    [moveCamera, onPress, coordinate, calloutContent, closeCallouts, closeCallout]
+    [
+      moveCamera,
+      onPress,
+      coordinate,
+      calloutContent,
+      closeCallouts,
+      closeCallout,
+    ]
   );
 
   const handleDragStart = useCallback(
@@ -185,7 +200,7 @@ export const Marker = ({
         <InfoWindow
           anchor={markerElement}
           pixelOffset={!calloutBubbled ? [0, CALLOUT_ARROW_HEIGHT] : undefined}
-          headerDisabled={!calloutBubbled}
+          headerDisabled
           onClose={() => setInfoWindowOpen(false)}
         >
           {!calloutBubbled ? (
