@@ -244,10 +244,6 @@ const HomeContent = () => {
             formatPressEvent(e, `Dragging(${m.name})`)
           }
           onMarkerDragEnd={(e, m) => formatPressEvent(e, `Drag end(${m.name})`)}
-          onCalloutPress={(m) => {
-            lockStatus();
-            setStatus({ text: `Callout pressed(${m.name})`, error: false });
-          }}
           onPolygonPress={() => {
             lockStatus();
             setStatus({ text: 'Polygon pressed', error: false });

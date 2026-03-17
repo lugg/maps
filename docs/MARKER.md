@@ -45,7 +45,6 @@ import { MapView, Marker } from '@lugg/maps';
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
 | `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
 | `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
-| `onCalloutPress` | `() => void` | - | Called when the callout is pressed |
 | `calloutBubbled` | `boolean` | `true` | Whether to wrap the callout in the native platform bubble |
 | `calloutAnchor` | `Point` | `{x: 0.5, y: 1}` | Anchor point for non-bubbled callout positioning relative to the marker |
 | `children` | `ReactNode` | - | Custom marker view |
@@ -97,7 +96,6 @@ Use the `callout` prop to display a callout when the marker is tapped.
   coordinate={{ latitude: 37.7749, longitude: -122.4194 }}
   title="San Francisco"
   description="California, USA"
-  onCalloutPress={() => console.log('Callout pressed')}
 />
 
 {/* Custom callout content */}
@@ -109,7 +107,6 @@ Use the `callout` prop to display a callout when the marker is tapped.
       <Text>With React content</Text>
     </View>
   }
-  onCalloutPress={() => console.log('Callout pressed')}
 />
 
 {/* Non-bubbled callout (no native chrome) */}
@@ -122,7 +119,6 @@ Use the `callout` prop to display a callout when the marker is tapped.
       <Text>Rendered without native bubble</Text>
     </View>
   }
-  onCalloutPress={() => console.log('Callout pressed')}
 />
 ```
 

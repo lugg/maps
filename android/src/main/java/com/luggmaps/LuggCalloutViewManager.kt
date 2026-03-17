@@ -27,11 +27,6 @@ class LuggCalloutViewManager :
     view.anchorY = value?.getDouble("y")?.toFloat() ?: 1.0f
   }
 
-  override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
-    mapOf(
-      "topCalloutPress" to mapOf("registrationName" to "onCalloutPress")
-    )
-
   override fun onDropViewInstance(view: LuggCalloutView) {
     super.onDropViewInstance(view)
     view.onDropViewInstance()

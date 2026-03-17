@@ -4,12 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
-import android.widget.ImageView
 import androidx.core.graphics.createBitmap
 import androidx.core.view.isNotEmpty
 import com.facebook.react.views.view.ReactViewGroup
-import com.luggmaps.events.CalloutPressEvent
-import com.luggmaps.extensions.dispatchEvent
 
 class LuggCalloutView(context: Context) : ReactViewGroup(context) {
   val contentView: ReactViewGroup = ReactViewGroup(context)
@@ -63,10 +60,6 @@ class LuggCalloutView(context: Context) : ReactViewGroup(context) {
     val canvas = Canvas(bitmap)
     contentView.draw(canvas)
     return bitmap
-  }
-
-  fun emitPressEvent() {
-    dispatchEvent(CalloutPressEvent(this))
   }
 
   fun onDropViewInstance() {

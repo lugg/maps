@@ -389,14 +389,6 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   return nil;
 }
 
-- (void)mapView:(GMSMapView *)mapView
-    didTapInfoWindowOfMarker:(GMSMarker *)marker {
-  LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
-  if (markerView && markerView.calloutView) {
-    [markerView.calloutView emitPressEvent];
-  }
-}
-
 - (void)showNonBubbledCallout:(LuggMarkerView *)markerView {
   [self dismissNonBubbledCallout];
   _mapView.selectedMarker = nil;

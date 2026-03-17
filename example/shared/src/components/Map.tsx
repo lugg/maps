@@ -34,7 +34,6 @@ interface MapProps extends MapViewProps {
   onMarkerDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void;
   onMarkerDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void;
   onMarkerDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void;
-  onCalloutPress?: (marker: MarkerData) => void;
 }
 
 const INITIAL_ZOOM = 14;
@@ -71,8 +70,7 @@ const renderMarker = (
   onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
   onDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void,
   onDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void,
-  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void,
-  onCalloutPress?: (marker: MarkerData) => void
+  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void
 ) => {
   const {
     id,
@@ -107,10 +105,6 @@ const renderMarker = (
     </View>
   );
 
-  const handleCalloutPress = onCalloutPress
-    ? () => onCalloutPress(marker)
-    : undefined;
-
   switch (type) {
     case 'icon':
       return (
@@ -124,7 +118,6 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
           callout={calloutEl('Icon Marker', 'A pin-style marker')}
-          onCalloutPress={handleCalloutPress}
         />
       );
     case 'text':
@@ -141,7 +134,6 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
           callout={calloutEl(`Text Marker ${text}`, 'A text badge marker')}
-          onCalloutPress={handleCalloutPress}
         />
       );
     case 'image':
@@ -157,7 +149,6 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
           callout={calloutEl('Image Marker', 'An avatar marker')}
-          onCalloutPress={handleCalloutPress}
         />
       );
     case 'custom':
@@ -183,7 +174,6 @@ const renderMarker = (
               <Button title="Press me" onPress={() => Alert.alert('pressed')} />
             </View>
           }
-          onCalloutPress={handleCalloutPress}
           calloutBubbled={false}
         >
           <View
@@ -205,7 +195,6 @@ const renderMarker = (
           onDragChange={handleDragChange}
           onDragEnd={handleDragEnd}
           callout={title ? undefined : calloutEl('Basic Marker', name ?? '')}
-          onCalloutPress={handleCalloutPress}
         />
       );
   }
@@ -227,7 +216,6 @@ export const Map = forwardRef<MapView, MapProps>(
       onMarkerDragStart,
       onMarkerDragChange,
       onMarkerDragEnd,
-      onCalloutPress,
       ...props
     },
     ref
@@ -282,8 +270,7 @@ export const Map = forwardRef<MapView, MapProps>(
               onMarkerPress,
               onMarkerDragStart,
               onMarkerDragChange,
-              onMarkerDragEnd,
-              onCalloutPress
+              onMarkerDragEnd
             )
           )}
           <Route coordinates={smoothedRoute} />

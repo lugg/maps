@@ -43,8 +43,7 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnPolygonClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
-  GoogleMap.InfoWindowAdapter,
-  GoogleMap.OnInfoWindowClickListener {
+  GoogleMap.InfoWindowAdapter {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -134,7 +133,6 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnMarkerClickListener(null)
     googleMap?.setOnMarkerDragListener(null)
     googleMap?.setInfoWindowAdapter(null)
-    googleMap?.setOnInfoWindowClickListener(null)
     googleMap?.clear()
     googleMap = null
     _isMapReady = false
@@ -159,7 +157,6 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMarkerClickListener(this)
     map.setOnMarkerDragListener(this)
     map.setInfoWindowAdapter(this)
-    map.setOnInfoWindowClickListener(this)
 
     wrapperView?.touchEventHandler = { event ->
       if (event.action == android.view.MotionEvent.ACTION_DOWN) {
@@ -290,17 +287,9 @@ class GoogleMapProvider(private val context: Context) :
     return ImageView(context).apply { setImageBitmap(bitmap) }
   }
 
-  override fun onInfoWindowClick(marker: Marker) {
-    markerToViewMap[marker]?.calloutView?.emitPressEvent()
-  }
-
   private fun showNonBubbledCallout(marker: Marker, calloutView: LuggCalloutView) {
     val wrapper = wrapperView ?: return
     val contentView = calloutView.contentView
-
-    contentView.setOnClickListener {
-      calloutView.emitPressEvent()
-    }
 
     calloutView.onUpdate = {
       layoutNonBubbledCallout()

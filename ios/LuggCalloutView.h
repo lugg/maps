@@ -18,8 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) UIView *contentView;
 @property(nonatomic, weak, nullable) id<LuggCalloutViewDelegate> delegate;
 
-- (void)emitPressEvent;
-
 @end
 
 NS_ASSUME_NONNULL_END

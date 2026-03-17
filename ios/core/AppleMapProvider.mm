@@ -695,38 +695,25 @@
   }
 }
 
-- (void)mapView:(MKMapView *)mapView
-               annotationView:(MKAnnotationView *)view
-    calloutAccessoryControlTapped:(UIControl *)control {
-  if (![view.annotation isKindOfClass:[AppleMarkerAnnotation class]])
-    return;
-
-  AppleMarkerAnnotation *annotation = (AppleMarkerAnnotation *)view.annotation;
-  LuggMarkerView *markerView = annotation.markerView;
-
-  if (markerView.calloutView) {
-    [markerView.calloutView emitPressEvent];
-  }
-}
-
 - (void)applyCalloutView:(LuggMarkerView *)markerView
            annotationView:(MKAnnotationView *)annotationView {
   LuggCalloutView *calloutView = markerView.calloutView;
-  if (!calloutView)
+  if (!calloutView) {
+    annotationView.detailCalloutAccessoryView = nil;
+    annotationView.rightCalloutAccessoryView = nil;
     return;
+  }
+
+  annotationView.rightCalloutAccessoryView = nil;
 
   if (!calloutView.bubbled) {
     annotationView.canShowCallout = NO;
+    annotationView.detailCalloutAccessoryView = nil;
     return;
   }
 
-  if (calloutView.hasCustomContent) {
-    annotationView.detailCalloutAccessoryView = calloutView.contentView;
-  }
-
-  UIButton *infoButton =
-      [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
-  annotationView.rightCalloutAccessoryView = infoButton;
+  annotationView.detailCalloutAccessoryView =
+      calloutView.hasCustomContent ? calloutView.contentView : nil;
 }
 
 #pragma mark - MarkerViewDelegate

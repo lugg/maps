@@ -74,10 +74,6 @@ export interface MarkerProps {
    */
   callout?: ComponentType<unknown> | ReactElement;
   /**
-   * Called when the callout is pressed
-   */
-  onCalloutPress?: () => void;
-  /**
    * Whether to wrap the callout in the native platform bubble.
    * Set to `false` to render custom content directly without the native callout chrome.
    *

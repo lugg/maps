@@ -1,7 +1,6 @@
 #import "LuggCalloutView.h"
 
 #import <react/renderer/components/RNMapsSpec/ComponentDescriptors.h>
-#import <react/renderer/components/RNMapsSpec/EventEmitters.h>
 #import <react/renderer/components/RNMapsSpec/Props.h>
 #import <react/renderer/components/RNMapsSpec/RCTComponentViewHelpers.h>
 
@@ -124,14 +123,6 @@ using namespace facebook::react;
 
 - (UIView *)contentView {
   return _contentView;
-}
-
-- (void)emitPressEvent {
-  if (!_eventEmitter) return;
-
-  auto emitter =
-      std::static_pointer_cast<LuggCalloutViewEventEmitter const>(_eventEmitter);
-  emitter->onCalloutPress({});
 }
 
 - (void)prepareForRecycle {

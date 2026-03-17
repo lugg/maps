@@ -39,7 +39,6 @@ export const Marker = ({
   onDragChange,
   onDragEnd,
   callout,
-  onCalloutPress,
   calloutBubbled = true,
   children,
 }: MarkerProps) => {
@@ -148,7 +147,6 @@ export const Marker = ({
               transform: 'translateX(-50%)',
               pointerEvents: 'auto',
             }}
-            onClick={() => onCalloutPress?.()}
           >
             {calloutContent}
           </div>
@@ -158,13 +156,9 @@ export const Marker = ({
             onCloseClick={() => setInfoWindowOpen(false)}
           >
             {calloutContent ? (
-              <div onClick={() => onCalloutPress?.()}>
-                {calloutContent}
-              </div>
+              <div>{calloutContent}</div>
             ) : (
-              <div onClick={() => onCalloutPress?.()}>
-                {title && <strong>{title}</strong>}
-              </div>
+              <div>{title && <strong>{title}</strong>}</div>
             )}
           </InfoWindow>
         )
