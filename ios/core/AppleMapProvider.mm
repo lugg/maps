@@ -325,13 +325,24 @@
   return NO;
 }
 
+- (BOOL)hitTestCalloutAtPoint:(CGPoint)point {
+  if (!_activeNonBubbledMarker)
+    return NO;
+
+  UIView *contentView = _activeNonBubbledMarker.calloutView.contentView;
+  CGPoint local = [contentView convertPoint:point fromView:_mapView];
+  return [contentView pointInside:local withEvent:nil];
+}
+
 - (void)handleTap:(UITapGestureRecognizer *)gesture {
   if (gesture.state != UIGestureRecognizerStateEnded)
     return;
 
-  [self dismissNonBubbledCallout];
-
   CGPoint point = [gesture locationInView:_mapView];
+  if ([self hitTestCalloutAtPoint:point])
+    return;
+
+  [self dismissNonBubbledCallout];
 
   if ([self hitTestAnnotationAtPoint:point])
     return;
@@ -546,7 +557,8 @@
   LuggMarkerView *markerView = annotation.markerView;
 
   if (markerView && _activeNonBubbledMarker == markerView) {
-    [self dismissNonBubbledCallout];
+    // Re-select to keep callout visible — dismissal is handled by handleTap:
+    [_mapView selectAnnotation:annotation animated:NO];
   }
 }
 
