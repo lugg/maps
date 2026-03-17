@@ -78,6 +78,8 @@ using namespace facebook::react;
   _bubbled = newViewProps.bubbled;
   if (newViewProps.anchor.x != 0 || newViewProps.anchor.y != 0) {
     _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  } else {
+    _anchor = CGPointMake(0.5, 1.0);
   }
 
   [super updateProps:props oldProps:oldProps];
