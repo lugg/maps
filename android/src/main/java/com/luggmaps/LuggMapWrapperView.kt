@@ -15,17 +15,6 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
     return super.dispatchTouchEvent(event)
   }
 
-  override fun requestLayout() {
-    super.requestLayout()
-    getChildAt(0)?.let {
-      it.measure(
-        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
-      )
-      it.layout(0, 0, width, height)
-    }
-  }
-
   override fun onLayout(
     changed: Boolean,
     left: Int,

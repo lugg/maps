@@ -1,10 +1,8 @@
 package com.luggmaps
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
-import android.view.ViewGroup
 import androidx.core.graphics.createBitmap
 import androidx.core.view.isNotEmpty
 import com.facebook.react.views.view.ReactViewGroup
@@ -68,18 +66,20 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     private set
 
   val hasCustomView: Boolean
-    get() = iconView.isNotEmpty()
+    get() = contentView.isNotEmpty()
 
-  val iconView: ReactViewGroup = ReactViewGroup(context)
+  val contentView: ReactViewGroup = ReactViewGroup(context)
+
+  var onUpdate: (() -> Unit)? = null
 
   var calloutView: LuggCalloutView? = null
     private set
 
-  private fun measureIconViewBounds(): Pair<Int, Int> {
+  private fun measureContentBounds(): Pair<Int, Int> {
     var maxWidth = 0
     var maxHeight = 0
-    for (i in 0 until iconView.childCount) {
-      val child = iconView.getChildAt(i)
+    for (i in 0 until contentView.childCount) {
+      val child = contentView.getChildAt(i)
       val childRight = child.left + child.width
       val childBottom = child.top + child.height
       if (childRight > maxWidth) maxWidth = childRight
@@ -88,8 +88,8 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     return Pair(maxWidth, maxHeight)
   }
 
-  private fun createIconBitmap(): BitmapDescriptor? {
-    val (width, height) = measureIconViewBounds()
+  private fun createContentBitmap(): BitmapDescriptor? {
+    val (width, height) = measureContentBounds()
     if (width <= 0 || height <= 0) return null
 
     val scaledWidth = (width * scale).toInt()
@@ -98,41 +98,31 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     val bitmap = createBitmap(scaledWidth, scaledHeight)
     val canvas = Canvas(bitmap)
     canvas.scale(scale, scale)
-    iconView.draw(canvas)
+    contentView.draw(canvas)
     return BitmapDescriptorFactory.fromBitmap(bitmap)
   }
 
-  private fun createIconViewWrapper(): View {
-    val (width, height) = measureIconViewBounds()
+  fun layoutContentView() {
+    val (width, height) = measureContentBounds()
     val scaledWidth = (width * scale).toInt()
     val scaledHeight = (height * scale).toInt()
 
-    (iconView.parent as? ViewGroup)?.removeView(iconView)
-    iconView.scaleX = scale
-    iconView.scaleY = scale
-    iconView.pivotX = 0f
-    iconView.pivotY = 0f
+    contentView.scaleX = scale
+    contentView.scaleY = scale
+    contentView.pivotX = 0f
+    contentView.pivotY = 0f
 
-    return object : ReactViewGroup(context) {
-      init {
-        addView(iconView)
-      }
-
-      override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        setMeasuredDimension(scaledWidth, scaledHeight)
-      }
-    }
+    contentView.measure(
+      View.MeasureSpec.makeMeasureSpec(scaledWidth, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(scaledHeight, View.MeasureSpec.EXACTLY)
+    )
+    contentView.layout(0, 0, scaledWidth, scaledHeight)
   }
 
   fun applyIconToMarker() {
     val m = marker ?: return
     if (!hasCustomView) return
-
-    if (rasterize) {
-      createIconBitmap()?.let { m.setIcon(it) }
-    } else {
-      m.iconView = createIconViewWrapper()
-    }
+    createContentBitmap()?.let { m.setIcon(it) }
   }
 
   fun applyScaleToMarker() {
@@ -142,9 +132,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     scaleUpdateRunnable?.let { removeCallbacks(it) }
     scaleUpdateRunnable = Runnable {
       if (rasterize) {
-        createIconBitmap()?.let { m.setIcon(it) }
+        createContentBitmap()?.let { m.setIcon(it) }
       } else {
-        m.iconView = createIconViewWrapper()
+        layoutContentView()
+        onUpdate?.invoke()
       }
     }
     post(scaleUpdateRunnable)
@@ -152,18 +143,15 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun updateIcon(onAddMarker: () -> Unit) {
     if (!hasCustomView) return
-    if (rasterize) {
-      post {
-        if (marker == null) {
-          onAddMarker()
-        } else {
-          applyIconToMarker()
-        }
+    post {
+      if (marker == null) {
+        onAddMarker()
+      } else if (rasterize) {
+        applyIconToMarker()
+      } else {
+        layoutContentView()
+        onUpdate?.invoke()
       }
-    } else {
-      marker?.remove()
-      marker = null
-      post { onAddMarker() }
     }
   }
 
@@ -175,7 +163,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     if (child is LuggCalloutView) {
       calloutView = child
     } else {
-      iconView.addView(child, index)
+      contentView.addView(child, index)
     }
     didLayout = false
   }
@@ -184,7 +172,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     if (child is LuggCalloutView) {
       calloutView = null
     } else {
-      iconView.removeView(child)
+      contentView.removeView(child)
     }
     didLayout = false
   }
@@ -194,17 +182,17 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     if (child is LuggCalloutView) {
       calloutView = null
     } else {
-      iconView.removeViewAt(index)
+      contentView.removeViewAt(index)
     }
     didLayout = false
   }
 
   override fun getChildCount(): Int =
-    iconView.childCount + if (calloutView != null) 1 else 0
+    contentView.childCount + if (calloutView != null) 1 else 0
 
   override fun getChildAt(index: Int): View? {
-    if (index < iconView.childCount) return iconView.getChildAt(index)
-    if (index == iconView.childCount && calloutView != null) return calloutView
+    if (index < contentView.childCount) return contentView.getChildAt(index)
+    if (index == contentView.childCount && calloutView != null) return calloutView
     return null
   }
 
@@ -298,9 +286,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   fun onDropViewInstance() {
     scaleUpdateRunnable?.let { removeCallbacks(it) }
     scaleUpdateRunnable = null
+    onUpdate = null
     didLayout = false
     calloutView = null
     delegate = null
-    iconView.removeAllViews()
+    contentView.removeAllViews()
   }
 }
