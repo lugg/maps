@@ -413,13 +413,36 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       ? ColorScheme.LIGHT
       : ColorScheme.FOLLOW_SYSTEM;
 
+  const calloutListeners = useRef(new Set<() => void>()).current;
+  const onCalloutClose = useCallback(
+    (listener: () => void) => {
+      calloutListeners.add(listener);
+      return () => calloutListeners.delete(listener);
+    },
+    [calloutListeners]
+  );
+  const closeCallouts = useCallback(
+    (except?: () => void) => {
+      calloutListeners.forEach((l) => {
+        if (l !== except) l();
+      });
+    },
+    [calloutListeners]
+  );
+
   const defaultCenter = initialCoordinate
     ? { lat: initialCoordinate.latitude, lng: initialCoordinate.longitude }
     : undefined;
 
   return (
     <MapContext.Provider
-      value={{ map, isDragging, moveCamera: panToCoordinate }}
+      value={{
+        map,
+        isDragging,
+        moveCamera: panToCoordinate,
+        onCalloutClose,
+        closeCallouts,
+      }}
     >
       <View ref={containerRef} style={style}>
         <Map

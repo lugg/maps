@@ -74,11 +74,16 @@ export const Marker = ({
   calloutOptions,
   children,
 }: MarkerProps) => {
-  const { moveCamera } = useMapContext();
+  const { moveCamera, onCalloutClose, closeCallouts } = useMapContext();
   const dragPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
   const [markerRef, markerElement] = useAdvancedMarkerRef();
   const [infoWindowOpen, setInfoWindowOpen] = useState(false);
   const calloutBubbled = calloutOptions?.bubbled ?? true;
+
+  const closeCallout = useCallback(() => setInfoWindowOpen(false), []);
+
+  useEffect(() => onCalloutClose(closeCallout), [onCalloutClose, closeCallout]);
+
   useEffect(() => {
     if (!calloutBubbled) injectUnbubbledStyle();
   }, [calloutBubbled]);
@@ -102,10 +107,11 @@ export const Marker = ({
       moveCamera(coord);
       onPress?.(createEvent(e, coordinate));
       if (calloutContent) {
+        closeCallouts(closeCallout);
         setInfoWindowOpen((prev) => !prev);
       }
     },
-    [moveCamera, onPress, coordinate, calloutContent]
+    [moveCamera, onPress, coordinate, calloutContent, closeCallouts, closeCallout]
   );
 
   const handleDragStart = useCallback(
