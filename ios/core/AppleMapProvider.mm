@@ -13,7 +13,6 @@
 @property(nonatomic, copy, nullable) NSString *subtitle;
 @property(nonatomic, strong) LuggMarkerView *markerView;
 @property(nonatomic, weak) MKAnnotationView *annotationView;
-@property(nonatomic, assign) CGFloat scaleBeforeZoom;
 @property(nonatomic, copy, nullable) dispatch_block_t pendingScaleAnimation;
 @end
 
@@ -824,18 +823,13 @@
   AppleMarkerAnnotation *annotation =
       (AppleMarkerAnnotation *)markerView.marker;
 
-  // Cancel any pending scale animation
+  // Cancel any pending rasterize
   if (annotation.pendingScaleAnimation) {
     dispatch_block_cancel(annotation.pendingScaleAnimation);
     annotation.pendingScaleAnimation = nil;
   }
 
-  // Capture the scale before rapid updates begin
-  if (annotation.scaleBeforeZoom == 0) {
-    annotation.scaleBeforeZoom = scale;
-  }
-
-  // Apply layout immediately using live iconView (skip rasterize during rapid updates)
+  // Use live iconView during rapid updates (skip expensive rasterize per frame)
   if (markerView.rasterize && [iconView superview] != annotationView) {
     annotationView.image = nil;
     [annotationView addSubview:iconView];
@@ -851,67 +845,23 @@
   annotationView.centerOffset =
       CGPointMake(scaledWidth * (0.5 - anchor.x),
                   scaledHeight * (0.5 - anchor.y));
-
-  CGAffineTransform rotation =
+  annotationView.transform =
       CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
-  annotationView.transform = rotation;
 
-  // Debounce: schedule animation after updates settle
-  CGFloat fromScale = annotation.scaleBeforeZoom;
-  dispatch_block_t animationBlock = dispatch_block_create((dispatch_block_flags_t)0, ^{
-    annotation.pendingScaleAnimation = nil;
-    annotation.scaleBeforeZoom = 0;
+  // Debounce: rasterize once updates settle
+  if (markerView.rasterize) {
+    dispatch_block_t rasterizeBlock = dispatch_block_create((dispatch_block_flags_t)0, ^{
+      annotation.pendingScaleAnimation = nil;
+      annotationView.image = [markerView createScaledIconImage];
+      [iconView removeFromSuperview];
+      [markerView resetIconViewTransform];
+    });
 
-    BOOL shouldAnimate = fabs(scale - fromScale) > 0.001;
-
-    if (markerView.rasterize) {
-      if (shouldAnimate) {
-        iconView.transform =
-            CGAffineTransformMakeScale(fromScale, fromScale);
-
-        [UIView animateWithDuration:0.3
-                              delay:0
-             usingSpringWithDamping:0.7
-              initialSpringVelocity:0
-                            options:UIViewAnimationOptionBeginFromCurrentState
-                         animations:^{
-                           iconView.transform =
-                               CGAffineTransformMakeScale(scale, scale);
-                         }
-                         completion:^(BOOL finished) {
-                           if (!finished)
-                             return;
-                           annotationView.image =
-                               [markerView createScaledIconImage];
-                           [iconView removeFromSuperview];
-                           [markerView resetIconViewTransform];
-                         }];
-      } else {
-        annotationView.image = [markerView createScaledIconImage];
-        [iconView removeFromSuperview];
-        [markerView resetIconViewTransform];
-      }
-    } else if (shouldAnimate) {
-      iconView.transform =
-          CGAffineTransformMakeScale(fromScale, fromScale);
-
-      [UIView animateWithDuration:0.3
-                            delay:0
-           usingSpringWithDamping:0.7
-            initialSpringVelocity:0
-                          options:UIViewAnimationOptionBeginFromCurrentState
-                       animations:^{
-                         iconView.transform =
-                             CGAffineTransformMakeScale(scale, scale);
-                       }
-                       completion:nil];
-    }
-  });
-
-  annotation.pendingScaleAnimation = animationBlock;
-  dispatch_after(
-      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(150 * NSEC_PER_MSEC)),
-      dispatch_get_main_queue(), animationBlock);
+    annotation.pendingScaleAnimation = rasterizeBlock;
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW, (int64_t)(150 * NSEC_PER_MSEC)),
+        dispatch_get_main_queue(), rasterizeBlock);
+  }
 }
 
 - (void)updateAnnotationViewFrame:(AppleMarkerAnnotation *)annotation {
