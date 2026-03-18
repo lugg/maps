@@ -71,8 +71,11 @@ const CIRCLE_HOLES = [
   }),
 ];
 
+const SELECTED_SCALE = 3;
+
 const renderMarker = (
   marker: MarkerData,
+  selectedId: string | null,
   onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
   onDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void,
   onDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void,
@@ -90,6 +93,7 @@ const renderMarker = (
     color,
     imageUrl,
   } = marker;
+  const scale = id === selectedId ? SELECTED_SCALE : 1;
 
   const handlePress = onPress
     ? (e: MarkerPressEvent) => onPress(e, marker)
@@ -118,6 +122,7 @@ const renderMarker = (
           key={id}
           name={name}
           coordinate={coordinate}
+          scale={scale}
           draggable
           onPress={handlePress}
           onDragStart={handleDragStart}
@@ -134,6 +139,7 @@ const renderMarker = (
           coordinate={coordinate}
           text={text ?? 'X'}
           color={color}
+          scale={scale}
           draggable
           onPress={handlePress}
           onDragStart={handleDragStart}
@@ -149,6 +155,7 @@ const renderMarker = (
           name={name}
           coordinate={coordinate}
           source={{ uri: imageUrl }}
+          scale={scale}
           draggable
           onPress={handlePress}
           onDragStart={handleDragStart}
@@ -164,6 +171,7 @@ const renderMarker = (
           name={name}
           coordinate={coordinate}
           anchor={anchor}
+          scale={scale}
           draggable
           onPress={handlePress}
           onDragStart={handleDragStart}
@@ -195,6 +203,7 @@ const renderMarker = (
           coordinate={coordinate}
           title={title}
           description={description}
+          scale={scale}
           draggable
           onPress={handlePress}
           onDragStart={handleDragStart}
@@ -228,6 +237,9 @@ export const Map = forwardRef<MapView, MapProps>(
   ) => {
     const { height: screenHeight } = useWindowDimensions();
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
+    const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(
+      null
+    );
     const polylineCoordinates = useMemo(
       () => markers.map((m) => m.coordinate),
       [markers]
@@ -245,6 +257,11 @@ export const Map = forwardRef<MapView, MapProps>(
         transform: [{ translateY: -bottom / 2 }],
       };
     });
+
+    const handleMarkerPress = (e: MarkerPressEvent, marker: MarkerData) => {
+      setSelectedMarkerId((prev) => (prev === marker.id ? null : marker.id));
+      onMarkerPress?.(e, marker);
+    };
 
     const handleCameraMove = (e: MapCameraEvent) => {
       onCameraMove?.(e);
@@ -273,7 +290,8 @@ export const Map = forwardRef<MapView, MapProps>(
           {markers.map((m) =>
             renderMarker(
               m,
-              onMarkerPress,
+              selectedMarkerId,
+              handleMarkerPress,
               onMarkerDragStart,
               onMarkerDragChange,
               onMarkerDragEnd
