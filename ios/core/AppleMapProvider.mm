@@ -573,6 +573,7 @@
   [contentView removeFromSuperview];
 
   contentView.userInteractionEnabled = YES;
+  contentView.hidden = YES;
   calloutView.delegate = self;
 
   AppleMarkerAnnotation *annotation =
@@ -622,6 +623,12 @@
     contentView.center =
         CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
                     point.y + contentSize.height * (0.5 - anchor.y));
+  }
+
+  if (contentView.hidden) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      contentView.hidden = NO;
+    });
   }
 }
 
