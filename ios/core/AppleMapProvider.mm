@@ -802,29 +802,31 @@
   annotationView.transform = CGAffineTransformIdentity;
 
   UIView *iconView = markerView.iconView;
-  CGRect frame = iconView.frame;
-  if (frame.size.width <= 0 || frame.size.height <= 0)
+  iconView.transform = CGAffineTransformIdentity;
+
+  CGSize size = iconView.bounds.size;
+  if (size.width <= 0 || size.height <= 0)
     return;
 
   CGFloat scale = markerView.scale;
   CGPoint anchor = markerView.anchor;
+  CGFloat scaledWidth = size.width * scale;
+  CGFloat scaledHeight = size.height * scale;
 
   if (markerView.rasterize) {
     annotationView.image = [markerView createScaledIconImage];
   } else {
     iconView.layer.anchorPoint = anchor;
+    iconView.bounds = CGRectMake(0, 0, size.width, size.height);
+    iconView.center =
+        CGPointMake(scaledWidth * anchor.x, scaledHeight * anchor.y);
     iconView.transform = CGAffineTransformMakeScale(scale, scale);
-    iconView.frame =
-        CGRectMake(frame.size.width * (0.5 - anchor.x) * (scale - 1),
-                   frame.size.height * (0.5 - anchor.y) * (scale - 1),
-                   frame.size.width, frame.size.height);
   }
 
-  annotationView.bounds =
-      CGRectMake(0, 0, frame.size.width * scale, frame.size.height * scale);
+  annotationView.bounds = CGRectMake(0, 0, scaledWidth, scaledHeight);
   annotationView.centerOffset =
-      CGPointMake(frame.size.width * scale * (anchor.x - 0.5),
-                  -frame.size.height * scale * (anchor.y - 0.5));
+      CGPointMake(scaledWidth * (0.5 - anchor.x),
+                  scaledHeight * (0.5 - anchor.y));
   annotationView.transform =
       CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
 }
