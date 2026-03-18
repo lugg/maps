@@ -38,6 +38,7 @@
   UITapGestureRecognizer *_tapGesture;
   UILongPressGestureRecognizer *_longPressGesture;
   LuggMarkerView *_activeNonBubbledMarker;
+  BOOL _isReselectingAnnotation;
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
@@ -108,6 +109,7 @@
 }
 
 - (void)destroy {
+  [self dismissNonBubbledCallout];
   [self stopEdgeInsetsAnimation];
   if (_tapGesture) {
     [_mapView removeGestureRecognizer:_tapGesture];
@@ -554,9 +556,11 @@
   AppleMarkerAnnotation *annotation = (AppleMarkerAnnotation *)view.annotation;
   LuggMarkerView *markerView = annotation.markerView;
 
-  if (markerView && _activeNonBubbledMarker == markerView) {
-    // Re-select to keep callout visible — dismissal is handled by handleTap:
+  if (markerView && _activeNonBubbledMarker == markerView &&
+      !_isReselectingAnnotation) {
+    _isReselectingAnnotation = YES;
     [_mapView selectAnnotation:annotation animated:NO];
+    _isReselectingAnnotation = NO;
   }
 }
 

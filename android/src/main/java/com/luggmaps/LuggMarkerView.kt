@@ -187,6 +187,18 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     didLayout = false
   }
 
+  override fun removeViews(start: Int, count: Int) {
+    for (i in (start until start + count).reversed()) {
+      val child = getChildAt(i)
+      if (child is LuggCalloutView) {
+        calloutView = null
+      } else if (i < contentView.childCount) {
+        contentView.removeViewAt(i)
+      }
+    }
+    didLayout = false
+  }
+
   override fun getChildCount(): Int = contentView.childCount + if (calloutView != null) 1 else 0
 
   override fun getChildAt(index: Int): View? {

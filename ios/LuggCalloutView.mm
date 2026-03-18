@@ -75,10 +75,16 @@ using namespace facebook::react;
       *std::static_pointer_cast<LuggCalloutViewProps const>(props);
 
   _bubbled = newViewProps.bubbled;
-  if (newViewProps.anchor.x != 0 || newViewProps.anchor.y != 0) {
+
+  if (oldProps) {
+    const auto &oldViewProps =
+        *std::static_pointer_cast<LuggCalloutViewProps const>(oldProps);
+    if (newViewProps.anchor.x != oldViewProps.anchor.x ||
+        newViewProps.anchor.y != oldViewProps.anchor.y) {
+      _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+    }
+  } else if (newViewProps.anchor.x != 0 || newViewProps.anchor.y != 0) {
     _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
-  } else {
-    _anchor = CGPointMake(0.5, 1.0);
   }
 
   [super updateProps:props oldProps:oldProps];

@@ -89,6 +89,8 @@ export const Marker = ({
     if (!calloutBubbled) injectUnbubbledStyle();
   }, [calloutBubbled]);
 
+  const hasCallout = !!(callout || title);
+
   const calloutContent = callout
     ? isValidElement(callout)
       ? callout
@@ -114,19 +116,12 @@ export const Marker = ({
         : coordinate;
       moveCamera(coord);
       onPress?.(createEvent(e, coordinate));
-      if (calloutContent) {
+      if (hasCallout) {
         closeCallouts(closeCallout);
         setInfoWindowOpen((prev) => !prev);
       }
     },
-    [
-      moveCamera,
-      onPress,
-      coordinate,
-      calloutContent,
-      closeCallouts,
-      closeCallout,
-    ]
+    [moveCamera, onPress, coordinate, hasCallout, closeCallouts, closeCallout]
   );
 
   const handleDragStart = useCallback(

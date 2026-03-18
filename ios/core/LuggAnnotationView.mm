@@ -1,11 +1,6 @@
 #import "LuggAnnotationView.h"
 
-@implementation LuggAnnotationView
-
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-  if ([super pointInside:point withEvent:event])
-    return YES;
-
+BOOL LuggAnnotationPointInside(UIView *self, CGPoint point, UIEvent *event) {
   for (UIView *subview in self.subviews) {
     CGPoint subviewPoint = [subview convertPoint:point fromView:self];
     if ([subview pointInside:subviewPoint withEvent:event])
@@ -14,18 +9,30 @@
   return NO;
 }
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-  UIView *result = [super hitTest:point withEvent:event];
-  if (result)
-    return result;
-
+UIView *_Nullable LuggAnnotationHitTest(UIView *self, CGPoint point,
+                                         UIEvent *event) {
   for (UIView *subview in [self.subviews reverseObjectEnumerator]) {
     CGPoint subviewPoint = [subview convertPoint:point fromView:self];
-    result = [subview hitTest:subviewPoint withEvent:event];
+    UIView *result = [subview hitTest:subviewPoint withEvent:event];
     if (result)
       return result;
   }
   return nil;
+}
+
+@implementation LuggAnnotationView
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+  if ([super pointInside:point withEvent:event])
+    return YES;
+  return LuggAnnotationPointInside(self, point, event);
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  UIView *result = [super hitTest:point withEvent:event];
+  if (result)
+    return result;
+  return LuggAnnotationHitTest(self, point, event);
 }
 
 @end
@@ -35,27 +42,14 @@
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
   if ([super pointInside:point withEvent:event])
     return YES;
-
-  for (UIView *subview in self.subviews) {
-    CGPoint subviewPoint = [subview convertPoint:point fromView:self];
-    if ([subview pointInside:subviewPoint withEvent:event])
-      return YES;
-  }
-  return NO;
+  return LuggAnnotationPointInside(self, point, event);
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
   UIView *result = [super hitTest:point withEvent:event];
   if (result)
     return result;
-
-  for (UIView *subview in [self.subviews reverseObjectEnumerator]) {
-    CGPoint subviewPoint = [subview convertPoint:point fromView:self];
-    result = [subview hitTest:subviewPoint withEvent:event];
-    if (result)
-      return result;
-  }
-  return nil;
+  return LuggAnnotationHitTest(self, point, event);
 }
 
 @end
