@@ -71,7 +71,7 @@ const CIRCLE_HOLES = [
   }),
 ];
 
-const SELECTED_SCALE = 3;
+const SELECTED_SCALE = 1.5;
 
 const renderMarker = (
   marker: MarkerData,
