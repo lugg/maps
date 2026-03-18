@@ -792,6 +792,10 @@
       (AppleMarkerAnnotation *)markerView.marker;
 
   if (annotation) {
+    if (annotation.pendingScaleAnimation) {
+      dispatch_block_cancel(annotation.pendingScaleAnimation);
+      annotation.pendingScaleAnimation = nil;
+    }
     annotation.annotationView.transform = CGAffineTransformIdentity;
     annotation.markerView = nil;
     annotation.annotationView = nil;
