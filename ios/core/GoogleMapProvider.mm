@@ -409,7 +409,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_wrapperView addSubview:contentView];
 
   _activeNonBubbledMarker = markerView;
-  [self positionNonBubbledCallout];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self positionNonBubbledCallout];
+    contentView.hidden = NO;
+  });
 }
 
 - (void)calloutViewDidUpdate:(LuggCalloutView *)calloutView {
@@ -443,12 +446,6 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   contentView.center =
       CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
                   point.y + contentSize.height * (0.5 - anchor.y));
-
-  if (contentView.hidden) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      contentView.hidden = NO;
-    });
-  }
 }
 
 #pragma mark - MarkerViewDelegate

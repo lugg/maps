@@ -587,7 +587,10 @@
   }
 
   _activeNonBubbledMarker = markerView;
-  [self positionNonBubbledCallout];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self positionNonBubbledCallout];
+    contentView.hidden = NO;
+  });
 }
 
 - (void)calloutViewDidUpdate:(LuggCalloutView *)calloutView {
@@ -625,11 +628,6 @@
                     point.y + contentSize.height * (0.5 - anchor.y));
   }
 
-  if (contentView.hidden) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      contentView.hidden = NO;
-    });
-  }
 }
 
 - (void)dismissNonBubbledCallout {
