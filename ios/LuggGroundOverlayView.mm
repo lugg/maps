@@ -55,12 +55,12 @@ using namespace luggmaps::events;
 
   _imageUri = [NSString stringWithUTF8String:newViewProps.image.c_str()];
 
-  _northeast = CLLocationCoordinate2DMake(
-      newViewProps.bounds.northeast.latitude,
-      newViewProps.bounds.northeast.longitude);
-  _southwest = CLLocationCoordinate2DMake(
-      newViewProps.bounds.southwest.latitude,
-      newViewProps.bounds.southwest.longitude);
+  _northeast =
+      CLLocationCoordinate2DMake(newViewProps.bounds.northeast.latitude,
+                                 newViewProps.bounds.northeast.longitude);
+  _southwest =
+      CLLocationCoordinate2DMake(newViewProps.bounds.southwest.latitude,
+                                 newViewProps.bounds.southwest.longitude);
 
   _opacity = newViewProps.opacity;
   _bearing = newViewProps.bearing;

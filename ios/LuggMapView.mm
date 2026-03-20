@@ -93,8 +93,7 @@ using namespace luggmaps::events;
     if (_provider) {
       [_provider addPolygonView:polygonView];
     }
-  } else if ([childComponentView
-                 isKindOfClass:[LuggGroundOverlayView class]]) {
+  } else if ([childComponentView isKindOfClass:[LuggGroundOverlayView class]]) {
     LuggGroundOverlayView *groundOverlayView =
         (LuggGroundOverlayView *)childComponentView;
     if (_provider) {
@@ -127,8 +126,7 @@ using namespace luggmaps::events;
     if (_provider) {
       [_provider removePolygonView:polygonView];
     }
-  } else if ([childComponentView
-                 isKindOfClass:[LuggGroundOverlayView class]]) {
+  } else if ([childComponentView isKindOfClass:[LuggGroundOverlayView class]]) {
     LuggGroundOverlayView *groundOverlayView =
         (LuggGroundOverlayView *)childComponentView;
     if (_provider) {

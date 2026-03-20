@@ -895,8 +895,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 #pragma mark - GroundOverlayViewDelegate
 
-- (void)groundOverlayViewDidUpdate:
-    (LuggGroundOverlayView *)groundOverlayView {
+- (void)groundOverlayViewDidUpdate:(LuggGroundOverlayView *)groundOverlayView {
   [self syncGroundOverlayView:groundOverlayView];
 }
 
@@ -1238,8 +1237,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 - (void)removeGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
   groundOverlayView.delegate = nil;
-  GroundImageOverlay *overlay =
-      (GroundImageOverlay *)groundOverlayView.overlay;
+  GroundImageOverlay *overlay = (GroundImageOverlay *)groundOverlayView.overlay;
   if (overlay) {
     [_overlayToGroundOverlayMap removeObjectForKey:overlay];
     [_mapView removeOverlay:overlay];
@@ -1270,15 +1268,14 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
   __weak __typeof(self) weakSelf = self;
   __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                 ^{
-                   NSData *data = [NSData dataWithContentsOfURL:url];
-                   UIImage *image = data ? [UIImage imageWithData:data] : nil;
-                   dispatch_async(dispatch_get_main_queue(), ^{
-                     [weakSelf addGroundOverlayToMap:weakOverlayView
-                                              image:image];
-                   });
-                 });
+  dispatch_async(
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        UIImage *image = data ? [UIImage imageWithData:data] : nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf addGroundOverlayToMap:weakOverlayView image:image];
+        });
+      });
 }
 
 - (void)addGroundOverlayToMap:(LuggGroundOverlayView *)groundOverlayView
@@ -1290,15 +1287,15 @@ static double tileToLng(NSInteger x, NSInteger z) {
   MKMapPoint ne = MKMapPointForCoordinate(groundOverlayView.northeast);
 
   MKMapRect mapRect = MKMapRectMake(MIN(sw.x, ne.x), MIN(sw.y, ne.y),
-                                     fabs(ne.x - sw.x), fabs(ne.y - sw.y));
+                                    fabs(ne.x - sw.x), fabs(ne.y - sw.y));
 
-  CLLocationCoordinate2D center = CLLocationCoordinate2DMake(
-      (groundOverlayView.northeast.latitude +
-       groundOverlayView.southwest.latitude) /
-          2.0,
-      (groundOverlayView.northeast.longitude +
-       groundOverlayView.southwest.longitude) /
-          2.0);
+  CLLocationCoordinate2D center =
+      CLLocationCoordinate2DMake((groundOverlayView.northeast.latitude +
+                                  groundOverlayView.southwest.latitude) /
+                                     2.0,
+                                 (groundOverlayView.northeast.longitude +
+                                  groundOverlayView.southwest.longitude) /
+                                     2.0);
 
   GroundImageOverlay *overlay = [[GroundImageOverlay alloc] init];
   overlay.coordinate = center;
@@ -1355,8 +1352,8 @@ static double tileToLng(NSInteger x, NSInteger z) {
     tileOverlay = [[MKTileOverlay alloc] initWithURLTemplate:urlTemplate];
   }
 
-  tileOverlay.tileSize = CGSizeMake(tileOverlayView.tileSize,
-                                     tileOverlayView.tileSize);
+  tileOverlay.tileSize =
+      CGSizeMake(tileOverlayView.tileSize, tileOverlayView.tileSize);
   tileOverlay.canReplaceMapContent = NO;
 
   tileOverlayView.overlay = tileOverlay;

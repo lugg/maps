@@ -59,8 +59,8 @@ using namespace luggmaps::events;
 
   auto ne = newViewProps.bounds.northeast;
   auto sw = newViewProps.bounds.southwest;
-  _hasBounds = (ne.latitude != 0 || ne.longitude != 0 ||
-                sw.latitude != 0 || sw.longitude != 0);
+  _hasBounds = (ne.latitude != 0 || ne.longitude != 0 || sw.latitude != 0 ||
+                sw.longitude != 0);
   if (_hasBounds) {
     _northeast = CLLocationCoordinate2DMake(ne.latitude, ne.longitude);
     _southwest = CLLocationCoordinate2DMake(sw.latitude, sw.longitude);

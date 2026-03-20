@@ -14,12 +14,12 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapColorScheme
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.GroundOverlay
 import com.google.android.gms.maps.model.GroundOverlayOptions
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapColorScheme
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -845,10 +845,7 @@ class GoogleMapProvider(private val context: Context) :
     }.start()
   }
 
-  private fun addGroundOverlayToMap(
-    groundOverlayView: LuggGroundOverlayView,
-    bitmap: android.graphics.Bitmap
-  ) {
+  private fun addGroundOverlayToMap(groundOverlayView: LuggGroundOverlayView, bitmap: android.graphics.Bitmap) {
     val map = googleMap ?: return
 
     val bounds = LatLngBounds(groundOverlayView.southwest, groundOverlayView.northeast)
@@ -917,8 +914,11 @@ class GoogleMapProvider(private val context: Context) :
           val tileSWLng = x / n * 360.0 - 180.0
           val tileNELng = (x + 1) / n * 360.0 - 180.0
 
-          if (tileNELat < swLat || tileSWLat > neLat ||
-              tileNELng < swLng || tileSWLng > neLng) {
+          if (tileNELat < swLat ||
+            tileSWLat > neLat ||
+            tileNELng < swLng ||
+            tileSWLng > neLng
+          ) {
             return null
           }
         }
@@ -927,7 +927,11 @@ class GoogleMapProvider(private val context: Context) :
           .replace("{x}", x.toString())
           .replace("{y}", y.toString())
           .replace("{z}", zoom.toString())
-        return try { URL(url) } catch (_: Exception) { null }
+        return try {
+          URL(url)
+        } catch (_: Exception) {
+          null
+        }
       }
     }
 

@@ -497,8 +497,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - GroundOverlayViewDelegate
 
-- (void)groundOverlayViewDidUpdate:
-    (LuggGroundOverlayView *)groundOverlayView {
+- (void)groundOverlayViewDidUpdate:(LuggGroundOverlayView *)groundOverlayView {
   [self syncGroundOverlayView:groundOverlayView];
 }
 
@@ -816,15 +815,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   __weak __typeof(self) weakSelf = self;
   __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                 ^{
-                   NSData *data = [NSData dataWithContentsOfURL:url];
-                   UIImage *image = data ? [UIImage imageWithData:data] : nil;
-                   dispatch_async(dispatch_get_main_queue(), ^{
-                     [weakSelf addGroundOverlayToMap:weakOverlayView
-                                              image:image];
-                   });
-                 });
+  dispatch_async(
+      dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        UIImage *image = data ? [UIImage imageWithData:data] : nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf addGroundOverlayToMap:weakOverlayView image:image];
+        });
+      });
 }
 
 - (void)addGroundOverlayToMap:(LuggGroundOverlayView *)groundOverlayView
@@ -836,8 +834,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
       initWithCoordinate:groundOverlayView.southwest
               coordinate:groundOverlayView.northeast];
 
-  GMSGroundOverlay *overlay =
-      [GMSGroundOverlay groundOverlayWithBounds:bounds icon:image];
+  GMSGroundOverlay *overlay = [GMSGroundOverlay groundOverlayWithBounds:bounds
+                                                                   icon:image];
   overlay.opacity = groundOverlayView.opacity;
   overlay.bearing = groundOverlayView.bearing;
   overlay.zIndex = (int)groundOverlayView.zIndex;
@@ -903,8 +901,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
       double n = pow(2.0, zoom);
       double tileSW_lat =
           180.0 / M_PI * atan(sinh(M_PI * (1 - 2.0 * (y + 1) / n)));
-      double tileNE_lat =
-          180.0 / M_PI * atan(sinh(M_PI * (1 - 2.0 * y / n)));
+      double tileNE_lat = 180.0 / M_PI * atan(sinh(M_PI * (1 - 2.0 * y / n)));
       double tileSW_lng = x / n * 360.0 - 180.0;
       double tileNE_lng = (x + 1) / n * 360.0 - 180.0;
 
@@ -914,12 +911,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
       }
     }
 
-    NSString *urlString = [urlTemplate
-        stringByReplacingOccurrencesOfString:@"{x}"
-                                  withString:[@(x) stringValue]];
-    urlString = [urlString stringByReplacingOccurrencesOfString:@"{y}"
-                                                    withString:[@(y)
-                                                                   stringValue]];
+    NSString *urlString =
+        [urlTemplate stringByReplacingOccurrencesOfString:@"{x}"
+                                               withString:[@(x) stringValue]];
+    urlString =
+        [urlString stringByReplacingOccurrencesOfString:@"{y}"
+                                             withString:[@(y) stringValue]];
     urlString =
         [urlString stringByReplacingOccurrencesOfString:@"{z}"
                                              withString:[@(zoom) stringValue]];

@@ -48,7 +48,13 @@ export const GroundOverlay = ({
       return;
     }
 
-    const imageUrl = typeof image === 'number' ? '' : image?.uri ?? '';
+    const source =
+      typeof image === 'number'
+        ? null
+        : Array.isArray(image)
+        ? image[0]
+        : image;
+    const imageUrl = source?.uri ?? '';
     if (!imageUrl) return;
 
     const latLngBounds = new google.maps.LatLngBounds(
