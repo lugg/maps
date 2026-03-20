@@ -6,6 +6,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class LuggMarkerView;
 @class LuggPolylineView;
 @class LuggPolygonView;
+@class LuggCircleView;
 @class LuggGroundOverlayView;
 @class LuggTileOverlayView;
 
@@ -64,6 +65,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addPolygonView:(LuggPolygonView *)polygonView;
 - (void)removePolygonView:(LuggPolygonView *)polygonView;
 - (void)syncPolygonView:(LuggPolygonView *)polygonView;
+- (void)addCircleView:(LuggCircleView *)circleView;
+- (void)removeCircleView:(LuggCircleView *)circleView;
+- (void)syncCircleView:(LuggCircleView *)circleView;
 - (void)addGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;
 - (void)removeGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;
 - (void)syncGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;

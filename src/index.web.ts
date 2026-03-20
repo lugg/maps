@@ -5,6 +5,8 @@ export { Marker } from './components/index.web';
 export type { CalloutOptions, MarkerProps } from './components/index.web';
 export { Polygon } from './components/index.web';
 export type { PolygonProps } from './components/index.web';
+export { Circle } from './components/index.web';
+export type { CircleProps } from './components/index.web';
 export { Polyline } from './components/index.web';
 export type { PolylineProps } from './components/index.web';
 export { GeoJson } from './components/index.web';

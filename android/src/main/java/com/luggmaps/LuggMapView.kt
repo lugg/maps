@@ -78,6 +78,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggMarkerView -> provider?.addMarkerView(child)
       is LuggPolylineView -> provider?.addPolylineView(child)
       is LuggPolygonView -> provider?.addPolygonView(child)
+      is LuggCircleView -> provider?.addCircleView(child)
       is LuggGroundOverlayView -> provider?.addGroundOverlayView(child)
       is LuggTileOverlayView -> provider?.addTileOverlayView(child)
     }
@@ -89,6 +90,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggMarkerView -> provider?.removeMarkerView(view)
       is LuggPolylineView -> provider?.removePolylineView(view)
       is LuggPolygonView -> provider?.removePolygonView(view)
+      is LuggCircleView -> provider?.removeCircleView(view)
       is LuggGroundOverlayView -> provider?.removeGroundOverlayView(view)
       is LuggTileOverlayView -> provider?.removeTileOverlayView(view)
     }
@@ -139,6 +141,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
         is LuggMarkerView -> google.addMarkerView(child)
         is LuggPolylineView -> google.addPolylineView(child)
         is LuggPolygonView -> google.addPolygonView(child)
+        is LuggCircleView -> google.addCircleView(child)
         is LuggGroundOverlayView -> google.addGroundOverlayView(child)
         is LuggTileOverlayView -> google.addTileOverlayView(child)
       }

@@ -1,6 +1,7 @@
 package com.luggmaps.core
 
 import android.view.View
+import com.luggmaps.LuggCircleView
 import com.luggmaps.LuggGroundOverlayView
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggPolygonView
@@ -44,6 +45,8 @@ interface MapProvider {
   fun removePolylineView(polylineView: LuggPolylineView)
   fun addPolygonView(polygonView: LuggPolygonView)
   fun removePolygonView(polygonView: LuggPolygonView)
+  fun addCircleView(circleView: LuggCircleView)
+  fun removeCircleView(circleView: LuggCircleView)
   fun addGroundOverlayView(groundOverlayView: LuggGroundOverlayView)
   fun removeGroundOverlayView(groundOverlayView: LuggGroundOverlayView)
   fun addTileOverlayView(tileOverlayView: LuggTileOverlayView)

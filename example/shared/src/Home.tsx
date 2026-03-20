@@ -248,6 +248,10 @@ const HomeContent = () => {
             lockStatus();
             setStatus({ text: 'Polygon pressed', error: false });
           }}
+          onCirclePress={() => {
+            lockStatus();
+            setStatus({ text: 'Circle pressed', error: false });
+          }}
           onGroundOverlayPress={() => {
             lockStatus();
             setStatus({ text: 'Ground overlay pressed', error: false });

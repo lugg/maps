@@ -11,6 +11,7 @@ import {
   Marker,
   GeoJson,
   Polygon,
+  Circle,
   GroundOverlay,
   type MapViewProps,
   type MapCameraEvent,
@@ -37,6 +38,7 @@ interface MapProps extends MapViewProps {
   geojson?: GeoJSON | null;
   animatedPosition?: SharedValue<number>;
   onPolygonPress?: () => void;
+  onCirclePress?: () => void;
   onGroundOverlayPress?: () => void;
   onMarkerPress?: (event: MarkerPressEvent, marker: MarkerData) => void;
   onMarkerDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void;
@@ -240,6 +242,7 @@ export const Map = forwardRef<MapView, MapProps>(
       onPress,
       onLongPress,
       onPolygonPress,
+      onCirclePress,
       onGroundOverlayPress,
       onMarkerPress,
       onMarkerDragStart,
@@ -320,6 +323,14 @@ export const Map = forwardRef<MapView, MapProps>(
             strokeColor="#4285F4"
             strokeWidth={2}
             onPress={onPolygonPress}
+          />
+          <Circle
+            center={{ latitude: 37.782, longitude: -122.435 }}
+            radius={200}
+            fillColor="rgba(244, 67, 54, 0.15)"
+            strokeColor="#F44336"
+            strokeWidth={2}
+            onPress={onCirclePress}
           />
           <MarkerText
             name="inline-marker"

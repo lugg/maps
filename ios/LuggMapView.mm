@@ -1,4 +1,5 @@
 #import "LuggMapView.h"
+#import "LuggCircleView.h"
 #import "LuggGroundOverlayView.h"
 #import "LuggMapWrapperView.h"
 #import "LuggMarkerView.h"
@@ -93,6 +94,11 @@ using namespace luggmaps::events;
     if (_provider) {
       [_provider addPolygonView:polygonView];
     }
+  } else if ([childComponentView isKindOfClass:[LuggCircleView class]]) {
+    LuggCircleView *circleView = (LuggCircleView *)childComponentView;
+    if (_provider) {
+      [_provider addCircleView:circleView];
+    }
   } else if ([childComponentView isKindOfClass:[LuggGroundOverlayView class]]) {
     LuggGroundOverlayView *groundOverlayView =
         (LuggGroundOverlayView *)childComponentView;
@@ -125,6 +131,11 @@ using namespace luggmaps::events;
     LuggPolygonView *polygonView = (LuggPolygonView *)childComponentView;
     if (_provider) {
       [_provider removePolygonView:polygonView];
+    }
+  } else if ([childComponentView isKindOfClass:[LuggCircleView class]]) {
+    LuggCircleView *circleView = (LuggCircleView *)childComponentView;
+    if (_provider) {
+      [_provider removeCircleView:circleView];
     }
   } else if ([childComponentView isKindOfClass:[LuggGroundOverlayView class]]) {
     LuggGroundOverlayView *groundOverlayView =
@@ -205,6 +216,8 @@ using namespace luggmaps::events;
       [_provider addPolylineView:(LuggPolylineView *)subview];
     } else if ([subview isKindOfClass:[LuggPolygonView class]]) {
       [_provider addPolygonView:(LuggPolygonView *)subview];
+    } else if ([subview isKindOfClass:[LuggCircleView class]]) {
+      [_provider addCircleView:(LuggCircleView *)subview];
     } else if ([subview isKindOfClass:[LuggGroundOverlayView class]]) {
       [_provider addGroundOverlayView:(LuggGroundOverlayView *)subview];
     } else if ([subview isKindOfClass:[LuggTileOverlayView class]]) {

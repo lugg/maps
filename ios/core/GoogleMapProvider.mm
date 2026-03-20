@@ -1,5 +1,6 @@
 #import "GoogleMapProvider.h"
 #import "../LuggCalloutView.h"
+#import "../LuggCircleView.h"
 #import "../LuggGroundOverlayView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
@@ -12,8 +13,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 @interface GoogleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
-    LuggPolygonViewDelegate, LuggGroundOverlayViewDelegate,
-    LuggTileOverlayViewDelegate>
+    LuggPolygonViewDelegate, LuggCircleViewDelegate,
+    LuggGroundOverlayViewDelegate, LuggTileOverlayViewDelegate>
 @end
 
 @implementation GoogleMapProvider {
@@ -26,10 +27,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
   NSMutableArray<LuggPolygonView *> *_pendingPolygonViews;
+  NSMutableArray<LuggCircleView *> *_pendingCircleViews;
   NSMutableArray<LuggGroundOverlayView *> *_pendingGroundOverlayViews;
   NSMutableArray<LuggTileOverlayView *> *_pendingTileOverlayViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
   NSMapTable<GMSPolygon *, LuggPolygonView *> *_polygonToViewMap;
+  NSMapTable<GMSCircle *, LuggCircleView *> *_circleToViewMap;
   NSMapTable<GMSMarker *, LuggMarkerView *> *_markerToViewMap;
   NSMapTable<GMSGroundOverlay *, LuggGroundOverlayView *>
       *_groundOverlayToViewMap;
@@ -52,10 +55,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _pendingMarkerViews = [NSMutableArray array];
     _pendingPolylineViews = [NSMutableArray array];
     _pendingPolygonViews = [NSMutableArray array];
+    _pendingCircleViews = [NSMutableArray array];
     _pendingGroundOverlayViews = [NSMutableArray array];
     _pendingTileOverlayViews = [NSMutableArray array];
     _polylineAnimators = [NSMapTable weakToStrongObjectsMapTable];
     _polygonToViewMap = [NSMapTable strongToWeakObjectsMapTable];
+    _circleToViewMap = [NSMapTable strongToWeakObjectsMapTable];
     _markerToViewMap = [NSMapTable strongToWeakObjectsMapTable];
     _groundOverlayToViewMap = [NSMapTable strongToWeakObjectsMapTable];
   }
@@ -111,6 +116,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [self processPendingMarkers];
   [self processPendingPolylines];
   [self processPendingPolygons];
+  [self processPendingCircles];
   [self processPendingGroundOverlays];
   [self processPendingTileOverlays];
 
@@ -122,10 +128,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
   [_pendingPolygonViews removeAllObjects];
+  [_pendingCircleViews removeAllObjects];
   [_pendingGroundOverlayViews removeAllObjects];
   [_pendingTileOverlayViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
   [_polygonToViewMap removeAllObjects];
+  [_circleToViewMap removeAllObjects];
   [_markerToViewMap removeAllObjects];
   [_groundOverlayToViewMap removeAllObjects];
   [_mapView clear];
@@ -312,6 +320,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     if (polygonView && polygonView.tappable) {
       [polygonView emitPressEvent];
     }
+  } else if ([overlay isKindOfClass:[GMSCircle class]]) {
+    GMSCircle *circle = (GMSCircle *)overlay;
+    LuggCircleView *circleView = [_circleToViewMap objectForKey:circle];
+    if (circleView && circleView.tappable) {
+      [circleView emitPressEvent];
+    }
   } else if ([overlay isKindOfClass:[GMSGroundOverlay class]]) {
     GMSGroundOverlay *groundOverlay = (GMSGroundOverlay *)overlay;
     LuggGroundOverlayView *groundOverlayView =
@@ -493,6 +507,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)polygonViewDidUpdate:(LuggPolygonView *)polygonView {
   [self syncPolygonView:polygonView];
+}
+
+#pragma mark - CircleViewDelegate
+
+- (void)circleViewDidUpdate:(LuggCircleView *)circleView {
+  [self syncCircleView:circleView];
 }
 
 #pragma mark - GroundOverlayViewDelegate
@@ -769,6 +789,71 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   polygon.map = _mapView;
   polygonView.polygon = polygon;
   [_polygonToViewMap setObject:polygonView forKey:polygon];
+}
+
+#pragma mark - Circle Management
+
+- (void)addCircleView:(LuggCircleView *)circleView {
+  circleView.delegate = self;
+  [self syncCircleView:circleView];
+}
+
+- (void)removeCircleView:(LuggCircleView *)circleView {
+  GMSCircle *circle = (GMSCircle *)circleView.circle;
+  if (circle) {
+    [_circleToViewMap removeObjectForKey:circle];
+    circle.map = nil;
+    circleView.circle = nil;
+  }
+}
+
+- (void)syncCircleView:(LuggCircleView *)circleView {
+  if (!_mapView) {
+    if (![_pendingCircleViews containsObject:circleView]) {
+      [_pendingCircleViews addObject:circleView];
+    }
+    return;
+  }
+
+  if (!circleView.circle) {
+    [self addCircleViewToMap:circleView];
+    return;
+  }
+
+  GMSCircle *circle = (GMSCircle *)circleView.circle;
+  circle.position = circleView.center;
+  circle.radius = circleView.radius;
+  circle.fillColor = circleView.fillColor;
+  circle.strokeColor = circleView.strokeColor;
+  circle.strokeWidth = circleView.strokeWidth;
+  circle.zIndex = (int)circleView.zIndex;
+  circle.tappable = circleView.tappable;
+}
+
+- (void)processPendingCircles {
+  if (!_mapView)
+    return;
+
+  for (LuggCircleView *circleView in _pendingCircleViews) {
+    [self addCircleViewToMap:circleView];
+  }
+  [_pendingCircleViews removeAllObjects];
+}
+
+- (void)addCircleViewToMap:(LuggCircleView *)circleView {
+  if (!_mapView)
+    return;
+
+  GMSCircle *circle = [GMSCircle circleWithPosition:circleView.center
+                                              radius:circleView.radius];
+  circle.fillColor = circleView.fillColor;
+  circle.strokeColor = circleView.strokeColor;
+  circle.strokeWidth = circleView.strokeWidth;
+  circle.zIndex = (int)circleView.zIndex;
+  circle.tappable = circleView.tappable;
+  circle.map = _mapView;
+  circleView.circle = circle;
+  [_circleToViewMap setObject:circleView forKey:circle];
 }
 
 #pragma mark - Ground Overlay Management

@@ -13,6 +13,7 @@ class LuggPackage : ReactPackage {
       LuggMapWrapperViewManager(),
       LuggPolylineViewManager(),
       LuggPolygonViewManager(),
+      LuggCircleViewManager(),
       LuggGroundOverlayViewManager(),
       LuggTileOverlayViewManager()
     )

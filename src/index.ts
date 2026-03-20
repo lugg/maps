@@ -10,6 +10,8 @@ export type {
 } from './components';
 export { Polygon } from './components';
 export type { PolygonProps } from './components';
+export { Circle } from './components';
+export type { CircleProps } from './components';
 export { Polyline } from './components';
 export type {
   PolylineProps,

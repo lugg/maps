@@ -7,6 +7,8 @@ export type {
 } from './Marker.types';
 export { Polygon } from './Polygon';
 export type { PolygonProps } from './Polygon.types';
+export { Circle } from './Circle';
+export type { CircleProps } from './Circle.types';
 export { Polyline } from './Polyline';
 export type {
   PolylineProps,

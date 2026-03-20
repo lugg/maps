@@ -1,5 +1,6 @@
 #import "AppleMapProvider.h"
 #import "../LuggCalloutView.h"
+#import "../LuggCircleView.h"
 #import "../LuggGroundOverlayView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
@@ -102,8 +103,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 @interface AppleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
-    LuggPolygonViewDelegate, LuggGroundOverlayViewDelegate,
-    LuggTileOverlayViewDelegate, UIGestureRecognizerDelegate>
+    LuggPolygonViewDelegate, LuggCircleViewDelegate,
+    LuggGroundOverlayViewDelegate, LuggTileOverlayViewDelegate,
+    UIGestureRecognizerDelegate>
 @end
 
 @implementation AppleMapProvider {
@@ -115,6 +117,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
+  NSMapTable<id<MKOverlay>, LuggCircleView *> *_overlayToCircleMap;
   NSMapTable<id<MKOverlay>, LuggGroundOverlayView *>
       *_overlayToGroundOverlayMap;
   NSMapTable<id<MKOverlay>, LuggTileOverlayView *> *_overlayToTileOverlayMap;
@@ -136,6 +139,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (self = [super init]) {
     _overlayToPolylineMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToPolygonMap = [NSMapTable strongToWeakObjectsMapTable];
+    _overlayToCircleMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToGroundOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToTileOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
   }
@@ -399,6 +403,33 @@ static double tileToLng(NSInteger x, NSInteger z) {
   return nil;
 }
 
+- (LuggCircleView *)hitTestCircleAtPoint:(CGPoint)point {
+  CLLocationCoordinate2D tapCoordinate = [_mapView convertPoint:point
+                                           toCoordinateFromView:_mapView];
+  CLLocation *tapLocation =
+      [[CLLocation alloc] initWithLatitude:tapCoordinate.latitude
+                                 longitude:tapCoordinate.longitude];
+
+  NSArray<id<MKOverlay>> *overlays = _mapView.overlays;
+  for (NSInteger i = overlays.count - 1; i >= 0; i--) {
+    id<MKOverlay> overlay = overlays[i];
+    if (![overlay isKindOfClass:[MKCircle class]])
+      continue;
+
+    LuggCircleView *circleView = [_overlayToCircleMap objectForKey:overlay];
+    if (!circleView || !circleView.tappable)
+      continue;
+
+    CLLocation *center =
+        [[CLLocation alloc] initWithLatitude:circleView.center.latitude
+                                   longitude:circleView.center.longitude];
+    CLLocationDistance distance = [tapLocation distanceFromLocation:center];
+    if (distance <= circleView.radius)
+      return circleView;
+  }
+  return nil;
+}
+
 - (LuggGroundOverlayView *)hitTestGroundOverlayAtPoint:(CGPoint)point {
   CLLocationCoordinate2D tapCoordinate = [_mapView convertPoint:point
                                            toCoordinateFromView:_mapView];
@@ -459,6 +490,12 @@ static double tileToLng(NSInteger x, NSInteger z) {
       [self hitTestGroundOverlayAtPoint:point];
   if (groundOverlayView) {
     [groundOverlayView emitPressEvent];
+    return;
+  }
+
+  LuggCircleView *circleView = [self hitTestCircleAtPoint:point];
+  if (circleView) {
+    [circleView emitPressEvent];
     return;
   }
 
@@ -635,6 +672,21 @@ static double tileToLng(NSInteger x, NSInteger z) {
       renderer.strokeColor = polygonView.strokeColor;
       renderer.lineWidth = polygonView.strokeWidth;
       polygonView.renderer = renderer;
+    }
+    return renderer;
+  }
+
+  if ([overlay isKindOfClass:[MKCircle class]]) {
+    LuggCircleView *circleView = [_overlayToCircleMap objectForKey:overlay];
+    MKCircle *circle = (MKCircle *)overlay;
+
+    MKCircleRenderer *renderer =
+        [[MKCircleRenderer alloc] initWithCircle:circle];
+    if (circleView) {
+      renderer.fillColor = circleView.fillColor;
+      renderer.strokeColor = circleView.strokeColor;
+      renderer.lineWidth = circleView.strokeWidth;
+      circleView.renderer = renderer;
     }
     return renderer;
   }
@@ -891,6 +943,12 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 - (void)polygonViewDidUpdate:(LuggPolygonView *)polygonView {
   [self syncPolygonView:polygonView];
+}
+
+#pragma mark - CircleViewDelegate
+
+- (void)circleViewDidUpdate:(LuggCircleView *)circleView {
+  [self syncCircleView:circleView];
 }
 
 #pragma mark - GroundOverlayViewDelegate
@@ -1228,6 +1286,65 @@ static double tileToLng(NSInteger x, NSInteger z) {
   return [interiorPolygons copy];
 }
 
+#pragma mark - Circle Management
+
+- (void)addCircleView:(LuggCircleView *)circleView {
+  circleView.delegate = self;
+  [self addCircleOverlayToMap:circleView];
+}
+
+- (void)removeCircleView:(LuggCircleView *)circleView {
+  circleView.delegate = nil;
+  MKCircle *circle = (MKCircle *)circleView.circle;
+  if (circle) {
+    [_overlayToCircleMap removeObjectForKey:circle];
+    [_mapView removeOverlay:circle];
+    circleView.circle = nil;
+  }
+}
+
+- (void)syncCircleView:(LuggCircleView *)circleView {
+  if (!_mapView)
+    return;
+
+  MKCircle *oldCircle = (MKCircle *)circleView.circle;
+
+  MKCircle *newCircle =
+      [MKCircle circleWithCenterCoordinate:circleView.center
+                                    radius:circleView.radius];
+
+  circleView.circle = newCircle;
+  [_overlayToCircleMap setObject:circleView forKey:newCircle];
+
+  MKCircleRenderer *renderer = (MKCircleRenderer *)circleView.renderer;
+  if (renderer && oldCircle) {
+    [_overlayToCircleMap removeObjectForKey:oldCircle];
+    [_mapView removeOverlay:oldCircle];
+    [self insertOverlay:newCircle withZIndex:circleView.zIndex];
+    circleView.renderer = nil;
+    return;
+  }
+
+  if (oldCircle) {
+    [_overlayToCircleMap removeObjectForKey:oldCircle];
+    [_mapView removeOverlay:oldCircle];
+  }
+  [self insertOverlay:newCircle withZIndex:circleView.zIndex];
+}
+
+- (void)addCircleOverlayToMap:(LuggCircleView *)circleView {
+  if (!_mapView)
+    return;
+
+  MKCircle *circle =
+      [MKCircle circleWithCenterCoordinate:circleView.center
+                                    radius:circleView.radius];
+
+  circleView.circle = circle;
+  [_overlayToCircleMap setObject:circleView forKey:circle];
+  [self insertOverlay:circle withZIndex:circleView.zIndex];
+}
+
 #pragma mark - Ground Overlay Management
 
 - (void)addGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
@@ -1376,12 +1493,16 @@ static double tileToLng(NSInteger x, NSInteger z) {
         [_overlayToPolylineMap objectForKey:overlays[i]];
     LuggPolygonView *existingPolygonView =
         [_overlayToPolygonMap objectForKey:overlays[i]];
+    LuggCircleView *existingCircleView =
+        [_overlayToCircleMap objectForKey:overlays[i]];
     LuggGroundOverlayView *existingGroundOverlayView =
         [_overlayToGroundOverlayMap objectForKey:overlays[i]];
     if (existingPolylineView) {
       existingZIndex = existingPolylineView.zIndex;
     } else if (existingPolygonView) {
       existingZIndex = existingPolygonView.zIndex;
+    } else if (existingCircleView) {
+      existingZIndex = existingCircleView.zIndex;
     } else if (existingGroundOverlayView) {
       existingZIndex = existingGroundOverlayView.zIndex;
     } else {

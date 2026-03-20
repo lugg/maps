@@ -20,6 +20,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -27,6 +29,8 @@ import com.google.android.gms.maps.model.TileOverlay
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
 import com.luggmaps.LuggCalloutView
+import com.luggmaps.LuggCircleView
+import com.luggmaps.LuggCircleViewDelegate
 import com.luggmaps.LuggGroundOverlayView
 import com.luggmaps.LuggGroundOverlayViewDelegate
 import com.luggmaps.LuggMapWrapperView
@@ -46,6 +50,7 @@ class GoogleMapProvider(private val context: Context) :
   LuggMarkerViewDelegate,
   LuggPolylineViewDelegate,
   LuggPolygonViewDelegate,
+  LuggCircleViewDelegate,
   LuggGroundOverlayViewDelegate,
   LuggTileOverlayViewDelegate,
   GoogleMap.OnCameraMoveStartedListener,
@@ -54,6 +59,7 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnMapClickListener,
   GoogleMap.OnMapLongClickListener,
   GoogleMap.OnPolygonClickListener,
+  GoogleMap.OnCircleClickListener,
   GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
@@ -72,10 +78,12 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingMarkerViews = mutableSetOf<LuggMarkerView>()
   private val pendingPolylineViews = mutableSetOf<LuggPolylineView>()
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
+  private val pendingCircleViews = mutableSetOf<LuggCircleView>()
   private val pendingGroundOverlayViews = mutableSetOf<LuggGroundOverlayView>()
   private val pendingTileOverlayViews = mutableSetOf<LuggTileOverlayView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
+  private val circleToViewMap = mutableMapOf<Circle, LuggCircleView>()
   private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
@@ -135,11 +143,13 @@ class GoogleMapProvider(private val context: Context) :
     pendingMarkerViews.clear()
     pendingPolylineViews.clear()
     pendingPolygonViews.clear()
+    pendingCircleViews.clear()
     pendingGroundOverlayViews.clear()
     pendingTileOverlayViews.clear()
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
     polygonToViewMap.clear()
+    circleToViewMap.clear()
     groundOverlayToViewMap.clear()
     markerToViewMap.clear()
     wrapperView?.touchEventHandler = null
@@ -150,6 +160,7 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnMapClickListener(null)
     googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
+    googleMap?.setOnCircleClickListener(null)
     googleMap?.setOnGroundOverlayClickListener(null)
     googleMap?.setOnMarkerClickListener(null)
     googleMap?.setOnMarkerDragListener(null)
@@ -175,6 +186,7 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMapClickListener(this)
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
+    map.setOnCircleClickListener(this)
     map.setOnGroundOverlayClickListener(this)
     map.setOnMarkerClickListener(this)
     map.setOnMarkerDragListener(this)
@@ -194,6 +206,7 @@ class GoogleMapProvider(private val context: Context) :
     processPendingMarkers()
     processPendingPolylines()
     processPendingPolygons()
+    processPendingCircles()
     processPendingGroundOverlays()
     processPendingTileOverlays()
 
@@ -246,6 +259,15 @@ class GoogleMapProvider(private val context: Context) :
     val polygonView = polygonToViewMap[polygon]
     if (polygonView?.tappable == true) {
       polygonView.emitPressEvent()
+    } else {
+      onMapClick(tapLocation ?: return)
+    }
+  }
+
+  override fun onCircleClick(circle: Circle) {
+    val circleView = circleToViewMap[circle]
+    if (circleView?.tappable == true) {
+      circleView.emitPressEvent()
     } else {
       onMapClick(tapLocation ?: return)
     }
@@ -514,6 +536,14 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun polygonViewDidUpdate(polygonView: LuggPolygonView) {
     syncPolygonView(polygonView)
+  }
+
+  // endregion
+
+  // region CircleViewDelegate
+
+  override fun circleViewDidUpdate(circleView: LuggCircleView) {
+    syncCircleView(circleView)
   }
 
   // endregion
@@ -796,6 +826,66 @@ class GoogleMapProvider(private val context: Context) :
     val polygon = map.addPolygon(options)
     polygonView.polygon = polygon
     polygonToViewMap[polygon] = polygonView
+  }
+
+  // endregion
+
+  // region Circle Management
+
+  override fun addCircleView(circleView: LuggCircleView) {
+    circleView.delegate = this
+    syncCircleView(circleView)
+  }
+
+  override fun removeCircleView(circleView: LuggCircleView) {
+    circleView.circle?.let { circleToViewMap.remove(it) }
+    circleView.circle?.remove()
+    circleView.circle = null
+  }
+
+  private fun syncCircleView(circleView: LuggCircleView) {
+    if (googleMap == null) {
+      pendingCircleViews.add(circleView)
+      return
+    }
+
+    if (circleView.circle == null) {
+      addCircleViewToMap(circleView)
+      return
+    }
+
+    circleView.circle?.apply {
+      center = circleView.center
+      radius = circleView.radius
+      fillColor = circleView.fillColor
+      strokeColor = circleView.strokeColor
+      strokeWidth = circleView.strokeWidth.dpToPx()
+      zIndex = circleView.zIndex
+      isClickable = true
+    }
+  }
+
+  private fun processPendingCircles() {
+    if (googleMap == null) return
+    pendingCircleViews.forEach { addCircleViewToMap(it) }
+    pendingCircleViews.clear()
+  }
+
+  private fun addCircleViewToMap(circleView: LuggCircleView) {
+    val map = googleMap ?: return
+
+    val options = CircleOptions()
+      .center(circleView.center)
+      .radius(circleView.radius)
+      .fillColor(circleView.fillColor)
+      .strokeColor(circleView.strokeColor)
+      .strokeWidth(circleView.strokeWidth.dpToPx())
+      .zIndex(circleView.zIndex)
+      .clickable(true)
+
+    val circle = map.addCircle(options)
+    circleView.circle = circle
+    circleToViewMap[circle] = circleView
   }
 
   // endregion
