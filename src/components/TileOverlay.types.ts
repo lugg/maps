@@ -1,3 +1,8 @@
+export interface TileOverlayBounds {
+  northeast: { latitude: number; longitude: number };
+  southwest: { latitude: number; longitude: number };
+}
+
 export interface TileOverlayProps {
   /**
    * URL template for tile images.
@@ -14,6 +19,11 @@ export interface TileOverlayProps {
    * Opacity of the tile overlay (0-1)
    */
   opacity?: number;
+  /**
+   * Restrict tiles to a geographic region.
+   * Tiles outside these bounds will not be loaded.
+   */
+  bounds?: TileOverlayBounds;
   /**
    * Z-index for layering
    */

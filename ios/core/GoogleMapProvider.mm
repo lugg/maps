@@ -814,7 +814,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (!url)
     return;
 
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                  ^{
@@ -893,8 +893,27 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     tileOverlayView.overlay = nil;
   }
 
+  BOOL hasBounds = tileOverlayView.hasBounds;
+  CLLocationCoordinate2D sw = tileOverlayView.southwest;
+  CLLocationCoordinate2D ne = tileOverlayView.northeast;
+
   GMSTileURLConstructor constructor = ^NSURL *(NSUInteger x, NSUInteger y,
                                                NSUInteger zoom) {
+    if (hasBounds) {
+      double n = pow(2.0, zoom);
+      double tileSW_lat =
+          180.0 / M_PI * atan(sinh(M_PI * (1 - 2.0 * (y + 1) / n)));
+      double tileNE_lat =
+          180.0 / M_PI * atan(sinh(M_PI * (1 - 2.0 * y / n)));
+      double tileSW_lng = x / n * 360.0 - 180.0;
+      double tileNE_lng = (x + 1) / n * 360.0 - 180.0;
+
+      if (tileNE_lat < sw.latitude || tileSW_lat > ne.latitude ||
+          tileNE_lng < sw.longitude || tileSW_lng > ne.longitude) {
+        return nil;
+      }
+    }
+
     NSString *urlString = [urlTemplate
         stringByReplacingOccurrencesOfString:@"{x}"
                                   withString:[@(x) stringValue]];

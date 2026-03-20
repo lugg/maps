@@ -899,8 +899,27 @@ class GoogleMapProvider(private val context: Context) :
     tileOverlayView.tileOverlay = null
 
     val tileSize = tileOverlayView.tileSize
+    val hasBounds = tileOverlayView.hasBounds
+    val swLat = tileOverlayView.boundsSwLat
+    val swLng = tileOverlayView.boundsSwLng
+    val neLat = tileOverlayView.boundsNeLat
+    val neLng = tileOverlayView.boundsNeLng
+
     val tileProvider = object : UrlTileProvider(tileSize, tileSize) {
       override fun getTileUrl(x: Int, y: Int, zoom: Int): URL? {
+        if (hasBounds) {
+          val n = Math.pow(2.0, zoom.toDouble())
+          val tileSWLat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2.0 * (y + 1) / n))))
+          val tileNELat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2.0 * y / n))))
+          val tileSWLng = x / n * 360.0 - 180.0
+          val tileNELng = (x + 1) / n * 360.0 - 180.0
+
+          if (tileNELat < swLat || tileSWLat > neLat ||
+              tileNELng < swLng || tileSWLng > neLng) {
+            return null
+          }
+        }
+
         val url = urlTemplate
           .replace("{x}", x.toString())
           .replace("{y}", y.toString())

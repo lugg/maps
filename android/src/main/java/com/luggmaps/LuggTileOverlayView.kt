@@ -20,6 +20,17 @@ class LuggTileOverlayView(context: Context) : ReactViewGroup(context) {
   var overlayOpacity: Float = 1f
     private set
 
+  var hasBounds: Boolean = false
+    private set
+  var boundsSwLat: Double = 0.0
+    private set
+  var boundsSwLng: Double = 0.0
+    private set
+  var boundsNeLat: Double = 0.0
+    private set
+  var boundsNeLng: Double = 0.0
+    private set
+
   var zIndex: Float = 0f
     private set
 
@@ -47,6 +58,18 @@ class LuggTileOverlayView(context: Context) : ReactViewGroup(context) {
 
   fun setZIndex(value: Float) {
     zIndex = value
+  }
+
+  fun setBounds(swLat: Double, swLng: Double, neLat: Double, neLng: Double) {
+    hasBounds = true
+    boundsSwLat = swLat
+    boundsSwLng = swLng
+    boundsNeLat = neLat
+    boundsNeLng = neLng
+  }
+
+  fun clearBounds() {
+    hasBounds = false
   }
 
   fun setTappable(value: Boolean) {

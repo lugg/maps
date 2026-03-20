@@ -12,4 +12,4 @@ export type {
   GroundOverlayBounds,
 } from './GroundOverlay.types';
 export { TileOverlay } from './TileOverlay.web';
-export type { TileOverlayProps } from './TileOverlay.types';
+export type { TileOverlayProps, TileOverlayBounds } from './TileOverlay.types';

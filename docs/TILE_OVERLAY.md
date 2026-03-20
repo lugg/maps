@@ -14,12 +14,16 @@ import { MapView, TileOverlay } from '@lugg/maps';
     opacity={0.7}
   />
 
-  {/* Custom tile server */}
+  {/* Custom tile server with bounds */}
   <TileOverlay
     urlTemplate="https://tiles.example.com/{z}/{x}/{y}.png"
     tileSize={512}
     opacity={0.5}
     zIndex={1}
+    bounds={{
+      southwest: { latitude: 37.77, longitude: -122.44 },
+      northeast: { latitude: 37.79, longitude: -122.42 },
+    }}
   />
 </MapView>
 ```
@@ -31,6 +35,7 @@ import { MapView, TileOverlay } from '@lugg/maps';
 | `urlTemplate` | `string` | **required** | URL template with `{x}`, `{y}`, `{z}` placeholders |
 | `tileSize` | `number` | `256` | Size of each tile in pixels |
 | `opacity` | `number` | `1` | Opacity of the tile layer (0-1) |
+| `bounds` | `TileOverlayBounds` | - | Restrict tiles to a geographic region |
 | `zIndex` | `number` | - | Z-index for layering |
 | `onPress` | `() => void` | - | Called when the tile overlay is tapped |
 

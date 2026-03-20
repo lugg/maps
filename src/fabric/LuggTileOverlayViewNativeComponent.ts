@@ -6,10 +6,21 @@ import type {
   DirectEventHandler,
 } from 'react-native/Libraries/Types/CodegenTypes';
 
+export interface Coordinate {
+  latitude: Double;
+  longitude: Double;
+}
+
+export interface Bounds {
+  northeast: Coordinate;
+  southwest: Coordinate;
+}
+
 export interface NativeProps extends ViewProps {
   urlTemplate: string;
   tileSize?: Int32;
   opacity?: Double;
+  bounds?: Bounds;
   tappable?: boolean;
   onTileOverlayPress?: DirectEventHandler<null>;
 }

@@ -21,7 +21,7 @@ export type { GeoJsonProps } from './components';
 export { GroundOverlay } from './components';
 export type { GroundOverlayProps, GroundOverlayBounds } from './components';
 export { TileOverlay } from './components';
-export type { TileOverlayProps } from './components';
+export type { TileOverlayProps, TileOverlayBounds } from './components';
 export type {
   MapViewProps,
   MapViewRef,

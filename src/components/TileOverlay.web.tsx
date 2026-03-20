@@ -6,6 +6,7 @@ export const TileOverlay = ({
   urlTemplate,
   tileSize = 256,
   opacity = 1,
+  bounds,
   zIndex = 0,
   onPress,
 }: TileOverlayProps) => {
@@ -44,6 +45,28 @@ export const TileOverlay = ({
 
     const imageMapType = new google.maps.ImageMapType({
       getTileUrl: (coord, zoom) => {
+        if (bounds) {
+          const n = Math.pow(2, zoom);
+          const tileSWLat =
+            (Math.atan(Math.sinh(Math.PI * (1 - (2 * (coord.y + 1)) / n))) *
+              180) /
+            Math.PI;
+          const tileNELat =
+            (Math.atan(Math.sinh(Math.PI * (1 - (2 * coord.y) / n))) * 180) /
+            Math.PI;
+          const tileSWLng = (coord.x / n) * 360 - 180;
+          const tileNELng = ((coord.x + 1) / n) * 360 - 180;
+
+          if (
+            tileNELat < bounds.southwest.latitude ||
+            tileSWLat > bounds.northeast.latitude ||
+            tileNELng < bounds.southwest.longitude ||
+            tileSWLng > bounds.northeast.longitude
+          ) {
+            return null;
+          }
+        }
+
         return urlTemplate
           .replace('{x}', String(coord.x))
           .replace('{y}', String(coord.y))
@@ -57,7 +80,7 @@ export const TileOverlay = ({
     map.overlayMapTypes.insertAt(length, imageMapType);
     overlayRef.current = imageMapType;
     indexRef.current = length;
-  }, [map, urlTemplate, tileSize, opacity, zIndex, onPress, handleClick]);
+  }, [map, urlTemplate, tileSize, opacity, bounds, zIndex, onPress, handleClick]);
 
   return null;
 };

@@ -19,7 +19,8 @@ export class TileOverlay extends React.PureComponent<TileOverlayProps> {
   }
 
   render() {
-    const { urlTemplate, tileSize, opacity, zIndex, onPress } = this.props;
+    const { urlTemplate, tileSize, opacity, bounds, zIndex, onPress } =
+      this.props;
 
     return (
       <LuggTileOverlayViewNativeComponent
@@ -27,6 +28,7 @@ export class TileOverlay extends React.PureComponent<TileOverlayProps> {
         urlTemplate={urlTemplate}
         tileSize={tileSize}
         opacity={opacity}
+        bounds={bounds}
         tappable={!!onPress}
         onTileOverlayPress={onPress}
       />

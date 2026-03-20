@@ -1,5 +1,6 @@
 package com.luggmaps
 
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
@@ -44,6 +45,22 @@ class LuggTileOverlayViewManager :
   @ReactProp(name = "opacity", defaultFloat = 1f)
   override fun setOpacity(view: LuggTileOverlayView, value: Float) {
     view.setOverlayOpacity(value)
+  }
+
+  @ReactProp(name = "bounds")
+  override fun setBounds(view: LuggTileOverlayView, value: ReadableMap?) {
+    if (value == null) {
+      view.clearBounds()
+      return
+    }
+    val ne = value.getMap("northeast")
+    val sw = value.getMap("southwest")
+    view.setBounds(
+      sw?.getDouble("latitude") ?: 0.0,
+      sw?.getDouble("longitude") ?: 0.0,
+      ne?.getDouble("latitude") ?: 0.0,
+      ne?.getDouble("longitude") ?: 0.0
+    )
   }
 
   @ReactProp(name = "tappable")

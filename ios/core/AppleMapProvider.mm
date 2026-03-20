@@ -31,6 +31,42 @@
 @implementation GroundImageOverlay
 @end
 
+@interface BoundedTileOverlay : MKTileOverlay
+@property(nonatomic, assign) CLLocationCoordinate2D southwest;
+@property(nonatomic, assign) CLLocationCoordinate2D northeast;
+@end
+
+@implementation BoundedTileOverlay
+
+static double tileToLat(NSInteger y, NSInteger z) {
+  double n = M_PI - 2.0 * M_PI * y / pow(2.0, z);
+  return 180.0 / M_PI * atan(0.5 * (exp(n) - exp(-n)));
+}
+
+static double tileToLng(NSInteger x, NSInteger z) {
+  return x / pow(2.0, z) * 360.0 - 180.0;
+}
+
+- (void)loadTileAtPath:(MKTileOverlayPath)path
+                result:(void (^)(NSData *_Nullable, NSError *_Nullable))result {
+  double tileSW_lat = tileToLat(path.y + 1, path.z);
+  double tileNE_lat = tileToLat(path.y, path.z);
+  double tileSW_lng = tileToLng(path.x, path.z);
+  double tileNE_lng = tileToLng(path.x + 1, path.z);
+
+  if (tileNE_lat < self.southwest.latitude ||
+      tileSW_lat > self.northeast.latitude ||
+      tileNE_lng < self.southwest.longitude ||
+      tileSW_lng > self.northeast.longitude) {
+    result(nil, nil);
+    return;
+  }
+
+  [super loadTileAtPath:path result:result];
+}
+
+@end
+
 @interface GroundImageOverlayRenderer : MKOverlayRenderer
 @property(nonatomic, strong) UIImage *image;
 @property(nonatomic, assign) CGFloat overlayOpacity;
@@ -1232,7 +1268,7 @@
   if (!url)
     return;
 
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                  ^{
@@ -1308,8 +1344,17 @@
     tileOverlayView.overlay = nil;
   }
 
-  MKTileOverlay *tileOverlay =
-      [[MKTileOverlay alloc] initWithURLTemplate:urlTemplate];
+  MKTileOverlay *tileOverlay;
+  if (tileOverlayView.hasBounds) {
+    BoundedTileOverlay *bounded =
+        [[BoundedTileOverlay alloc] initWithURLTemplate:urlTemplate];
+    bounded.southwest = tileOverlayView.southwest;
+    bounded.northeast = tileOverlayView.northeast;
+    tileOverlay = bounded;
+  } else {
+    tileOverlay = [[MKTileOverlay alloc] initWithURLTemplate:urlTemplate];
+  }
+
   tileOverlay.tileSize = CGSizeMake(tileOverlayView.tileSize,
                                      tileOverlayView.tileSize);
   tileOverlay.canReplaceMapContent = NO;

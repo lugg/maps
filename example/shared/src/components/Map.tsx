@@ -11,6 +11,8 @@ import {
   Marker,
   GeoJson,
   Polygon,
+  GroundOverlay,
+  TileOverlay,
   type MapViewProps,
   type MapCameraEvent,
   type MarkerPressEvent,
@@ -36,6 +38,7 @@ interface MapProps extends MapViewProps {
   geojson?: GeoJSON | null;
   animatedPosition?: SharedValue<number>;
   onPolygonPress?: () => void;
+  onGroundOverlayPress?: () => void;
   onMarkerPress?: (event: MarkerPressEvent, marker: MarkerData) => void;
   onMarkerDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void;
   onMarkerDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void;
@@ -238,6 +241,7 @@ export const Map = forwardRef<MapView, MapProps>(
       onPress,
       onLongPress,
       onPolygonPress,
+      onGroundOverlayPress,
       onMarkerPress,
       onMarkerDragStart,
       onMarkerDragChange,
@@ -325,6 +329,25 @@ export const Map = forwardRef<MapView, MapProps>(
             color="#34A853"
           />
           <GeoJson geojson={SAMPLE_GEOJSON} />
+          <GroundOverlay
+            image={{
+              uri: 'https://picsum.photos/320/240',
+            }}
+            bounds={{
+              southwest: { latitude: 37.7765, longitude: -122.435 },
+              northeast: { latitude: 37.7805, longitude: -122.43 },
+            }}
+            opacity={0.6}
+            onPress={onGroundOverlayPress}
+          />
+          <TileOverlay
+            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            opacity={0.3}
+            bounds={{
+              southwest: { latitude: 37.77, longitude: -122.44 },
+              northeast: { latitude: 37.79, longitude: -122.42 },
+            }}
+          />
           {geojson && (
             <GeoJson
               geojson={geojson}
