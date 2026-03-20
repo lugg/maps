@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Image } from 'react-native';
 import { useMapContext } from '../MapProvider.web';
 import type { GroundOverlayProps } from './GroundOverlay.types';
 
@@ -49,8 +48,7 @@ export const GroundOverlay = ({
       return;
     }
 
-    const resolved = Image.resolveAssetSource(image);
-    const imageUrl = resolved?.uri ?? '';
+    const imageUrl = typeof image === 'number' ? '' : image?.uri ?? '';
     if (!imageUrl) return;
 
     const latLngBounds = new google.maps.LatLngBounds(
