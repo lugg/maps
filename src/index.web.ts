@@ -15,7 +15,10 @@ export type {
   GroundOverlayBounds,
 } from './components/index.web';
 export { TileOverlay } from './components/index.web';
-export type { TileOverlayProps, TileOverlayBounds } from './components/index.web';
+export type {
+  TileOverlayProps,
+  TileOverlayBounds,
+} from './components/index.web';
 export type {
   MapViewProps,
   MapViewRef,

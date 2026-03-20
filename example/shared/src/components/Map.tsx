@@ -12,7 +12,6 @@ import {
   GeoJson,
   Polygon,
   GroundOverlay,
-  TileOverlay,
   type MapViewProps,
   type MapCameraEvent,
   type MarkerPressEvent,
@@ -339,14 +338,6 @@ export const Map = forwardRef<MapView, MapProps>(
             }}
             opacity={0.6}
             onPress={onGroundOverlayPress}
-          />
-          <TileOverlay
-            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            opacity={0.3}
-            bounds={{
-              southwest: { latitude: 37.77, longitude: -122.44 },
-              northeast: { latitude: 37.79, longitude: -122.42 },
-            }}
           />
           {geojson && (
             <GeoJson

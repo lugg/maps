@@ -80,7 +80,16 @@ export const TileOverlay = ({
     map.overlayMapTypes.insertAt(length, imageMapType);
     overlayRef.current = imageMapType;
     indexRef.current = length;
-  }, [map, urlTemplate, tileSize, opacity, bounds, zIndex, onPress, handleClick]);
+  }, [
+    map,
+    urlTemplate,
+    tileSize,
+    opacity,
+    bounds,
+    zIndex,
+    onPress,
+    handleClick,
+  ]);
 
   return null;
 };
