@@ -42,9 +42,9 @@ class LuggTileOverlayViewManager :
     view.setTileSize(value)
   }
 
-  @ReactProp(name = "opacity", defaultFloat = 1f)
-  override fun setOpacity(view: LuggTileOverlayView, value: Float) {
-    view.setOverlayOpacity(value)
+  @ReactProp(name = "opacity", defaultDouble = 1.0)
+  override fun setOpacity(view: LuggTileOverlayView, value: Double) {
+    view.setOverlayOpacity(value.toFloat())
   }
 
   @ReactProp(name = "bounds")

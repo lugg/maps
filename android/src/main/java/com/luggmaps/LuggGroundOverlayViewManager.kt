@@ -55,14 +55,14 @@ class LuggGroundOverlayViewManager :
     }
   }
 
-  @ReactProp(name = "opacity", defaultFloat = 1f)
-  override fun setOpacity(view: LuggGroundOverlayView, value: Float) {
-    view.setOverlayOpacity(value)
+  @ReactProp(name = "opacity", defaultDouble = 1.0)
+  override fun setOpacity(view: LuggGroundOverlayView, value: Double) {
+    view.setOverlayOpacity(value.toFloat())
   }
 
-  @ReactProp(name = "bearing", defaultFloat = 0f)
-  override fun setBearing(view: LuggGroundOverlayView, value: Float) {
-    view.setBearing(value)
+  @ReactProp(name = "bearing", defaultDouble = 0.0)
+  override fun setBearing(view: LuggGroundOverlayView, value: Double) {
+    view.setBearing(value.toFloat())
   }
 
   @ReactProp(name = "tappable")

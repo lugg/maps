@@ -831,8 +831,11 @@ class GoogleMapProvider(private val context: Context) :
     // Load image async and add overlay
     Thread {
       try {
-        val url = URL(imageUri)
-        val bitmap = android.graphics.BitmapFactory.decodeStream(url.openStream())
+        val connection = URL(imageUri).openConnection() as java.net.HttpURLConnection
+        connection.instanceFollowRedirects = true
+        connection.connect()
+        val bitmap = android.graphics.BitmapFactory.decodeStream(connection.inputStream)
+        connection.disconnect()
         if (bitmap != null) {
           mapView?.post {
             addGroundOverlayToMap(groundOverlayView, bitmap)
