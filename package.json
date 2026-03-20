@@ -151,6 +151,7 @@
         "LuggMapWrapperView": "LuggMapWrapperView",
         "LuggPolylineView": "LuggPolylineView",
         "LuggPolygonView": "LuggPolygonView",
+        "LuggCircleView": "LuggCircleView",
         "LuggGroundOverlayView": "LuggGroundOverlayView",
         "LuggTileOverlayView": "LuggTileOverlayView"
       }

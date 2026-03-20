@@ -325,9 +325,9 @@ export const Map = forwardRef<MapView, MapProps>(
             onPress={onPolygonPress}
           />
           <Circle
-            center={{ latitude: 37.782, longitude: -122.435 }}
-            radius={200}
-            fillColor="rgba(244, 67, 54, 0.15)"
+            center={{ latitude: 37.78, longitude: -122.427 }}
+            radius={300}
+            fillColor="rgba(244, 67, 54, 0.3)"
             strokeColor="#F44336"
             strokeWidth={2}
             onPress={onCirclePress}
