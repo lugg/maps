@@ -41,7 +41,10 @@ export interface MarkerProps {
    */
   description?: string;
   /**
-   * Anchor point for custom marker views
+   * Anchor point for custom marker views.
+   * `{x: 0.5, y: 1}` places the bottom-center of the marker at the coordinate.
+   *
+   * @default {x: 0.5, y: 1}
    */
   anchor?: Point;
   /**

@@ -33,7 +33,6 @@ export const INITIAL_MARKERS: MarkerData[] = [
     name: 'marker-4',
     coordinate: { latitude: 37.775, longitude: -122.44 },
     type: 'basic',
-    anchor: { x: 0.5, y: 1 },
   },
   {
     id: '7',
@@ -63,7 +62,6 @@ export const INITIAL_MARKERS: MarkerData[] = [
     name: 'marker-2',
     coordinate: { latitude: 37.785, longitude: -122.42 },
     type: 'basic',
-    anchor: { x: 0.5, y: 1 },
   },
   {
     id: '9',
@@ -91,6 +89,5 @@ export const INITIAL_MARKERS: MarkerData[] = [
     name: 'marker-5',
     coordinate: { latitude: 37.79, longitude: -122.435 },
     type: 'basic',
-    anchor: { x: 0.5, y: 1 },
   },
 ];

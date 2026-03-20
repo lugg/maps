@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import LuggMarkerViewNativeComponent from '../fabric/LuggMarkerViewNativeComponent';
 import LuggCalloutViewNativeComponent from '../fabric/LuggCalloutViewNativeComponent';
 import type { MarkerProps } from './Marker.types';
+import type { Point } from '../types';
 
 export type {
   CalloutOptions,
@@ -10,6 +11,8 @@ export type {
   MarkerPressEvent,
   MarkerDragEvent,
 } from './Marker.types';
+
+const DEFAULT_ANCHOR: Point = { x: 0.5, y: 1 };
 
 export class Marker extends React.PureComponent<MarkerProps> {
   private getStyle(zIndex: number | undefined) {
@@ -60,7 +63,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
         coordinate={coordinate}
         title={title}
         description={description}
-        anchor={anchor}
+        anchor={anchor ?? DEFAULT_ANCHOR}
         rotate={rotate}
         scale={scale}
         rasterize={rasterize}

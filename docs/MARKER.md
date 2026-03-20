@@ -34,7 +34,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `coordinate` | `Coordinate` | **required** | Marker position |
 | `title` | `string` | - | Callout title |
 | `description` | `string` | - | Callout description |
-| `anchor` | `Point` | - | Anchor point for custom views |
+| `anchor` | `Point` | `{x: 0.5, y: 1}` | Anchor point for custom views |
 | `zIndex` | `number` | - | Z-index for marker ordering. Higher values render on top |
 | `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
 | `scale` | `number` | `1` | Scale factor for the marker |
@@ -83,7 +83,7 @@ Use the `children` prop to render a custom marker view. The `anchor` prop contro
 - `{ x: 0.5, y: 0 }` - top center
 - `{ x: 1, y: 0 }` - top right
 - `{ x: 0.5, y: 0.5 }` - center
-- `{ x: 0.5, y: 1 }` - bottom center (default for pins)
+- `{ x: 0.5, y: 1 }` - bottom center **(default)**
 
 ## Callout
 
