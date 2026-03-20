@@ -150,7 +150,9 @@
         "LuggCalloutView": "LuggCalloutView",
         "LuggMapWrapperView": "LuggMapWrapperView",
         "LuggPolylineView": "LuggPolylineView",
-        "LuggPolygonView": "LuggPolygonView"
+        "LuggPolygonView": "LuggPolygonView",
+        "LuggGroundOverlayView": "LuggGroundOverlayView",
+        "LuggTileOverlayView": "LuggTileOverlayView"
       }
     }
   },

@@ -15,3 +15,10 @@ export type {
 } from './Polyline.types';
 export { GeoJson } from './GeoJson';
 export type { GeoJsonProps } from './GeoJson.types';
+export { GroundOverlay } from './GroundOverlay';
+export type {
+  GroundOverlayProps,
+  GroundOverlayBounds,
+} from './GroundOverlay.types';
+export { TileOverlay } from './TileOverlay';
+export type { TileOverlayProps } from './TileOverlay.types';

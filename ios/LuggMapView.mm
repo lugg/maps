@@ -1,8 +1,10 @@
 #import "LuggMapView.h"
+#import "LuggGroundOverlayView.h"
 #import "LuggMapWrapperView.h"
 #import "LuggMarkerView.h"
 #import "LuggPolygonView.h"
 #import "LuggPolylineView.h"
+#import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
 #import "core/GoogleMapProvider.h"
 #import "core/MapProviderDelegate.h"
@@ -91,6 +93,19 @@ using namespace luggmaps::events;
     if (_provider) {
       [_provider addPolygonView:polygonView];
     }
+  } else if ([childComponentView
+                 isKindOfClass:[LuggGroundOverlayView class]]) {
+    LuggGroundOverlayView *groundOverlayView =
+        (LuggGroundOverlayView *)childComponentView;
+    if (_provider) {
+      [_provider addGroundOverlayView:groundOverlayView];
+    }
+  } else if ([childComponentView isKindOfClass:[LuggTileOverlayView class]]) {
+    LuggTileOverlayView *tileOverlayView =
+        (LuggTileOverlayView *)childComponentView;
+    if (_provider) {
+      [_provider addTileOverlayView:tileOverlayView];
+    }
   }
 }
 
@@ -111,6 +126,19 @@ using namespace luggmaps::events;
     LuggPolygonView *polygonView = (LuggPolygonView *)childComponentView;
     if (_provider) {
       [_provider removePolygonView:polygonView];
+    }
+  } else if ([childComponentView
+                 isKindOfClass:[LuggGroundOverlayView class]]) {
+    LuggGroundOverlayView *groundOverlayView =
+        (LuggGroundOverlayView *)childComponentView;
+    if (_provider) {
+      [_provider removeGroundOverlayView:groundOverlayView];
+    }
+  } else if ([childComponentView isKindOfClass:[LuggTileOverlayView class]]) {
+    LuggTileOverlayView *tileOverlayView =
+        (LuggTileOverlayView *)childComponentView;
+    if (_provider) {
+      [_provider removeTileOverlayView:tileOverlayView];
     }
   }
 
@@ -179,6 +207,10 @@ using namespace luggmaps::events;
       [_provider addPolylineView:(LuggPolylineView *)subview];
     } else if ([subview isKindOfClass:[LuggPolygonView class]]) {
       [_provider addPolygonView:(LuggPolygonView *)subview];
+    } else if ([subview isKindOfClass:[LuggGroundOverlayView class]]) {
+      [_provider addGroundOverlayView:(LuggGroundOverlayView *)subview];
+    } else if ([subview isKindOfClass:[LuggTileOverlayView class]]) {
+      [_provider addTileOverlayView:(LuggTileOverlayView *)subview];
     }
   }
 }

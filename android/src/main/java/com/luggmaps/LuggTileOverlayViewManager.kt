@@ -1,0 +1,63 @@
+package com.luggmaps
+
+import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.ViewGroupManager
+import com.facebook.react.uimanager.ViewManagerDelegate
+import com.facebook.react.uimanager.annotations.ReactProp
+import com.facebook.react.viewmanagers.LuggTileOverlayViewManagerDelegate
+import com.facebook.react.viewmanagers.LuggTileOverlayViewManagerInterface
+
+@ReactModule(name = LuggTileOverlayViewManager.NAME)
+class LuggTileOverlayViewManager :
+  ViewGroupManager<LuggTileOverlayView>(),
+  LuggTileOverlayViewManagerInterface<LuggTileOverlayView> {
+  private val delegate: ViewManagerDelegate<LuggTileOverlayView> = LuggTileOverlayViewManagerDelegate(this)
+
+  override fun getDelegate(): ViewManagerDelegate<LuggTileOverlayView> = delegate
+  override fun getName(): String = NAME
+  override fun createViewInstance(context: ThemedReactContext): LuggTileOverlayView = LuggTileOverlayView(context)
+
+  override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
+    mapOf("topTileOverlayPress" to mapOf("registrationName" to "onTileOverlayPress"))
+
+  override fun onDropViewInstance(view: LuggTileOverlayView) {
+    super.onDropViewInstance(view)
+    view.onDropViewInstance()
+  }
+
+  override fun onAfterUpdateTransaction(view: LuggTileOverlayView) {
+    super.onAfterUpdateTransaction(view)
+    view.onAfterUpdateTransaction()
+  }
+
+  @ReactProp(name = "urlTemplate")
+  override fun setUrlTemplate(view: LuggTileOverlayView, value: String?) {
+    view.setUrlTemplate(value ?: "")
+  }
+
+  @ReactProp(name = "tileSize", defaultInt = 256)
+  override fun setTileSize(view: LuggTileOverlayView, value: Int) {
+    view.setTileSize(value)
+  }
+
+  @ReactProp(name = "opacity", defaultFloat = 1f)
+  override fun setOpacity(view: LuggTileOverlayView, value: Float) {
+    view.setOverlayOpacity(value)
+  }
+
+  @ReactProp(name = "tappable")
+  override fun setTappable(view: LuggTileOverlayView, value: Boolean) {
+    view.setTappable(value)
+  }
+
+  @ReactProp(name = "zIndex", defaultFloat = 0f)
+  override fun setZIndex(view: LuggTileOverlayView, value: Float) {
+    super.setZIndex(view, value)
+    view.setZIndex(value)
+  }
+
+  companion object {
+    const val NAME = "LuggTileOverlayView"
+  }
+}

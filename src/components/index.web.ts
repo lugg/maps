@@ -6,3 +6,10 @@ export type { PolygonProps } from './Polygon.types';
 export type { PolylineProps } from './Polyline.types';
 export { GeoJson } from './GeoJson';
 export type { GeoJsonProps } from './GeoJson.types';
+export { GroundOverlay } from './GroundOverlay.web';
+export type {
+  GroundOverlayProps,
+  GroundOverlayBounds,
+} from './GroundOverlay.types';
+export { TileOverlay } from './TileOverlay.web';
+export type { TileOverlayProps } from './TileOverlay.types';

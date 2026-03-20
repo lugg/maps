@@ -12,6 +12,8 @@ class LuggPackage : ReactPackage {
       LuggCalloutViewManager(),
       LuggMapWrapperViewManager(),
       LuggPolylineViewManager(),
-      LuggPolygonViewManager()
+      LuggPolygonViewManager(),
+      LuggGroundOverlayViewManager(),
+      LuggTileOverlayViewManager()
     )
 }

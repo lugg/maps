@@ -17,10 +17,18 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.GroundOverlay
+import com.google.android.gms.maps.model.GroundOverlayOptions
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.TileOverlay
+import com.google.android.gms.maps.model.TileOverlayOptions
+import com.google.android.gms.maps.model.UrlTileProvider
 import com.luggmaps.LuggCalloutView
+import com.luggmaps.LuggGroundOverlayView
+import com.luggmaps.LuggGroundOverlayViewDelegate
 import com.luggmaps.LuggMapWrapperView
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggMarkerViewDelegate
@@ -28,6 +36,9 @@ import com.luggmaps.LuggPolygonView
 import com.luggmaps.LuggPolygonViewDelegate
 import com.luggmaps.LuggPolylineView
 import com.luggmaps.LuggPolylineViewDelegate
+import com.luggmaps.LuggTileOverlayView
+import com.luggmaps.LuggTileOverlayViewDelegate
+import java.net.URL
 
 class GoogleMapProvider(private val context: Context) :
   MapProvider,
@@ -35,12 +46,15 @@ class GoogleMapProvider(private val context: Context) :
   LuggMarkerViewDelegate,
   LuggPolylineViewDelegate,
   LuggPolygonViewDelegate,
+  LuggGroundOverlayViewDelegate,
+  LuggTileOverlayViewDelegate,
   GoogleMap.OnCameraMoveStartedListener,
   GoogleMap.OnCameraMoveListener,
   GoogleMap.OnCameraIdleListener,
   GoogleMap.OnMapClickListener,
   GoogleMap.OnMapLongClickListener,
   GoogleMap.OnPolygonClickListener,
+  GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
   GoogleMap.InfoWindowAdapter {
@@ -58,8 +72,11 @@ class GoogleMapProvider(private val context: Context) :
   private val pendingMarkerViews = mutableSetOf<LuggMarkerView>()
   private val pendingPolylineViews = mutableSetOf<LuggPolylineView>()
   private val pendingPolygonViews = mutableSetOf<LuggPolygonView>()
+  private val pendingGroundOverlayViews = mutableSetOf<LuggGroundOverlayView>()
+  private val pendingTileOverlayViews = mutableSetOf<LuggTileOverlayView>()
   private val polylineAnimators = mutableMapOf<LuggPolylineView, PolylineAnimator>()
   private val polygonToViewMap = mutableMapOf<Polygon, LuggPolygonView>()
+  private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
   private var activeNonBubbledMarker: Marker? = null
@@ -118,9 +135,12 @@ class GoogleMapProvider(private val context: Context) :
     pendingMarkerViews.clear()
     pendingPolylineViews.clear()
     pendingPolygonViews.clear()
+    pendingGroundOverlayViews.clear()
+    pendingTileOverlayViews.clear()
     polylineAnimators.values.forEach { it.destroy() }
     polylineAnimators.clear()
     polygonToViewMap.clear()
+    groundOverlayToViewMap.clear()
     markerToViewMap.clear()
     wrapperView?.touchEventHandler = null
     wrapperView = null
@@ -130,6 +150,7 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.setOnMapClickListener(null)
     googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
+    googleMap?.setOnGroundOverlayClickListener(null)
     googleMap?.setOnMarkerClickListener(null)
     googleMap?.setOnMarkerDragListener(null)
     googleMap?.setInfoWindowAdapter(null)
@@ -154,6 +175,7 @@ class GoogleMapProvider(private val context: Context) :
     map.setOnMapClickListener(this)
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
+    map.setOnGroundOverlayClickListener(this)
     map.setOnMarkerClickListener(this)
     map.setOnMarkerDragListener(this)
     map.setInfoWindowAdapter(this)
@@ -172,6 +194,8 @@ class GoogleMapProvider(private val context: Context) :
     processPendingMarkers()
     processPendingPolylines()
     processPendingPolygons()
+    processPendingGroundOverlays()
+    processPendingTileOverlays()
 
     delegate?.mapProviderDidReady()
   }
@@ -224,6 +248,13 @@ class GoogleMapProvider(private val context: Context) :
       polygonView.emitPressEvent()
     } else {
       onMapClick(tapLocation ?: return)
+    }
+  }
+
+  override fun onGroundOverlayClick(groundOverlay: GroundOverlay) {
+    val view = groundOverlayToViewMap[groundOverlay]
+    if (view?.tappable == true) {
+      view.emitPressEvent()
     }
   }
 
@@ -483,6 +514,22 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun polygonViewDidUpdate(polygonView: LuggPolygonView) {
     syncPolygonView(polygonView)
+  }
+
+  // endregion
+
+  // region GroundOverlayViewDelegate
+
+  override fun groundOverlayViewDidUpdate(groundOverlayView: LuggGroundOverlayView) {
+    syncGroundOverlayView(groundOverlayView)
+  }
+
+  // endregion
+
+  // region TileOverlayViewDelegate
+
+  override fun tileOverlayViewDidUpdate(tileOverlayView: LuggTileOverlayView) {
+    syncTileOverlayView(tileOverlayView)
   }
 
   // endregion
@@ -749,6 +796,132 @@ class GoogleMapProvider(private val context: Context) :
     val polygon = map.addPolygon(options)
     polygonView.polygon = polygon
     polygonToViewMap[polygon] = polygonView
+  }
+
+  // endregion
+
+  // region Ground Overlay Management
+
+  override fun addGroundOverlayView(groundOverlayView: LuggGroundOverlayView) {
+    groundOverlayView.delegate = this
+    syncGroundOverlayView(groundOverlayView)
+  }
+
+  override fun removeGroundOverlayView(groundOverlayView: LuggGroundOverlayView) {
+    groundOverlayView.delegate = null
+    groundOverlayView.groundOverlay?.let { groundOverlayToViewMap.remove(it) }
+    groundOverlayView.groundOverlay?.remove()
+    groundOverlayView.groundOverlay = null
+  }
+
+  private fun syncGroundOverlayView(groundOverlayView: LuggGroundOverlayView) {
+    if (googleMap == null) {
+      pendingGroundOverlayViews.add(groundOverlayView)
+      return
+    }
+
+    val imageUri = groundOverlayView.imageUri
+    if (imageUri.isEmpty()) return
+
+    // Remove old overlay
+    groundOverlayView.groundOverlay?.let { groundOverlayToViewMap.remove(it) }
+    groundOverlayView.groundOverlay?.remove()
+    groundOverlayView.groundOverlay = null
+
+    // Load image async and add overlay
+    Thread {
+      try {
+        val url = URL(imageUri)
+        val bitmap = android.graphics.BitmapFactory.decodeStream(url.openStream())
+        if (bitmap != null) {
+          mapView?.post {
+            addGroundOverlayToMap(groundOverlayView, bitmap)
+          }
+        }
+      } catch (_: Exception) {}
+    }.start()
+  }
+
+  private fun addGroundOverlayToMap(
+    groundOverlayView: LuggGroundOverlayView,
+    bitmap: android.graphics.Bitmap
+  ) {
+    val map = googleMap ?: return
+
+    val bounds = LatLngBounds(groundOverlayView.southwest, groundOverlayView.northeast)
+    val options = GroundOverlayOptions()
+      .image(BitmapDescriptorFactory.fromBitmap(bitmap))
+      .positionFromBounds(bounds)
+      .transparency(1f - groundOverlayView.overlayOpacity)
+      .bearing(groundOverlayView.bearing)
+      .zIndex(groundOverlayView.zIndex)
+      .clickable(groundOverlayView.tappable)
+
+    val overlay = map.addGroundOverlay(options)
+    if (overlay != null) {
+      groundOverlayView.groundOverlay = overlay
+      groundOverlayToViewMap[overlay] = groundOverlayView
+    }
+  }
+
+  private fun processPendingGroundOverlays() {
+    if (googleMap == null) return
+    pendingGroundOverlayViews.forEach { syncGroundOverlayView(it) }
+    pendingGroundOverlayViews.clear()
+  }
+
+  // endregion
+
+  // region Tile Overlay Management
+
+  override fun addTileOverlayView(tileOverlayView: LuggTileOverlayView) {
+    tileOverlayView.delegate = this
+    syncTileOverlayView(tileOverlayView)
+  }
+
+  override fun removeTileOverlayView(tileOverlayView: LuggTileOverlayView) {
+    tileOverlayView.delegate = null
+    tileOverlayView.tileOverlay?.remove()
+    tileOverlayView.tileOverlay = null
+  }
+
+  private fun syncTileOverlayView(tileOverlayView: LuggTileOverlayView) {
+    if (googleMap == null) {
+      pendingTileOverlayViews.add(tileOverlayView)
+      return
+    }
+
+    val urlTemplate = tileOverlayView.urlTemplate
+    if (urlTemplate.isEmpty()) return
+
+    // Remove old overlay
+    tileOverlayView.tileOverlay?.remove()
+    tileOverlayView.tileOverlay = null
+
+    val tileSize = tileOverlayView.tileSize
+    val tileProvider = object : UrlTileProvider(tileSize, tileSize) {
+      override fun getTileUrl(x: Int, y: Int, zoom: Int): URL? {
+        val url = urlTemplate
+          .replace("{x}", x.toString())
+          .replace("{y}", y.toString())
+          .replace("{z}", zoom.toString())
+        return try { URL(url) } catch (_: Exception) { null }
+      }
+    }
+
+    val options = TileOverlayOptions()
+      .tileProvider(tileProvider)
+      .transparency(1f - tileOverlayView.overlayOpacity)
+      .zIndex(tileOverlayView.zIndex)
+
+    val overlay = googleMap?.addTileOverlay(options)
+    tileOverlayView.tileOverlay = overlay
+  }
+
+  private fun processPendingTileOverlays() {
+    if (googleMap == null) return
+    pendingTileOverlayViews.forEach { syncTileOverlayView(it) }
+    pendingTileOverlayViews.clear()
   }
 
   // endregion

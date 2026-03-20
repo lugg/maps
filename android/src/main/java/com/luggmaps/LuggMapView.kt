@@ -78,6 +78,8 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggMarkerView -> provider?.addMarkerView(child)
       is LuggPolylineView -> provider?.addPolylineView(child)
       is LuggPolygonView -> provider?.addPolygonView(child)
+      is LuggGroundOverlayView -> provider?.addGroundOverlayView(child)
+      is LuggTileOverlayView -> provider?.addTileOverlayView(child)
     }
   }
 
@@ -87,6 +89,8 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggMarkerView -> provider?.removeMarkerView(view)
       is LuggPolylineView -> provider?.removePolylineView(view)
       is LuggPolygonView -> provider?.removePolygonView(view)
+      is LuggGroundOverlayView -> provider?.removeGroundOverlayView(view)
+      is LuggTileOverlayView -> provider?.removeTileOverlayView(view)
     }
     super.removeViewAt(index)
   }
@@ -135,6 +139,8 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
         is LuggMarkerView -> google.addMarkerView(child)
         is LuggPolylineView -> google.addPolylineView(child)
         is LuggPolygonView -> google.addPolygonView(child)
+        is LuggGroundOverlayView -> google.addGroundOverlayView(child)
+        is LuggTileOverlayView -> google.addTileOverlayView(child)
       }
     }
   }

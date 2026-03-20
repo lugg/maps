@@ -9,6 +9,13 @@ export { Polyline } from './components/index.web';
 export type { PolylineProps } from './components/index.web';
 export { GeoJson } from './components/index.web';
 export type { GeoJsonProps } from './components/index.web';
+export { GroundOverlay } from './components/index.web';
+export type {
+  GroundOverlayProps,
+  GroundOverlayBounds,
+} from './components/index.web';
+export { TileOverlay } from './components/index.web';
+export type { TileOverlayProps } from './components/index.web';
 export type {
   MapViewProps,
   MapViewRef,

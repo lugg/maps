@@ -1,8 +1,10 @@
 #import "GoogleMapProvider.h"
 #import "../LuggCalloutView.h"
+#import "../LuggGroundOverlayView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
+#import "../LuggTileOverlayView.h"
 #import "GMSPolylineAnimator.h"
 #import "PolylineAnimatorBase.h"
 
@@ -10,7 +12,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 @interface GoogleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
-    LuggPolygonViewDelegate>
+    LuggPolygonViewDelegate, LuggGroundOverlayViewDelegate,
+    LuggTileOverlayViewDelegate>
 @end
 
 @implementation GoogleMapProvider {
@@ -23,9 +26,13 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
   NSMutableArray<LuggPolylineView *> *_pendingPolylineViews;
   NSMutableArray<LuggPolygonView *> *_pendingPolygonViews;
+  NSMutableArray<LuggGroundOverlayView *> *_pendingGroundOverlayViews;
+  NSMutableArray<LuggTileOverlayView *> *_pendingTileOverlayViews;
   NSMapTable<LuggPolylineView *, GMSPolylineAnimator *> *_polylineAnimators;
   NSMapTable<GMSPolygon *, LuggPolygonView *> *_polygonToViewMap;
   NSMapTable<GMSMarker *, LuggMarkerView *> *_markerToViewMap;
+  NSMapTable<GMSGroundOverlay *, LuggGroundOverlayView *>
+      *_groundOverlayToViewMap;
   LuggMarkerView *_activeNonBubbledMarker;
 
   // Edge insets animation
@@ -45,9 +52,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     _pendingMarkerViews = [NSMutableArray array];
     _pendingPolylineViews = [NSMutableArray array];
     _pendingPolygonViews = [NSMutableArray array];
+    _pendingGroundOverlayViews = [NSMutableArray array];
+    _pendingTileOverlayViews = [NSMutableArray array];
     _polylineAnimators = [NSMapTable weakToStrongObjectsMapTable];
     _polygonToViewMap = [NSMapTable strongToWeakObjectsMapTable];
     _markerToViewMap = [NSMapTable strongToWeakObjectsMapTable];
+    _groundOverlayToViewMap = [NSMapTable strongToWeakObjectsMapTable];
   }
   return self;
 }
@@ -101,6 +111,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [self processPendingMarkers];
   [self processPendingPolylines];
   [self processPendingPolygons];
+  [self processPendingGroundOverlays];
+  [self processPendingTileOverlays];
 
   [_delegate mapProviderDidReady];
 }
@@ -110,9 +122,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
   [_pendingPolygonViews removeAllObjects];
+  [_pendingGroundOverlayViews removeAllObjects];
+  [_pendingTileOverlayViews removeAllObjects];
   [_polylineAnimators removeAllObjects];
   [_polygonToViewMap removeAllObjects];
   [_markerToViewMap removeAllObjects];
+  [_groundOverlayToViewMap removeAllObjects];
   [_mapView clear];
   [_mapView removeFromSuperview];
   _mapView = nil;
@@ -291,15 +306,20 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)mapView:(GMSMapView *)mapView didTapOverlay:(GMSOverlay *)overlay {
-  if (![overlay isKindOfClass:[GMSPolygon class]])
-    return;
-
-  GMSPolygon *polygon = (GMSPolygon *)overlay;
-  LuggPolygonView *polygonView = [_polygonToViewMap objectForKey:polygon];
-  if (!polygonView || !polygonView.tappable)
-    return;
-
-  [polygonView emitPressEvent];
+  if ([overlay isKindOfClass:[GMSPolygon class]]) {
+    GMSPolygon *polygon = (GMSPolygon *)overlay;
+    LuggPolygonView *polygonView = [_polygonToViewMap objectForKey:polygon];
+    if (polygonView && polygonView.tappable) {
+      [polygonView emitPressEvent];
+    }
+  } else if ([overlay isKindOfClass:[GMSGroundOverlay class]]) {
+    GMSGroundOverlay *groundOverlay = (GMSGroundOverlay *)overlay;
+    LuggGroundOverlayView *groundOverlayView =
+        [_groundOverlayToViewMap objectForKey:groundOverlay];
+    if (groundOverlayView && groundOverlayView.tappable) {
+      [groundOverlayView emitPressEvent];
+    }
+  }
 }
 
 - (BOOL)mapView:(GMSMapView *)mapView didTapMarker:(GMSMarker *)marker {
@@ -473,6 +493,19 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)polygonViewDidUpdate:(LuggPolygonView *)polygonView {
   [self syncPolygonView:polygonView];
+}
+
+#pragma mark - GroundOverlayViewDelegate
+
+- (void)groundOverlayViewDidUpdate:
+    (LuggGroundOverlayView *)groundOverlayView {
+  [self syncGroundOverlayView:groundOverlayView];
+}
+
+#pragma mark - TileOverlayViewDelegate
+
+- (void)tileOverlayViewDidUpdate:(LuggTileOverlayView *)tileOverlayView {
+  [self syncTileOverlayView:tileOverlayView];
 }
 
 #pragma mark - Marker Management
@@ -737,6 +770,161 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   polygon.map = _mapView;
   polygonView.polygon = polygon;
   [_polygonToViewMap setObject:polygonView forKey:polygon];
+}
+
+#pragma mark - Ground Overlay Management
+
+- (void)addGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  groundOverlayView.delegate = self;
+  [self syncGroundOverlayView:groundOverlayView];
+}
+
+- (void)removeGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  groundOverlayView.delegate = nil;
+  GMSGroundOverlay *overlay = (GMSGroundOverlay *)groundOverlayView.overlay;
+  if (overlay) {
+    [_groundOverlayToViewMap removeObjectForKey:overlay];
+    overlay.map = nil;
+    groundOverlayView.overlay = nil;
+  }
+}
+
+- (void)syncGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  if (!_mapView) {
+    if (![_pendingGroundOverlayViews containsObject:groundOverlayView]) {
+      [_pendingGroundOverlayViews addObject:groundOverlayView];
+    }
+    return;
+  }
+
+  NSString *imageUri = groundOverlayView.imageUri;
+  if (imageUri.length == 0)
+    return;
+
+  // Remove old overlay
+  GMSGroundOverlay *oldOverlay = (GMSGroundOverlay *)groundOverlayView.overlay;
+  if (oldOverlay) {
+    [_groundOverlayToViewMap removeObjectForKey:oldOverlay];
+    oldOverlay.map = nil;
+    groundOverlayView.overlay = nil;
+  }
+
+  // Load image and create overlay
+  NSURL *url = [NSURL URLWithString:imageUri];
+  if (!url)
+    return;
+
+  __weak typeof(self) weakSelf = self;
+  __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                 ^{
+                   NSData *data = [NSData dataWithContentsOfURL:url];
+                   UIImage *image = data ? [UIImage imageWithData:data] : nil;
+                   dispatch_async(dispatch_get_main_queue(), ^{
+                     [weakSelf addGroundOverlayToMap:weakOverlayView
+                                              image:image];
+                   });
+                 });
+}
+
+- (void)addGroundOverlayToMap:(LuggGroundOverlayView *)groundOverlayView
+                        image:(UIImage *)image {
+  if (!_mapView || !groundOverlayView || !image)
+    return;
+
+  GMSCoordinateBounds *bounds = [[GMSCoordinateBounds alloc]
+      initWithCoordinate:groundOverlayView.southwest
+              coordinate:groundOverlayView.northeast];
+
+  GMSGroundOverlay *overlay =
+      [GMSGroundOverlay groundOverlayWithBounds:bounds icon:image];
+  overlay.opacity = groundOverlayView.opacity;
+  overlay.bearing = groundOverlayView.bearing;
+  overlay.zIndex = (int)groundOverlayView.zIndex;
+  overlay.tappable = groundOverlayView.tappable;
+  overlay.map = _mapView;
+
+  groundOverlayView.overlay = overlay;
+  [_groundOverlayToViewMap setObject:groundOverlayView forKey:overlay];
+}
+
+- (void)processPendingGroundOverlays {
+  if (!_mapView)
+    return;
+
+  for (LuggGroundOverlayView *view in _pendingGroundOverlayViews) {
+    [self syncGroundOverlayView:view];
+  }
+  [_pendingGroundOverlayViews removeAllObjects];
+}
+
+#pragma mark - Tile Overlay Management
+
+- (void)addTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  tileOverlayView.delegate = self;
+  [self syncTileOverlayView:tileOverlayView];
+}
+
+- (void)removeTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  tileOverlayView.delegate = nil;
+  GMSTileLayer *tileLayer = (GMSTileLayer *)tileOverlayView.overlay;
+  if (tileLayer) {
+    tileLayer.map = nil;
+    tileOverlayView.overlay = nil;
+  }
+}
+
+- (void)syncTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  if (!_mapView) {
+    if (![_pendingTileOverlayViews containsObject:tileOverlayView]) {
+      [_pendingTileOverlayViews addObject:tileOverlayView];
+    }
+    return;
+  }
+
+  NSString *urlTemplate = tileOverlayView.urlTemplate;
+  if (urlTemplate.length == 0)
+    return;
+
+  // Remove old tile layer
+  GMSTileLayer *oldLayer = (GMSTileLayer *)tileOverlayView.overlay;
+  if (oldLayer) {
+    oldLayer.map = nil;
+    tileOverlayView.overlay = nil;
+  }
+
+  GMSTileURLConstructor constructor = ^NSURL *(NSUInteger x, NSUInteger y,
+                                               NSUInteger zoom) {
+    NSString *urlString = [urlTemplate
+        stringByReplacingOccurrencesOfString:@"{x}"
+                                  withString:[@(x) stringValue]];
+    urlString = [urlString stringByReplacingOccurrencesOfString:@"{y}"
+                                                    withString:[@(y)
+                                                                   stringValue]];
+    urlString =
+        [urlString stringByReplacingOccurrencesOfString:@"{z}"
+                                             withString:[@(zoom) stringValue]];
+    return [NSURL URLWithString:urlString];
+  };
+
+  GMSURLTileLayer *tileLayer =
+      [GMSURLTileLayer tileLayerWithURLConstructor:constructor];
+  tileLayer.tileSize = tileOverlayView.tileSize;
+  tileLayer.opacity = tileOverlayView.opacity;
+  tileLayer.zIndex = (int)tileOverlayView.zIndex;
+  tileLayer.map = _mapView;
+
+  tileOverlayView.overlay = tileLayer;
+}
+
+- (void)processPendingTileOverlays {
+  if (!_mapView)
+    return;
+
+  for (LuggTileOverlayView *view in _pendingTileOverlayViews) {
+    [self syncTileOverlayView:view];
+  }
+  [_pendingTileOverlayViews removeAllObjects];
 }
 
 #pragma mark - Lifecycle

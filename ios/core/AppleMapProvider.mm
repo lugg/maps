@@ -1,8 +1,10 @@
 #import "AppleMapProvider.h"
 #import "../LuggCalloutView.h"
+#import "../LuggGroundOverlayView.h"
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
+#import "../LuggTileOverlayView.h"
 #import "../extensions/MKMapView+Zoom.h"
 #import "LuggAnnotationView.h"
 #import "MKPolylineAnimator.h"
@@ -19,12 +21,53 @@
 @implementation AppleMarkerAnnotation
 @end
 
+@interface GroundImageOverlay : NSObject <MKOverlay>
+@property(nonatomic, assign) CLLocationCoordinate2D coordinate;
+@property(nonatomic, assign) MKMapRect boundingMapRect;
+@property(nonatomic, strong) UIImage *image;
+@property(nonatomic, assign) CGFloat opacity;
+@end
+
+@implementation GroundImageOverlay
+@end
+
+@interface GroundImageOverlayRenderer : MKOverlayRenderer
+@property(nonatomic, strong) UIImage *image;
+@property(nonatomic, assign) CGFloat overlayOpacity;
+@end
+
+@implementation GroundImageOverlayRenderer
+
+- (void)drawMapRect:(MKMapRect)mapRect
+          zoomScale:(MKZoomScale)zoomScale
+          inContext:(CGContextRef)context {
+  MKMapRect overlayRect = self.overlay.boundingMapRect;
+  CGRect drawRect = [self rectForMapRect:overlayRect];
+
+  CGContextSaveGState(context);
+  CGContextSetAlpha(context, self.overlayOpacity);
+
+  // Flip the context for UIImage drawing
+  CGContextTranslateCTM(context, drawRect.origin.x,
+                        drawRect.origin.y + drawRect.size.height);
+  CGContextScaleCTM(context, 1.0, -1.0);
+
+  CGRect imageRect =
+      CGRectMake(0, 0, drawRect.size.width, drawRect.size.height);
+  CGContextDrawImage(context, imageRect, self.image.CGImage);
+
+  CGContextRestoreGState(context);
+}
+
+@end
+
 @implementation LuggAppleMapViewContent
 @end
 
 @interface AppleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
-    LuggPolygonViewDelegate, UIGestureRecognizerDelegate>
+    LuggPolygonViewDelegate, LuggGroundOverlayViewDelegate,
+    LuggTileOverlayViewDelegate, UIGestureRecognizerDelegate>
 @end
 
 @implementation AppleMapProvider {
@@ -36,6 +79,9 @@
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
   NSMapTable<id<MKOverlay>, LuggPolygonView *> *_overlayToPolygonMap;
+  NSMapTable<id<MKOverlay>, LuggGroundOverlayView *>
+      *_overlayToGroundOverlayMap;
+  NSMapTable<id<MKOverlay>, LuggTileOverlayView *> *_overlayToTileOverlayMap;
   UITapGestureRecognizer *_tapGesture;
   UILongPressGestureRecognizer *_longPressGesture;
   LuggMarkerView *_activeNonBubbledMarker;
@@ -54,6 +100,8 @@
   if (self = [super init]) {
     _overlayToPolylineMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToPolygonMap = [NSMapTable strongToWeakObjectsMapTable];
+    _overlayToGroundOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
+    _overlayToTileOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
   }
   return self;
 }
@@ -315,6 +363,28 @@
   return nil;
 }
 
+- (LuggGroundOverlayView *)hitTestGroundOverlayAtPoint:(CGPoint)point {
+  CLLocationCoordinate2D tapCoordinate = [_mapView convertPoint:point
+                                           toCoordinateFromView:_mapView];
+
+  NSArray<id<MKOverlay>> *overlays = _mapView.overlays;
+  for (NSInteger i = overlays.count - 1; i >= 0; i--) {
+    id<MKOverlay> overlay = overlays[i];
+    if (![overlay isKindOfClass:[GroundImageOverlay class]])
+      continue;
+
+    LuggGroundOverlayView *view =
+        [_overlayToGroundOverlayMap objectForKey:overlay];
+    if (!view || !view.tappable)
+      continue;
+
+    MKMapPoint mapPoint = MKMapPointForCoordinate(tapCoordinate);
+    if (MKMapRectContainsPoint(overlay.boundingMapRect, mapPoint))
+      return view;
+  }
+  return nil;
+}
+
 - (BOOL)hitTestAnnotationAtPoint:(CGPoint)point {
   for (id<MKAnnotation> annotation in _mapView.annotations) {
     MKAnnotationView *view = [_mapView viewForAnnotation:annotation];
@@ -348,6 +418,13 @@
 
   if ([self hitTestAnnotationAtPoint:point])
     return;
+
+  LuggGroundOverlayView *groundOverlayView =
+      [self hitTestGroundOverlayAtPoint:point];
+  if (groundOverlayView) {
+    [groundOverlayView emitPressEvent];
+    return;
+  }
 
   LuggPolygonView *polygonView = [self hitTestPolygonAtPoint:point];
   if (polygonView) {
@@ -523,6 +600,22 @@
       renderer.lineWidth = polygonView.strokeWidth;
       polygonView.renderer = renderer;
     }
+    return renderer;
+  }
+
+  if ([overlay isKindOfClass:[GroundImageOverlay class]]) {
+    GroundImageOverlay *groundOverlay = (GroundImageOverlay *)overlay;
+    GroundImageOverlayRenderer *renderer =
+        [[GroundImageOverlayRenderer alloc] initWithOverlay:overlay];
+    renderer.image = groundOverlay.image;
+    renderer.overlayOpacity = groundOverlay.opacity;
+    return renderer;
+  }
+
+  if ([overlay isKindOfClass:[MKTileOverlay class]]) {
+    MKTileOverlay *tileOverlay = (MKTileOverlay *)overlay;
+    MKTileOverlayRenderer *renderer =
+        [[MKTileOverlayRenderer alloc] initWithTileOverlay:tileOverlay];
     return renderer;
   }
 
@@ -762,6 +855,19 @@
 
 - (void)polygonViewDidUpdate:(LuggPolygonView *)polygonView {
   [self syncPolygonView:polygonView];
+}
+
+#pragma mark - GroundOverlayViewDelegate
+
+- (void)groundOverlayViewDidUpdate:
+    (LuggGroundOverlayView *)groundOverlayView {
+  [self syncGroundOverlayView:groundOverlayView];
+}
+
+#pragma mark - TileOverlayViewDelegate
+
+- (void)tileOverlayViewDidUpdate:(LuggTileOverlayView *)tileOverlayView {
+  [self syncTileOverlayView:tileOverlayView];
 }
 
 #pragma mark - Marker Management
@@ -1087,6 +1193,132 @@
   return [interiorPolygons copy];
 }
 
+#pragma mark - Ground Overlay Management
+
+- (void)addGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  groundOverlayView.delegate = self;
+  [self syncGroundOverlayView:groundOverlayView];
+}
+
+- (void)removeGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  groundOverlayView.delegate = nil;
+  GroundImageOverlay *overlay =
+      (GroundImageOverlay *)groundOverlayView.overlay;
+  if (overlay) {
+    [_overlayToGroundOverlayMap removeObjectForKey:overlay];
+    [_mapView removeOverlay:overlay];
+    groundOverlayView.overlay = nil;
+  }
+}
+
+- (void)syncGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView {
+  if (!_mapView)
+    return;
+
+  NSString *imageUri = groundOverlayView.imageUri;
+  if (imageUri.length == 0)
+    return;
+
+  // Remove old overlay
+  GroundImageOverlay *oldOverlay =
+      (GroundImageOverlay *)groundOverlayView.overlay;
+  if (oldOverlay) {
+    [_overlayToGroundOverlayMap removeObjectForKey:oldOverlay];
+    [_mapView removeOverlay:oldOverlay];
+    groundOverlayView.overlay = nil;
+  }
+
+  NSURL *url = [NSURL URLWithString:imageUri];
+  if (!url)
+    return;
+
+  __weak typeof(self) weakSelf = self;
+  __weak LuggGroundOverlayView *weakOverlayView = groundOverlayView;
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                 ^{
+                   NSData *data = [NSData dataWithContentsOfURL:url];
+                   UIImage *image = data ? [UIImage imageWithData:data] : nil;
+                   dispatch_async(dispatch_get_main_queue(), ^{
+                     [weakSelf addGroundOverlayToMap:weakOverlayView
+                                              image:image];
+                   });
+                 });
+}
+
+- (void)addGroundOverlayToMap:(LuggGroundOverlayView *)groundOverlayView
+                        image:(UIImage *)image {
+  if (!_mapView || !groundOverlayView || !image)
+    return;
+
+  MKMapPoint sw = MKMapPointForCoordinate(groundOverlayView.southwest);
+  MKMapPoint ne = MKMapPointForCoordinate(groundOverlayView.northeast);
+
+  MKMapRect mapRect = MKMapRectMake(MIN(sw.x, ne.x), MIN(sw.y, ne.y),
+                                     fabs(ne.x - sw.x), fabs(ne.y - sw.y));
+
+  CLLocationCoordinate2D center = CLLocationCoordinate2DMake(
+      (groundOverlayView.northeast.latitude +
+       groundOverlayView.southwest.latitude) /
+          2.0,
+      (groundOverlayView.northeast.longitude +
+       groundOverlayView.southwest.longitude) /
+          2.0);
+
+  GroundImageOverlay *overlay = [[GroundImageOverlay alloc] init];
+  overlay.coordinate = center;
+  overlay.boundingMapRect = mapRect;
+  overlay.image = image;
+  overlay.opacity = groundOverlayView.opacity;
+
+  groundOverlayView.overlay = overlay;
+  [_overlayToGroundOverlayMap setObject:groundOverlayView forKey:overlay];
+  [self insertOverlay:overlay withZIndex:groundOverlayView.zIndex];
+}
+
+#pragma mark - Tile Overlay Management
+
+- (void)addTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  tileOverlayView.delegate = self;
+  [self syncTileOverlayView:tileOverlayView];
+}
+
+- (void)removeTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  tileOverlayView.delegate = nil;
+  MKTileOverlay *overlay = (MKTileOverlay *)tileOverlayView.overlay;
+  if (overlay) {
+    [_overlayToTileOverlayMap removeObjectForKey:overlay];
+    [_mapView removeOverlay:overlay];
+    tileOverlayView.overlay = nil;
+  }
+}
+
+- (void)syncTileOverlayView:(LuggTileOverlayView *)tileOverlayView {
+  if (!_mapView)
+    return;
+
+  NSString *urlTemplate = tileOverlayView.urlTemplate;
+  if (urlTemplate.length == 0)
+    return;
+
+  // Remove old overlay
+  MKTileOverlay *oldOverlay = (MKTileOverlay *)tileOverlayView.overlay;
+  if (oldOverlay) {
+    [_overlayToTileOverlayMap removeObjectForKey:oldOverlay];
+    [_mapView removeOverlay:oldOverlay];
+    tileOverlayView.overlay = nil;
+  }
+
+  MKTileOverlay *tileOverlay =
+      [[MKTileOverlay alloc] initWithURLTemplate:urlTemplate];
+  tileOverlay.tileSize = CGSizeMake(tileOverlayView.tileSize,
+                                     tileOverlayView.tileSize);
+  tileOverlay.canReplaceMapContent = NO;
+
+  tileOverlayView.overlay = tileOverlay;
+  [_overlayToTileOverlayMap setObject:tileOverlayView forKey:tileOverlay];
+  [_mapView addOverlay:tileOverlay level:MKOverlayLevelAboveRoads];
+}
+
 - (void)insertOverlay:(id<MKOverlay>)overlay withZIndex:(NSInteger)zIndex {
   if (zIndex == 0) {
     [_mapView addOverlay:overlay];
@@ -1102,10 +1334,14 @@
         [_overlayToPolylineMap objectForKey:overlays[i]];
     LuggPolygonView *existingPolygonView =
         [_overlayToPolygonMap objectForKey:overlays[i]];
+    LuggGroundOverlayView *existingGroundOverlayView =
+        [_overlayToGroundOverlayMap objectForKey:overlays[i]];
     if (existingPolylineView) {
       existingZIndex = existingPolylineView.zIndex;
     } else if (existingPolygonView) {
       existingZIndex = existingPolygonView.zIndex;
+    } else if (existingGroundOverlayView) {
+      existingZIndex = existingGroundOverlayView.zIndex;
     } else {
       continue;
     }

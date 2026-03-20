@@ -6,6 +6,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class LuggMarkerView;
 @class LuggPolylineView;
 @class LuggPolygonView;
+@class LuggGroundOverlayView;
+@class LuggTileOverlayView;
 
 @protocol MapProviderDelegate <NSObject>
 - (void)mapProviderDidReady;
@@ -62,6 +64,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addPolygonView:(LuggPolygonView *)polygonView;
 - (void)removePolygonView:(LuggPolygonView *)polygonView;
 - (void)syncPolygonView:(LuggPolygonView *)polygonView;
+- (void)addGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;
+- (void)removeGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;
+- (void)syncGroundOverlayView:(LuggGroundOverlayView *)groundOverlayView;
+- (void)addTileOverlayView:(LuggTileOverlayView *)tileOverlayView;
+- (void)removeTileOverlayView:(LuggTileOverlayView *)tileOverlayView;
+- (void)syncTileOverlayView:(LuggTileOverlayView *)tileOverlayView;
 
 // Lifecycle
 - (void)pauseAnimations;

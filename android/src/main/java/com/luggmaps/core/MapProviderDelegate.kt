@@ -1,9 +1,11 @@
 package com.luggmaps.core
 
 import android.view.View
+import com.luggmaps.LuggGroundOverlayView
 import com.luggmaps.LuggMarkerView
 import com.luggmaps.LuggPolygonView
 import com.luggmaps.LuggPolylineView
+import com.luggmaps.LuggTileOverlayView
 
 data class EdgeInsets(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0)
 
@@ -42,6 +44,10 @@ interface MapProvider {
   fun removePolylineView(polylineView: LuggPolylineView)
   fun addPolygonView(polygonView: LuggPolygonView)
   fun removePolygonView(polygonView: LuggPolygonView)
+  fun addGroundOverlayView(groundOverlayView: LuggGroundOverlayView)
+  fun removeGroundOverlayView(groundOverlayView: LuggGroundOverlayView)
+  fun addTileOverlayView(tileOverlayView: LuggTileOverlayView)
+  fun removeTileOverlayView(tileOverlayView: LuggTileOverlayView)
 
   // Lifecycle
   fun pauseAnimations()
