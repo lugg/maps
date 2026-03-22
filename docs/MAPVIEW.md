@@ -23,8 +23,8 @@ import { MapView } from '@lugg/maps';
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `provider` | `'google' \| 'apple'` | `'apple'` (iOS), `'google'` (Android) | Map provider |
-| `mapType` | `'standard' \| 'satellite' \| 'terrain' \| 'hybrid' \| 'muted-standard'` | `'standard'` | Map type. `muted-standard` is Apple Maps only; falls back to `standard` on Google Maps |
+| `provider` | [`MapProvider`](#mapprovider) | `'apple'` (iOS), `'google'` (Android) | Map provider |
+| `mapType` | [`MapType`](#maptype) | `'standard'` | Map display type |
 | `mapId` | `string` | - | Map style ID (Google) or configuration name (Apple) |
 | `initialCoordinate` | `Coordinate` | - | Initial camera coordinate |
 | `initialZoom` | `number` | `10` | Initial zoom level |
@@ -35,12 +35,39 @@ import { MapView } from '@lugg/maps';
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
-| `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Map color theme |
+| `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
 | `onPress` | `(event: MapPressEvent) => void` | - | Called when the map is pressed |
 | `onLongPress` | `(event: MapPressEvent) => void` | - | Called when the map is long pressed |
 | `onCameraMove` | `(event: MapCameraEvent) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event: MapCameraEvent) => void` | - | Called when camera stops moving |
 | `onReady` | `() => void` | - | Called when map is loaded and ready |
+
+## Enums
+
+### MapProvider
+
+| Value | Description |
+|-------|-------------|
+| `'google'` | Google Maps |
+| `'apple'` | Apple Maps (iOS only) |
+
+### MapType
+
+| Value | Description |
+|-------|-------------|
+| `'standard'` | Default map style |
+| `'satellite'` | Satellite imagery |
+| `'terrain'` | Terrain/topographic map |
+| `'hybrid'` | Satellite imagery with labels |
+| `'muted-standard'` | Muted standard style (Apple Maps only, falls back to `standard` on Google Maps) |
+
+### MapTheme
+
+| Value | Description |
+|-------|-------------|
+| `'light'` | Light appearance |
+| `'dark'` | Dark appearance |
+| `'system'` | Follow system appearance |
 
 ## Ref Methods
 
