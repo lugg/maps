@@ -1,6 +1,7 @@
 export { Button } from './Button';
 export { ThemedText } from './ThemedText';
 export { Map } from './Map';
+export type { MapRef } from './Map';
 export { MarkerIcon } from './MarkerIcon';
 export { MarkerText } from './MarkerText';
 export { MarkerImage } from './MarkerImage';

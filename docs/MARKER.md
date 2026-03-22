@@ -48,6 +48,34 @@ import { MapView, Marker } from '@lugg/maps';
 | `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `anchor` (native only) |
 | `children` | `ReactNode` | - | Custom marker view |
 
+## Methods
+
+Access methods via a ref on the `Marker` component.
+
+```tsx
+import { useRef } from 'react';
+import { Marker, type MarkerRef } from '@lugg/maps';
+
+const markerRef = useRef<MarkerRef>(null);
+
+<Marker
+  ref={markerRef}
+  coordinate={{ latitude: 37.7749, longitude: -122.4194 }}
+  title="San Francisco"
+/>
+
+// Show callout programmatically
+markerRef.current?.showCallout();
+
+// Hide callout
+markerRef.current?.hideCallout();
+```
+
+| Method | Description |
+|--------|-------------|
+| `showCallout()` | Show the marker's callout. No-op if no callout or title is set |
+| `hideCallout()` | Hide the marker's callout |
+
 ## Draggable Markers
 
 Set `draggable` to enable marker dragging. Use the drag event callbacks to track position changes.

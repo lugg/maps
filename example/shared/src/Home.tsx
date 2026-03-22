@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {
-  MapView,
   MapProvider,
   type MapProviderType,
   type MapCameraEvent,
@@ -26,7 +25,7 @@ import {
   useReanimatedTrueSheet,
 } from '@lodev09/react-native-true-sheet/reanimated';
 
-import { Button, Map, ThemedText } from './components';
+import { Button, Map, type MapRef, ThemedText } from './components';
 import { randomFrom, randomLetter } from './utils';
 import {
   MARKER_COLORS,
@@ -69,7 +68,7 @@ export const Home = () => {
 };
 
 const HomeContent = () => {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<MapRef>(null);
   const sheetRef = useRef<TrueSheet>(null);
   const geojsonSheetRef = useRef<TrueSheet>(null);
   const { height: screenHeight } = useWindowDimensions();
@@ -185,6 +184,7 @@ const HomeContent = () => {
     if (markers.length === 0) return;
     const marker = randomFrom(markers);
     mapRef.current?.moveCamera(marker.coordinate);
+    mapRef.current?.showMarkerCallout(marker.id);
   };
 
   const fitAllMarkers = () => {

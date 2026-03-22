@@ -282,6 +282,22 @@ using namespace luggmaps::events;
                                _iconView.bounds.size.height);
 }
 
+- (void)showCallout {
+  if ([self.delegate respondsToSelector:@selector(showCalloutForMarkerView:)]) {
+    [self.delegate showCalloutForMarkerView:self];
+  }
+}
+
+- (void)hideCallout {
+  if ([self.delegate respondsToSelector:@selector(hideCalloutForMarkerView:)]) {
+    [self.delegate hideCalloutForMarkerView:self];
+  }
+}
+
+- (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {
+  RCTLuggMarkerViewHandleCommand(self, commandName, args);
+}
+
 - (void)prepareForRecycle {
   [super prepareForRecycle];
   _didLayout = NO;

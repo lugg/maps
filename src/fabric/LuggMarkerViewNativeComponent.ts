@@ -1,4 +1,4 @@
-import { codegenNativeComponent } from 'react-native';
+import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
 import type { ViewProps, HostComponent } from 'react-native';
 import type {
   Double,
@@ -68,6 +68,17 @@ export interface NativeProps extends ViewProps {
   }>;
 }
 
+type ComponentType = HostComponent<NativeProps>;
+
+interface NativeCommands {
+  showCallout: (viewRef: React.ElementRef<ComponentType>) => void;
+  hideCallout: (viewRef: React.ElementRef<ComponentType>) => void;
+}
+
+export const Commands = codegenNativeCommands<NativeCommands>({
+  supportedCommands: ['showCallout', 'hideCallout'],
+});
+
 export default codegenNativeComponent<NativeProps>(
   'LuggMarkerView'
-) as HostComponent<NativeProps>;
+) as ComponentType;

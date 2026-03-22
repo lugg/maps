@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 @optional
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView;
 - (void)markerViewDidUpdate:(LuggMarkerView *)markerView;
+- (void)showCalloutForMarkerView:(LuggMarkerView *)markerView;
+- (void)hideCalloutForMarkerView:(LuggMarkerView *)markerView;
 @end
 
 @interface LuggMarkerView : RCTViewComponentView

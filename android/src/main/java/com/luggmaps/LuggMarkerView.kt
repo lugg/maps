@@ -16,6 +16,8 @@ import com.luggmaps.extensions.dispatchEvent
 interface LuggMarkerViewDelegate {
   fun markerViewDidUpdate(markerView: LuggMarkerView)
   fun markerViewDidLayout(markerView: LuggMarkerView)
+  fun showCalloutForMarkerView(markerView: LuggMarkerView)
+  fun hideCalloutForMarkerView(markerView: LuggMarkerView)
 }
 
 class LuggMarkerView(context: Context) : ReactViewGroup(context) {
@@ -284,6 +286,14 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun emitDragEndEvent(x: Float, y: Float) {
     dispatchEvent(MarkerDragEvent(this, MarkerDragEvent.DRAG_END, latitude, longitude, x, y))
+  }
+
+  fun showCallout() {
+    delegate?.showCalloutForMarkerView(this)
+  }
+
+  fun hideCallout() {
+    delegate?.hideCalloutForMarkerView(this)
   }
 
   fun setName(name: String?) {

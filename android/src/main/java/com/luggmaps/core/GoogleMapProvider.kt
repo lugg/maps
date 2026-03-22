@@ -522,6 +522,30 @@ class GoogleMapProvider(private val context: Context) :
     syncMarkerView(markerView)
   }
 
+  override fun showCalloutForMarkerView(markerView: LuggMarkerView) {
+    val marker = markerView.marker ?: return
+    val calloutView = markerView.calloutView
+
+    if (calloutView != null && calloutView.hasCustomContent) {
+      dismissNonBubbledCallout()
+      if (calloutView.bubbled) {
+        marker.showInfoWindow()
+      } else {
+        showNonBubbledCallout(marker, calloutView)
+      }
+      return
+    }
+
+    if (!markerView.title.isNullOrEmpty()) {
+      marker.showInfoWindow()
+    }
+  }
+
+  override fun hideCalloutForMarkerView(markerView: LuggMarkerView) {
+    dismissNonBubbledCallout()
+    markerView.marker?.hideInfoWindow()
+  }
+
   // endregion
 
   // region PolylineViewDelegate

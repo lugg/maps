@@ -4,6 +4,7 @@ export type { MapProviderProps } from './MapProvider.types';
 export { Marker } from './components';
 export type {
   CalloutOptions,
+  MarkerRef,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,

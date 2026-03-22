@@ -125,6 +125,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   UILongPressGestureRecognizer *_longPressGesture;
   LuggMarkerView *_activeNonBubbledMarker;
   BOOL _isReselectingAnnotation;
+  BOOL _isProgrammaticSelect;
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
@@ -719,9 +720,11 @@ static double tileToLng(NSInteger x, NSInteger z) {
   LuggMarkerView *markerView = annotation.markerView;
 
   if (markerView) {
-    CGPoint point = [_mapView convertCoordinate:markerView.coordinate
-                                  toPointToView:_mapView];
-    [markerView emitPressEventWithPoint:point];
+    if (!_isProgrammaticSelect) {
+      CGPoint point = [_mapView convertCoordinate:markerView.coordinate
+                                    toPointToView:_mapView];
+      [markerView emitPressEventWithPoint:point];
+    }
 
     LuggCalloutView *calloutView = markerView.calloutView;
     if (calloutView && !calloutView.bubbled && calloutView.hasCustomContent) {
@@ -899,6 +902,42 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
   annotationView.detailCalloutAccessoryView =
       calloutView.hasCustomContent ? calloutView.contentView : nil;
+}
+
+- (void)showCalloutForMarkerView:(LuggMarkerView *)markerView {
+  LuggCalloutView *calloutView = markerView.calloutView;
+  _isProgrammaticSelect = YES;
+
+  if (calloutView && calloutView.hasCustomContent) {
+    [self dismissNonBubbledCallout];
+    AppleMarkerAnnotation *annotation =
+        (AppleMarkerAnnotation *)markerView.marker;
+    if (!calloutView.bubbled) {
+      [self showNonBubbledCallout:markerView];
+    } else if (annotation) {
+      [_mapView selectAnnotation:annotation animated:YES];
+    }
+    _isProgrammaticSelect = NO;
+    return;
+  }
+
+  if (markerView.title.length > 0) {
+    AppleMarkerAnnotation *annotation =
+        (AppleMarkerAnnotation *)markerView.marker;
+    if (annotation) {
+      [_mapView selectAnnotation:annotation animated:YES];
+    }
+  }
+  _isProgrammaticSelect = NO;
+}
+
+- (void)hideCalloutForMarkerView:(LuggMarkerView *)markerView {
+  [self dismissNonBubbledCallout];
+  AppleMarkerAnnotation *annotation =
+      (AppleMarkerAnnotation *)markerView.marker;
+  if (annotation) {
+    [_mapView deselectAnnotation:annotation animated:YES];
+  }
 }
 
 #pragma mark - MarkerViewDelegate

@@ -1,12 +1,15 @@
 import React, { isValidElement } from 'react';
 import { StyleSheet } from 'react-native';
-import LuggMarkerViewNativeComponent from '../fabric/LuggMarkerViewNativeComponent';
+import LuggMarkerViewNativeComponent, {
+  Commands,
+} from '../fabric/LuggMarkerViewNativeComponent';
 import LuggCalloutViewNativeComponent from '../fabric/LuggCalloutViewNativeComponent';
-import type { MarkerProps } from './Marker.types';
+import type { MarkerProps, MarkerRef } from './Marker.types';
 import type { Point } from '../types';
 
 export type {
   CalloutOptions,
+  MarkerRef,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
@@ -14,7 +17,24 @@ export type {
 
 const DEFAULT_ANCHOR: Point = { x: 0.5, y: 1 };
 
-export class Marker extends React.PureComponent<MarkerProps> {
+export class Marker
+  extends React.PureComponent<MarkerProps>
+  implements MarkerRef
+{
+  private nativeRef = React.createRef<any>();
+
+  showCallout() {
+    const ref = this.nativeRef.current;
+    if (!ref) return;
+    Commands.showCallout(ref);
+  }
+
+  hideCallout() {
+    const ref = this.nativeRef.current;
+    if (!ref) return;
+    Commands.hideCallout(ref);
+  }
+
   private getStyle(zIndex: number | undefined) {
     if (zIndex == null) return styles.marker;
     if (zIndex !== this._cachedZIndex) {
@@ -58,6 +78,7 @@ export class Marker extends React.PureComponent<MarkerProps> {
 
     return (
       <LuggMarkerViewNativeComponent
+        ref={this.nativeRef}
         style={this.getStyle(zIndex)}
         name={name}
         coordinate={coordinate}

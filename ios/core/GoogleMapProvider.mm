@@ -487,6 +487,31 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
                       contentSize.height * (0.5 - anchor.y));
 }
 
+- (void)showCalloutForMarkerView:(LuggMarkerView *)markerView {
+  LuggCalloutView *calloutView = markerView.calloutView;
+  if (calloutView && calloutView.hasCustomContent) {
+    [self dismissNonBubbledCallout];
+    GMSMarker *marker = (GMSMarker *)markerView.marker;
+    if (calloutView.bubbled) {
+      _mapView.selectedMarker = marker;
+    } else {
+      [self showNonBubbledCallout:markerView];
+    }
+    return;
+  }
+
+  if (markerView.title.length > 0) {
+    _mapView.selectedMarker = (GMSMarker *)markerView.marker;
+  }
+}
+
+- (void)hideCalloutForMarkerView:(LuggMarkerView *)markerView {
+  [self dismissNonBubbledCallout];
+  if (_mapView.selectedMarker == markerView.marker) {
+    _mapView.selectedMarker = nil;
+  }
+}
+
 #pragma mark - MarkerViewDelegate
 
 - (void)markerViewDidLayout:(LuggMarkerView *)markerView {

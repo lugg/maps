@@ -1,4 +1,11 @@
-import { forwardRef, useMemo, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   StyleSheet,
@@ -13,6 +20,7 @@ import {
   Polygon,
   Circle,
   GroundOverlay,
+  type MapViewRef,
   type MapViewProps,
   type MapCameraEvent,
   type MarkerPressEvent,
@@ -83,7 +91,8 @@ const renderMarker = (
   onPress?: (event: MarkerPressEvent, marker: MarkerData) => void,
   onDragStart?: (event: MarkerDragEvent, marker: MarkerData) => void,
   onDragChange?: (event: MarkerDragEvent, marker: MarkerData) => void,
-  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void
+  onDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void,
+  refCallback?: (id: string, ref: Marker | null) => void
 ) => {
   const {
     id,
@@ -119,10 +128,15 @@ const renderMarker = (
     </View>
   );
 
+  const markerRef = refCallback
+    ? (r: Marker | null) => refCallback(id, r)
+    : undefined;
+
   switch (type) {
     case 'icon':
       return (
         <MarkerIcon
+          ref={markerRef}
           key={id}
           name={name}
           coordinate={coordinate}
@@ -141,6 +155,7 @@ const renderMarker = (
     case 'text':
       return (
         <MarkerText
+          ref={markerRef}
           key={id}
           name={name}
           coordinate={coordinate}
@@ -161,6 +176,7 @@ const renderMarker = (
     case 'image':
       return (
         <MarkerImage
+          ref={markerRef}
           key={id}
           name={name}
           coordinate={coordinate}
@@ -180,6 +196,7 @@ const renderMarker = (
     case 'custom':
       return (
         <Marker
+          ref={markerRef}
           key={id}
           name={name}
           coordinate={coordinate}
@@ -213,6 +230,7 @@ const renderMarker = (
     default:
       return (
         <Marker
+          ref={markerRef}
           key={id}
           name={name}
           coordinate={coordinate}
@@ -230,7 +248,12 @@ const renderMarker = (
   }
 };
 
-export const Map = forwardRef<MapView, MapProps>(
+export interface MapRef extends MapViewRef {
+  showMarkerCallout(markerId: string): void;
+  hideMarkerCallout(markerId: string): void;
+}
+
+export const Map = forwardRef<MapRef, MapProps>(
   (
     {
       markers,
@@ -253,9 +276,33 @@ export const Map = forwardRef<MapView, MapProps>(
     ref
   ) => {
     const { height: screenHeight } = useWindowDimensions();
+    const mapRef = useRef<MapView>(null);
+    const markerRefsMap = useRef(new globalThis.Map<string, Marker>());
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
     const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(
       null
+    );
+
+    const handleMarkerRef = useCallback((id: string, r: Marker | null) => {
+      if (r) {
+        markerRefsMap.current.set(id, r);
+      } else {
+        markerRefsMap.current.delete(id);
+      }
+    }, []);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        moveCamera: (...args) => mapRef.current?.moveCamera(...args),
+        fitCoordinates: (...args) => mapRef.current?.fitCoordinates(...args),
+        setEdgeInsets: (...args) => mapRef.current?.setEdgeInsets(...args),
+        showMarkerCallout: (markerId) =>
+          markerRefsMap.current.get(markerId)?.showCallout(),
+        hideMarkerCallout: (markerId) =>
+          markerRefsMap.current.get(markerId)?.hideCallout(),
+      }),
+      []
     );
     const polylineCoordinates = useMemo(
       () => markers.map((m) => m.coordinate),
@@ -292,7 +339,7 @@ export const Map = forwardRef<MapView, MapProps>(
     return (
       <View style={styles.container}>
         <MapView
-          ref={ref}
+          ref={mapRef}
           style={StyleSheet.absoluteFill}
           initialCoordinate={{ latitude: 37.78, longitude: -122.43 }}
           initialZoom={INITIAL_ZOOM}
@@ -311,7 +358,8 @@ export const Map = forwardRef<MapView, MapProps>(
               handleMarkerPress,
               onMarkerDragStart,
               onMarkerDragChange,
-              onMarkerDragEnd
+              onMarkerDragEnd,
+              handleMarkerRef
             )
           )}
           <Route coordinates={smoothedRoute} />

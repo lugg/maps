@@ -23,6 +23,11 @@ export interface CalloutOptions {
   anchor?: Point;
 }
 
+export interface MarkerRef {
+  showCallout(): void;
+  hideCallout(): void;
+}
+
 export interface MarkerProps {
   /**
    * Name used for debugging purposes

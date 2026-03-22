@@ -97,6 +97,14 @@ class LuggMarkerViewManager :
     view.setDraggable(value)
   }
 
+  override fun showCallout(view: LuggMarkerView) {
+    view.showCallout()
+  }
+
+  override fun hideCallout(view: LuggMarkerView) {
+    view.hideCallout()
+  }
+
   companion object {
     const val NAME = "LuggMarkerView"
   }
