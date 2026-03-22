@@ -101,6 +101,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
   ref
 ) {
   const {
+    mapType = 'standard',
     mapId = 'DEMO_MAP_ID',
     initialCoordinate,
     initialZoom = 10,
@@ -417,6 +418,15 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     wasGesture.current = false;
   };
 
+  const mapTypeId =
+    mapType === 'satellite'
+      ? 'satellite'
+      : mapType === 'terrain'
+      ? 'terrain'
+      : mapType === 'hybrid'
+      ? 'hybrid'
+      : 'roadmap';
+
   const gestureHandling =
     scrollEnabled === false && zoomEnabled === false
       ? 'none'
@@ -453,6 +463,7 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
           defaultZoom={initialZoom}
           minZoom={minZoom}
           maxZoom={maxZoom}
+          mapTypeId={mapTypeId}
           gestureHandling={gestureHandling}
           colorScheme={colorScheme}
           disableDefaultUI

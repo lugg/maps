@@ -40,6 +40,7 @@ using namespace luggmaps::events;
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
   BOOL _userLocationEnabled;
+  LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
   double _minZoom;
   double _maxZoom;
@@ -64,6 +65,7 @@ using namespace luggmaps::events;
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _userLocationEnabled = NO;
+    _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
     _edgeInsets = UIEdgeInsetsZero;
   }
@@ -272,6 +274,7 @@ using namespace luggmaps::events;
   [_provider setRotateEnabled:_rotateEnabled];
   [_provider setPitchEnabled:_pitchEnabled];
   [_provider setUserLocationEnabled:_userLocationEnabled];
+  [_provider setMapType:_mapType];
   [_provider setTheme:(NSInteger)_theme];
   [_provider setMinZoom:_minZoom];
   [_provider setMaxZoom:_maxZoom];
@@ -311,6 +314,10 @@ using namespace luggmaps::events;
   if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
     _userLocationEnabled = newViewProps.userLocationEnabled;
     [_provider setUserLocationEnabled:_userLocationEnabled];
+  }
+  if (newViewProps.mapType != prevViewProps.mapType) {
+    _mapType = newViewProps.mapType;
+    [_provider setMapType:_mapType];
   }
   if (newViewProps.minZoom != prevViewProps.minZoom) {
     _minZoom = newViewProps.minZoom;

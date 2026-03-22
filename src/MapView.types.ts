@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { NativeSyntheticEvent, ViewProps } from 'react-native';
 import type {
   MapProvider,
+  MapType,
   Coordinate,
   EdgeInsets,
   MapTheme,
@@ -64,6 +65,11 @@ export interface MapViewProps extends ViewProps {
    * @default 'apple' on iOS, 'google' on Android
    */
   provider?: MapProvider;
+  /**
+   * Map type to display
+   * @default 'standard'
+   */
+  mapType?: MapType;
   /**
    * Map style ID (Google Maps) or configuration name (Apple Maps)
    */

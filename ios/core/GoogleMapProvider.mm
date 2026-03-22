@@ -1,4 +1,7 @@
 #import "GoogleMapProvider.h"
+
+using facebook::react::LuggMapViewMapType;
+
 #import "../LuggCalloutView.h"
 #import "../LuggCircleView.h"
 #import "../LuggGroundOverlayView.h"
@@ -162,6 +165,25 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.myLocationEnabled = enabled;
+}
+
+- (void)setMapType:(LuggMapViewMapType)mapType {
+  if (!_mapView) return;
+
+  switch (mapType) {
+  case LuggMapViewMapType::Satellite:
+    _mapView.mapType = kGMSTypeSatellite;
+    break;
+  case LuggMapViewMapType::Terrain:
+    _mapView.mapType = kGMSTypeTerrain;
+    break;
+  case LuggMapViewMapType::Hybrid:
+    _mapView.mapType = kGMSTypeHybrid;
+    break;
+  default:
+    _mapView.mapType = kGMSTypeNormal;
+    break;
+  }
 }
 
 - (void)setTheme:(NSInteger)theme {

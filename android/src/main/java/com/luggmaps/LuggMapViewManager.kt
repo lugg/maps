@@ -152,6 +152,11 @@ class LuggMapViewManager :
     view.setMaxZoom(value)
   }
 
+  @ReactProp(name = "mapType")
+  override fun setMapType(view: LuggMapView, value: String?) {
+    view.setMapType(value ?: "standard")
+  }
+
   @ReactProp(name = "theme")
   override fun setTheme(view: LuggMapView, value: String?) {
     view.setTheme(value ?: "system")

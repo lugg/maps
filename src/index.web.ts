@@ -30,6 +30,7 @@ export type {
 } from './MapView.types';
 export type {
   MapProvider as MapProviderType,
+  MapType,
   Coordinate,
   Point,
   EdgeInsets,

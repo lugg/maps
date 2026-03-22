@@ -30,6 +30,16 @@ export interface EdgeInsets {
 }
 
 /**
+ * Map type
+ */
+export type MapType =
+  | 'standard'
+  | 'satellite'
+  | 'terrain'
+  | 'hybrid'
+  | 'muted-standard';
+
+/**
  * Map theme
  */
 export type MapTheme = 'light' | 'dark' | 'system';

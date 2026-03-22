@@ -24,6 +24,7 @@ import { MapView } from '@lugg/maps';
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `provider` | `'google' \| 'apple'` | `'apple'` (iOS), `'google'` (Android) | Map provider |
+| `mapType` | `'standard' \| 'satellite' \| 'terrain' \| 'hybrid' \| 'muted-standard'` | `'standard'` | Map type. `muted-standard` is Apple Maps only; falls back to `standard` on Google Maps |
 | `mapId` | `string` | - | Map style ID (Google) or configuration name (Apple) |
 | `initialCoordinate` | `Coordinate` | - | Initial camera coordinate |
 | `initialZoom` | `number` | `10` | Initial zoom level |

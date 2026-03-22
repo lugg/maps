@@ -1,4 +1,7 @@
 #import "AppleMapProvider.h"
+
+using facebook::react::LuggMapViewMapType;
+
 #import "../LuggCalloutView.h"
 #import "../LuggCircleView.h"
 #import "../LuggGroundOverlayView.h"
@@ -234,6 +237,26 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.showsUserLocation = enabled;
+}
+
+- (void)setMapType:(LuggMapViewMapType)mapType {
+  switch (mapType) {
+  case LuggMapViewMapType::Satellite:
+    _mapView.mapType = MKMapTypeSatellite;
+    break;
+  case LuggMapViewMapType::Terrain:
+    _mapView.mapType = MKMapTypeStandard;
+    break;
+  case LuggMapViewMapType::Hybrid:
+    _mapView.mapType = MKMapTypeHybrid;
+    break;
+  case LuggMapViewMapType::MutedStandard:
+    _mapView.mapType = MKMapTypeMutedStandard;
+    break;
+  default:
+    _mapView.mapType = MKMapTypeStandard;
+    break;
+  }
 }
 
 - (void)setTheme:(NSInteger)theme {

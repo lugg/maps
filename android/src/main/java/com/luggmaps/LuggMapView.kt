@@ -58,6 +58,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var initialLatitude: Double = 37.78
   private var initialLongitude: Double = -122.43
   private var initialZoom: Float = 14f
+  private var mapType: String = "standard"
   private var theme: String = "system"
   private var zoomEnabled: Boolean = true
   private var scrollEnabled: Boolean = true
@@ -183,6 +184,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setPitchEnabled(pitchEnabled)
     provider?.setUserLocationEnabled(userLocationEnabled)
     provider?.setUserLocationButtonEnabled(userLocationButtonEnabled)
+    provider?.setMapType(mapType)
     provider?.setTheme(theme)
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
@@ -255,6 +257,12 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (maxZoom == zoom) return
     maxZoom = zoom
     provider?.setMaxZoom(zoom)
+  }
+
+  fun setMapType(value: String) {
+    if (mapType == value) return
+    mapType = value
+    provider?.setMapType(value)
   }
 
   fun setTheme(value: String) {

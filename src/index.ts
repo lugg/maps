@@ -37,6 +37,7 @@ export type {
 } from './MapView.types';
 export type {
   MapProvider as MapProviderType,
+  MapType,
   MapTheme,
   Coordinate,
   Point,

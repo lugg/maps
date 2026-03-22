@@ -19,6 +19,7 @@ export class MapView
 {
   static defaultProps: Partial<MapViewProps> = {
     provider: Platform.OS === 'ios' ? 'apple' : 'google',
+    mapType: 'standard',
     initialZoom: 10,
     zoomEnabled: true,
     scrollEnabled: true,
@@ -80,6 +81,7 @@ export class MapView
   render() {
     const {
       provider,
+      mapType,
       mapId,
       initialCoordinate,
       initialZoom,
@@ -107,6 +109,7 @@ export class MapView
         ref={this.nativeRef}
         {...rest}
         provider={provider}
+        mapType={mapType}
         mapId={mapId}
         initialCoordinate={initialCoordinate}
         initialZoom={initialZoom}

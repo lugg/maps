@@ -62,6 +62,10 @@ export interface ReadyEvent {}
 
 export interface NativeProps extends ViewProps {
   provider?: WithDefault<'google' | 'apple', 'google'>;
+  mapType?: WithDefault<
+    'standard' | 'satellite' | 'terrain' | 'hybrid' | 'muted-standard',
+    'standard'
+  >;
   mapId?: string;
   initialCoordinate?: Coordinate;
   initialZoom?: Double;

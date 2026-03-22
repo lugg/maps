@@ -451,6 +451,15 @@ class GoogleMapProvider(private val context: Context) :
     googleMap?.uiSettings?.isMyLocationButtonEnabled = enabled
   }
 
+  override fun setMapType(value: String) {
+    googleMap?.mapType = when (value) {
+      "satellite" -> GoogleMap.MAP_TYPE_SATELLITE
+      "terrain" -> GoogleMap.MAP_TYPE_TERRAIN
+      "hybrid" -> GoogleMap.MAP_TYPE_HYBRID
+      else -> GoogleMap.MAP_TYPE_NORMAL
+    }
+  }
+
   override fun setTheme(value: String) {
     theme = value
     applyTheme()

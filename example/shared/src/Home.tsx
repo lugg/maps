@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import {
+  Pressable,
   StyleSheet,
   View,
   TextInput,
@@ -7,9 +8,11 @@ import {
   useColorScheme,
   useWindowDimensions,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import {
   MapProvider,
   type MapProviderType,
+  type MapType,
   type MapCameraEvent,
   type MapPressEvent,
   type GeoJSON,
@@ -76,6 +79,8 @@ const HomeContent = () => {
   const locationPermission = useLocationPermission();
   const { animatedPosition } = useReanimatedTrueSheet();
   const [provider, setProvider] = useState<MapProviderType>('apple');
+  const [mapType, setMapType] = useState<MapType>('standard');
+  const mapTypeSheetRef = useRef<TrueSheet>(null);
   const [showMap, setShowMap] = useState(true);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [status, setStatus] = useState({ text: 'Loading...', error: false });
@@ -224,6 +229,7 @@ const HomeContent = () => {
           key={provider}
           ref={mapRef}
           provider={provider}
+          mapType={mapType}
           markers={markers}
           geojson={geojson}
           animatedPosition={animatedPosition}
@@ -258,6 +264,24 @@ const HomeContent = () => {
           }}
         />
       )}
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.mapTypeButton,
+          pressed && styles.mapTypeButtonPressed,
+        ]}
+        onPress={() => mapTypeSheetRef.current?.present()}
+      >
+        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z"
+            stroke="#333"
+            strokeWidth={1.75}
+            strokeLinejoin="round"
+          />
+          <Path d="M9 4v13M15 7v13" stroke="#333" strokeWidth={1.75} />
+        </Svg>
+      </Pressable>
 
       <ReanimatedTrueSheet
         ref={sheetRef}
@@ -327,6 +351,26 @@ const HomeContent = () => {
       </ReanimatedTrueSheet>
 
       <TrueSheet
+        ref={mapTypeSheetRef}
+        detents={['auto']}
+        style={styles.geojsonSheet}
+      >
+        <ThemedText variant="title">Map Type</ThemedText>
+        {(['standard', 'satellite', 'terrain', 'hybrid', 'muted-standard'] as MapType[]).map(
+          (type) => (
+            <Button
+              key={type}
+              title={type === mapType ? `${type} ✓` : type}
+              onPress={() => {
+                setMapType(type);
+                mapTypeSheetRef.current?.dismiss();
+              }}
+            />
+          )
+        )}
+      </TrueSheet>
+
+      <TrueSheet
         ref={geojsonSheetRef}
         detents={['auto']}
         style={styles.geojsonSheet}
@@ -376,6 +420,25 @@ const HomeContent = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  mapTypeButton: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  mapTypeButtonPressed: {
+    opacity: 0.7,
+  },
   statusText: {
     color: '#666',
   },
