@@ -275,7 +275,7 @@ using namespace luggmaps::events;
   [_provider setPitchEnabled:_pitchEnabled];
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
-  [_provider setTheme:(NSInteger)_theme];
+  [_provider setTheme:_theme];
   [_provider setMinZoom:_minZoom];
   [_provider setMaxZoom:_maxZoom];
 }
@@ -329,7 +329,7 @@ using namespace luggmaps::events;
   }
   if (newViewProps.theme != prevViewProps.theme) {
     _theme = newViewProps.theme;
-    [_provider setTheme:(NSInteger)_theme];
+    [_provider setTheme:_theme];
   }
 
   UIEdgeInsets newEdgeInsets = UIEdgeInsetsMake(
