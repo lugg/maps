@@ -43,7 +43,7 @@ using namespace facebook::react;
 @implementation LuggCalloutView {
   LuggCalloutContentView *_contentView;
   BOOL _bubbled;
-  CGPoint _anchor;
+  CGPoint _offset;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -58,7 +58,7 @@ using namespace facebook::react;
     _props = defaultProps;
 
     _bubbled = YES;
-    _anchor = CGPointMake(0.5, 1.0);
+    _offset = CGPointZero;
     _contentView = [[LuggCalloutContentView alloc] init];
     _contentView.backgroundColor = [UIColor clearColor];
 
@@ -79,12 +79,12 @@ using namespace facebook::react;
   if (oldProps) {
     const auto &oldViewProps =
         *std::static_pointer_cast<LuggCalloutViewProps const>(oldProps);
-    if (newViewProps.anchor.x != oldViewProps.anchor.x ||
-        newViewProps.anchor.y != oldViewProps.anchor.y) {
-      _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+    if (newViewProps.offset.x != oldViewProps.offset.x ||
+        newViewProps.offset.y != oldViewProps.offset.y) {
+      _offset = CGPointMake(newViewProps.offset.x, newViewProps.offset.y);
     }
-  } else if (newViewProps.anchor.x != 0 || newViewProps.anchor.y != 0) {
-    _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  } else if (newViewProps.offset.x != 0 || newViewProps.offset.y != 0) {
+    _offset = CGPointMake(newViewProps.offset.x, newViewProps.offset.y);
   }
 
   [super updateProps:props oldProps:oldProps];
@@ -95,8 +95,8 @@ using namespace facebook::react;
   return _bubbled;
 }
 
-- (CGPoint)anchor {
-  return _anchor;
+- (CGPoint)offset {
+  return _offset;
 }
 
 - (void)mountChildComponentView:

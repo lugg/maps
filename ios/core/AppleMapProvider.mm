@@ -788,24 +788,23 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (contentSize.width <= 0 || contentSize.height <= 0)
     return;
 
-  CGPoint anchor = calloutView.anchor;
+  CGPoint offset = calloutView.offset;
 
   AppleMarkerAnnotation *annotation =
       (AppleMarkerAnnotation *)_activeNonBubbledMarker.marker;
   MKAnnotationView *annotationView = annotation.annotationView;
 
   if (annotationView && contentView.superview == annotationView) {
-    CGPoint center = CGPointMake(annotationView.bounds.size.width / 2.0 +
-                                     contentSize.width * (0.5 - anchor.x),
-                                 contentSize.height * (0.5 - anchor.y));
+    CGPoint center = CGPointMake(annotationView.bounds.size.width / 2.0 + offset.x,
+                                 -contentSize.height / 2.0 + offset.y);
     contentView.center = center;
   } else {
     CGPoint point =
         [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
                       toPointToView:_wrapperView];
     contentView.center =
-        CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
-                    point.y + contentSize.height * (0.5 - anchor.y));
+        CGPointMake(point.x + offset.x,
+                    point.y - contentSize.height / 2.0 + offset.y);
   }
 
   contentView.hidden = NO;

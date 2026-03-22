@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.uimanager.PixelUtil.dpToPx
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
@@ -22,9 +23,9 @@ class LuggCalloutViewManager :
     view.bubbled = value
   }
 
-  override fun setAnchor(view: LuggCalloutView, value: ReadableMap?) {
-    view.anchorX = value?.getDouble("x")?.toFloat() ?: 0.5f
-    view.anchorY = value?.getDouble("y")?.toFloat() ?: 1.0f
+  override fun setOffset(view: LuggCalloutView, value: ReadableMap?) {
+    view.offsetX = value?.getDouble("x")?.toFloat()?.dpToPx() ?: 0f
+    view.offsetY = value?.getDouble("y")?.toFloat()?.dpToPx() ?: 0f
   }
 
   override fun onDropViewInstance(view: LuggCalloutView) {

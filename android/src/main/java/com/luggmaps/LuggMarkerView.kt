@@ -77,6 +77,12 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var calloutView: LuggCalloutView? = null
     private set
 
+  val scaledContentHeight: Float
+    get() {
+      val (_, height) = measureContentBounds()
+      return height * scale
+    }
+
   private fun measureContentBounds(): Pair<Int, Int> {
     var maxWidth = 0
     var maxHeight = 0

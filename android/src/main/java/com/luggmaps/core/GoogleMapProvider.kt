@@ -406,8 +406,8 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
 
     val point = map.projection.toScreenLocation(marker.position)
-    contentView.translationX = point.x - contentView.width * calloutView.anchorX
-    contentView.translationY = point.y - markerView.contentView.height * markerView.anchorY - contentView.height * calloutView.anchorY
+    contentView.translationX = point.x - contentView.width / 2f + calloutView.offsetX
+    contentView.translationY = point.y - markerView.scaledContentHeight * markerView.anchorY - contentView.height + calloutView.offsetY
   }
 
   // endregion

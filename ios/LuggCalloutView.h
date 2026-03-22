@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LuggCalloutView : RCTViewComponentView
 
 @property(nonatomic, readonly) BOOL bubbled;
-@property(nonatomic, readonly) CGPoint anchor;
+@property(nonatomic, readonly) CGPoint offset;
 @property(nonatomic, readonly) BOOL hasCustomContent;
 @property(nonatomic, readonly) UIView *contentView;
 @property(nonatomic, weak, nullable) id<LuggCalloutViewDelegate> delegate;

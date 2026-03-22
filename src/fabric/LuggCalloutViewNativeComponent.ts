@@ -12,7 +12,7 @@ export interface Point {
 
 export interface NativeProps extends ViewProps {
   bubbled?: WithDefault<boolean, true>;
-  anchor?: Point;
+  offset?: Point;
 }
 
 export default codegenNativeComponent<NativeProps>(

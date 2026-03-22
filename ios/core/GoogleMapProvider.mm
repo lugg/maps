@@ -473,7 +473,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (contentSize.width <= 0 || contentSize.height <= 0)
     return;
 
-  CGPoint anchor = calloutView.anchor;
+  CGPoint offset = calloutView.offset;
   CGPoint point = [_mapView.projection
       pointForCoordinate:_activeNonBubbledMarker.coordinate];
 
@@ -482,9 +482,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
       iconView.bounds.size.height * _activeNonBubbledMarker.scale;
 
   contentView.center =
-      CGPointMake(point.x + contentSize.width * (0.5 - anchor.x),
-                  point.y - markerHeight * _activeNonBubbledMarker.anchor.y +
-                      contentSize.height * (0.5 - anchor.y));
+      CGPointMake(point.x + offset.x,
+                  point.y - markerHeight * _activeNonBubbledMarker.anchor.y -
+                      contentSize.height / 2.0 + offset.y);
 }
 
 - (void)showCalloutForMarkerView:(LuggMarkerView *)markerView {

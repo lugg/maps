@@ -11,12 +11,12 @@ import com.facebook.react.views.view.ReactViewGroup
 class LuggCalloutView(context: Context) : ReactViewGroup(context) {
   val contentView: ReactViewGroup = ReactViewGroup(context)
   var bubbled: Boolean = true
-  var anchorX: Float = 0.5f
+  var offsetX: Float = 0f
     set(value) {
       field = value
       onUpdate?.invoke()
     }
-  var anchorY: Float = 1.0f
+  var offsetY: Float = 0f
     set(value) {
       field = value
       onUpdate?.invoke()

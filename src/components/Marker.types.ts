@@ -14,13 +14,13 @@ export interface CalloutOptions {
    */
   bubbled?: boolean;
   /**
-   * Anchor point for the callout relative to the marker position.
-   * `{x: 0.5, y: 1}` places the bottom-center of the callout at the marker.
+   * Pixel offset for non-bubbled callouts from their default centered position above the marker.
+   * Positive `x` moves right, positive `y` moves down.
+   * Only applies when `bubbled` is `false`.
    *
-   * @note Not supported on web.
-   * @default {x: 0.5, y: 1}
+   * @default {x: 0, y: 0}
    */
-  anchor?: Point;
+  offset?: Point;
 }
 
 export interface MarkerRef {

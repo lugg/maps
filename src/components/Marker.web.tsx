@@ -86,6 +86,7 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
     const [markerRef, markerElement] = useAdvancedMarkerRef();
     const [infoWindowOpen, setInfoWindowOpen] = useState(false);
     const calloutBubbled = calloutOptions?.bubbled ?? true;
+    const calloutOffset = calloutOptions?.offset;
 
     const closeCallout = useCallback(() => setInfoWindowOpen(false), []);
 
@@ -220,7 +221,9 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
           <InfoWindow
             anchor={markerElement}
             pixelOffset={
-              !calloutBubbled ? [0, CALLOUT_ARROW_HEIGHT] : undefined
+              !calloutBubbled
+                ? [calloutOffset?.x ?? 0, CALLOUT_ARROW_HEIGHT + (calloutOffset?.y ?? 0)]
+                : undefined
             }
             headerDisabled
             onClose={() => setInfoWindowOpen(false)}

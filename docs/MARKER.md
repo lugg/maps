@@ -45,7 +45,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
 | `onDragEnd` | `(event: MarkerDragEvent) => void` | - | Called when marker drag ends. Event includes `coordinate` and `point` |
 | `callout` | `ComponentType \| ReactElement` | - | Callout content displayed when marker is tapped |
-| `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `anchor` (native only) |
+| `calloutOptions` | `CalloutOptions` | - | Callout config. Supports `bubbled` and `offset` |
 | `children` | `ReactNode` | - | Custom marker view |
 
 ## Methods
@@ -154,4 +154,4 @@ Use the `callout` prop to display a callout when the marker is tapped.
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `bubbled` | `boolean` | `true` | Whether to wrap the callout in the native platform bubble |
-| `anchor` | [`Point`](./TYPES.md#point) | `{x: 0.5, y: 1}` | Anchor point for non-bubbled callout positioning relative to the marker. Not supported on Web |
+| `offset` | [`Point`](./TYPES.md#point) | `{x: 0, y: 0}` | Pixel offset for non-bubbled callouts from their default centered position above the marker. Only applies when `bubbled` is `false` |

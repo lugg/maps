@@ -74,7 +74,7 @@ export class Marker
         : React.createElement(callout)
       : null;
     const calloutBubbled = calloutOptions?.bubbled ?? true;
-    const calloutAnchor = calloutOptions?.anchor;
+    const calloutOffset = calloutOptions?.offset;
 
     return (
       <LuggMarkerViewNativeComponent
@@ -99,7 +99,7 @@ export class Marker
           <LuggCalloutViewNativeComponent
             style={calloutStyles.callout}
             bubbled={calloutBubbled}
-            anchor={calloutAnchor}
+            offset={calloutOffset}
           >
             {calloutContent}
           </LuggCalloutViewNativeComponent>
