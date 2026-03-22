@@ -795,16 +795,16 @@ static double tileToLng(NSInteger x, NSInteger z) {
   MKAnnotationView *annotationView = annotation.annotationView;
 
   if (annotationView && contentView.superview == annotationView) {
-    CGPoint center = CGPointMake(annotationView.bounds.size.width / 2.0 + offset.x,
-                                 -contentSize.height / 2.0 + offset.y);
+    CGPoint center =
+        CGPointMake(annotationView.bounds.size.width / 2.0 + offset.x,
+                    -contentSize.height / 2.0 + offset.y);
     contentView.center = center;
   } else {
     CGPoint point =
         [_mapView convertCoordinate:_activeNonBubbledMarker.coordinate
                       toPointToView:_wrapperView];
-    contentView.center =
-        CGPointMake(point.x + offset.x,
-                    point.y - contentSize.height / 2.0 + offset.y);
+    contentView.center = CGPointMake(
+        point.x + offset.x, point.y - contentSize.height / 2.0 + offset.y);
   }
 
   contentView.hidden = NO;
