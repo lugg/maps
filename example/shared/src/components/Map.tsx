@@ -40,6 +40,12 @@ import { Button } from './Button';
 import type { MarkerData } from './index';
 import { Route, smoothCoordinates } from './Route';
 import { SAMPLE_GEOJSON } from '../geojson';
+import {
+  INITIAL_ZOOM,
+  CIRCLE_CENTER,
+  CIRCLE_COORDS,
+  CIRCLE_HOLES,
+} from '../mapData';
 
 interface MapProps extends MapViewProps {
   markers: MarkerData[];
@@ -54,36 +60,20 @@ interface MapProps extends MapViewProps {
   onMarkerDragEnd?: (event: MarkerDragEvent, marker: MarkerData) => void;
 }
 
-const INITIAL_ZOOM = 14;
-
-const CIRCLE_CENTER = { latitude: 37.78, longitude: -122.43 };
-const CIRCLE_RADIUS = 0.003;
-const CIRCLE_COORDS = Array.from({ length: 36 }, (_, i) => {
-  const angle = (i * 10 * Math.PI) / 180;
-  return {
-    latitude: CIRCLE_CENTER.latitude + CIRCLE_RADIUS * Math.cos(angle),
-    longitude:
-      CIRCLE_CENTER.longitude +
-      (CIRCLE_RADIUS * Math.sin(angle)) /
-        Math.cos((CIRCLE_CENTER.latitude * Math.PI) / 180),
-  };
-});
-
-const HOLE_RADIUS = 0.0015;
-const CIRCLE_HOLES = [
-  Array.from({ length: 36 }, (_, i) => {
-    const angle = (i * 10 * Math.PI) / 180;
-    return {
-      latitude: CIRCLE_CENTER.latitude + HOLE_RADIUS * Math.cos(angle),
-      longitude:
-        CIRCLE_CENTER.longitude +
-        (HOLE_RADIUS * Math.sin(angle)) /
-          Math.cos((CIRCLE_CENTER.latitude * Math.PI) / 180),
-    };
-  }),
-];
-
 const SELECTED_SCALE = 1.5;
+
+const CalloutContent = ({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) => (
+  <View style={styles.callout}>
+    <Text style={styles.calloutTitle}>{title}</Text>
+    <Text style={styles.calloutDescription}>{description}</Text>
+  </View>
+);
 
 const renderMarker = (
   marker: MarkerData,
@@ -107,7 +97,6 @@ const renderMarker = (
     imageUrl,
   } = marker;
   const scale = id === selectedId ? SELECTED_SCALE : 1;
-
   const handlePress = onPress
     ? (e: MarkerPressEvent) => onPress(e, marker)
     : undefined;
@@ -120,93 +109,71 @@ const renderMarker = (
   const handleDragEnd = onDragEnd
     ? (e: MarkerDragEvent) => onDragEnd(e, marker)
     : undefined;
-
-  const calloutEl = (label: string, desc: string) => (
-    <View style={styles.callout}>
-      <Text style={styles.calloutTitle}>{label}</Text>
-      <Text style={styles.calloutDescription}>{desc}</Text>
-    </View>
-  );
-
   const markerRef = refCallback
     ? (r: Marker | null) => refCallback(id, r)
     : undefined;
+
+  const shared = {
+    key: id,
+    name,
+    coordinate,
+    scale,
+    draggable: true as const,
+    onPress: handlePress,
+    onDragStart: handleDragStart,
+    onDragChange: handleDragChange,
+    onDragEnd: handleDragEnd,
+  };
 
   switch (type) {
     case 'icon':
       return (
         <MarkerIcon
           ref={markerRef}
-          key={id}
-          name={name}
-          coordinate={coordinate}
-          scale={scale}
-          draggable
-          onPress={handlePress}
-          onDragStart={handleDragStart}
-          onDragChange={handleDragChange}
-          onDragEnd={handleDragEnd}
-          callout={calloutEl(
-            'Icon Marker Callout',
-            'A draggable pin-style marker with a custom icon representation on the map'
-          )}
+          {...shared}
+          callout={
+            <CalloutContent
+              title="Icon Marker Callout"
+              description="A draggable pin-style marker with a custom icon representation on the map"
+            />
+          }
         />
       );
     case 'text':
       return (
         <MarkerText
           ref={markerRef}
-          key={id}
-          name={name}
-          coordinate={coordinate}
+          {...shared}
           text={text ?? 'X'}
           color={color}
-          scale={scale}
-          draggable
-          onPress={handlePress}
-          onDragStart={handleDragStart}
-          onDragChange={handleDragChange}
-          onDragEnd={handleDragEnd}
-          callout={calloutEl(
-            `Text Badge Marker ${text}`,
-            'Displays a colored text badge that can be dragged around the map'
-          )}
+          callout={
+            <CalloutContent
+              title={`Text Badge Marker ${text}`}
+              description="Displays a colored text badge that can be dragged around the map"
+            />
+          }
         />
       );
     case 'image':
       return (
         <MarkerImage
           ref={markerRef}
-          key={id}
-          name={name}
-          coordinate={coordinate}
+          {...shared}
           source={{ uri: imageUrl }}
-          scale={scale}
-          draggable
-          onPress={handlePress}
-          onDragStart={handleDragStart}
-          onDragChange={handleDragChange}
-          onDragEnd={handleDragEnd}
-          callout={calloutEl(
-            'Remote Image Marker',
-            'An avatar marker rendered from a remote image source URL'
-          )}
+          callout={
+            <CalloutContent
+              title="Remote Image Marker"
+              description="An avatar marker rendered from a remote image source URL"
+            />
+          }
         />
       );
     case 'custom':
       return (
         <Marker
           ref={markerRef}
-          key={id}
-          name={name}
-          coordinate={coordinate}
+          {...shared}
           anchor={anchor}
-          scale={scale}
-          draggable
-          onPress={handlePress}
-          onDragStart={handleDragStart}
-          onDragChange={handleDragChange}
-          onDragEnd={handleDragEnd}
           callout={
             <View style={styles.customCallout}>
               <View>
@@ -231,18 +198,14 @@ const renderMarker = (
       return (
         <Marker
           ref={markerRef}
-          key={id}
-          name={name}
-          coordinate={coordinate}
+          {...shared}
           title={title}
           description={description}
-          scale={scale}
-          draggable
-          onPress={handlePress}
-          onDragStart={handleDragStart}
-          onDragChange={handleDragChange}
-          onDragEnd={handleDragEnd}
-          callout={title ? undefined : calloutEl('Basic Marker', name ?? '')}
+          callout={
+            title ? undefined : (
+              <CalloutContent title="Basic Marker" description={name ?? ''} />
+            )
+          }
         />
       );
   }
@@ -304,31 +267,22 @@ export const Map = forwardRef<MapRef, MapProps>(
       }),
       []
     );
-    const polylineCoordinates = useMemo(
-      () => markers.map((m) => m.coordinate),
-      [markers]
-    );
+
     const smoothedRoute = useMemo(
-      () => smoothCoordinates(polylineCoordinates),
-      [polylineCoordinates]
+      () => smoothCoordinates(markers.map((m) => m.coordinate)),
+      [markers]
     );
 
     const centerPinStyle = useAnimatedStyle(() => {
       const bottom = animatedPosition
         ? screenHeight - animatedPosition.value
         : 0;
-      return {
-        transform: [{ translateY: -bottom / 2 }],
-      };
+      return { transform: [{ translateY: -bottom / 2 }] };
     });
 
     const handleMarkerPress = (e: MarkerPressEvent, marker: MarkerData) => {
       setSelectedMarkerId((prev) => (prev === marker.id ? null : marker.id));
       onMarkerPress?.(e, marker);
-    };
-
-    const handleCameraMove = (e: MapCameraEvent) => {
-      onCameraMove?.(e);
     };
 
     const handleCameraIdle = (e: MapCameraEvent) => {
@@ -341,13 +295,13 @@ export const Map = forwardRef<MapRef, MapProps>(
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFill}
-          initialCoordinate={{ latitude: 37.78, longitude: -122.43 }}
+          initialCoordinate={CIRCLE_CENTER}
           initialZoom={INITIAL_ZOOM}
           userLocationEnabled
           edgeInsets={edgeInsets}
           onPress={onPress}
           onLongPress={onLongPress}
-          onCameraMove={handleCameraMove}
+          onCameraMove={onCameraMove}
           onCameraIdle={handleCameraIdle}
           {...props}
         >
@@ -388,9 +342,7 @@ export const Map = forwardRef<MapRef, MapProps>(
           />
           <GeoJson geojson={SAMPLE_GEOJSON} />
           <GroundOverlay
-            image={{
-              uri: 'https://picsum.photos/320/240',
-            }}
+            image={{ uri: 'https://picsum.photos/320/240' }}
             bounds={{
               southwest: { latitude: 37.7765, longitude: -122.435 },
               northeast: { latitude: 37.7805, longitude: -122.43 },

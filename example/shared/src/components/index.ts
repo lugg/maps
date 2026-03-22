@@ -7,6 +7,7 @@ export { MarkerText } from './MarkerText';
 export { MarkerImage } from './MarkerImage';
 export { CrewMarker } from './CrewMarker';
 export { PickupIcon } from './PickupIcon';
+export { MapTypeButton } from './MapTypeButton';
 
 export type MarkerData = {
   id: string;
