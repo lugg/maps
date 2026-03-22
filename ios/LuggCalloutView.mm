@@ -74,7 +74,12 @@ using namespace facebook::react;
   const auto &newViewProps =
       *std::static_pointer_cast<LuggCalloutViewProps const>(props);
 
-  _bubbled = newViewProps.bubbled;
+  BOOL changed = NO;
+
+  if (_bubbled != newViewProps.bubbled) {
+    _bubbled = newViewProps.bubbled;
+    changed = YES;
+  }
 
   if (oldProps) {
     const auto &oldViewProps =
@@ -82,13 +87,18 @@ using namespace facebook::react;
     if (newViewProps.offset.x != oldViewProps.offset.x ||
         newViewProps.offset.y != oldViewProps.offset.y) {
       _offset = CGPointMake(newViewProps.offset.x, newViewProps.offset.y);
+      changed = YES;
     }
   } else if (newViewProps.offset.x != 0 || newViewProps.offset.y != 0) {
     _offset = CGPointMake(newViewProps.offset.x, newViewProps.offset.y);
+    changed = YES;
   }
 
   [super updateProps:props oldProps:oldProps];
-  [_delegate calloutViewDidUpdate:self];
+
+  if (changed) {
+    [_delegate calloutViewDidUpdate:self];
+  }
 }
 
 - (BOOL)bubbled {

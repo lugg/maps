@@ -1,9 +1,10 @@
 import { forwardRef, useRef, useImperativeHandle, useState } from 'react';
-import { StyleSheet, TextInput, useColorScheme } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import type { GeoJSON } from '@lugg/maps';
 
 import { Button, ThemedText } from '../components';
+import { sizes, useTheme } from '../theme';
 
 const GEOJSON_PRESETS = [
   {
@@ -30,7 +31,7 @@ export interface GeoJsonSheetRef {
 export const GeoJsonSheet = forwardRef<GeoJsonSheetRef, GeoJsonSheetProps>(
   ({ geojson, onLoad, onClear, onStatus }, ref) => {
     const sheetRef = useRef<TrueSheet>(null);
-    const isDark = useColorScheme() === 'dark';
+    const { colors } = useTheme();
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -59,9 +60,16 @@ export const GeoJsonSheet = forwardRef<GeoJsonSheetRef, GeoJsonSheetProps>(
       <TrueSheet ref={sheetRef} detents={['auto']} style={styles.sheet}>
         <ThemedText variant="title">Load GeoJSON</ThemedText>
         <TextInput
-          style={[styles.urlInput, isDark && styles.urlInputDark]}
+          style={[
+            styles.urlInput,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.inputBackground,
+              color: colors.inputText,
+            },
+          ]}
           placeholder="Enter GeoJSON URL..."
-          placeholderTextColor={isDark ? '#666' : '#999'}
+          placeholderTextColor={colors.placeholder}
           value={url}
           onChangeText={setUrl}
           autoCapitalize="none"
@@ -102,21 +110,13 @@ export const GeoJsonSheet = forwardRef<GeoJsonSheetRef, GeoJsonSheetProps>(
 
 const styles = StyleSheet.create({
   sheet: {
-    padding: 24,
-    gap: 12,
+    padding: sizes.xl,
+    gap: sizes.md,
   },
   urlInput: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#DDD',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    backgroundColor: '#FFF',
-    color: '#000',
-  },
-  urlInputDark: {
-    backgroundColor: '#1C1C1E',
-    borderColor: '#333',
-    color: '#FFF',
+    borderRadius: sizes.radiusMd,
+    padding: sizes.md,
+    fontSize: sizes.fontBase,
   },
 });

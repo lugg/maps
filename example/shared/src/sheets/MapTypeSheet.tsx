@@ -4,6 +4,7 @@ import { TrueSheet } from '@lodev09/react-native-true-sheet';
 import type { MapType } from '@lugg/maps';
 
 import { Button, ThemedText } from '../components';
+import { sizes } from '../theme';
 
 const MAP_TYPES: MapType[] = [
   'standard',
@@ -50,7 +51,7 @@ export const MapTypeSheet = forwardRef<MapTypeSheetRef, MapTypeSheetProps>(
 
 const styles = StyleSheet.create({
   sheet: {
-    padding: 24,
-    gap: 12,
+    padding: sizes.xl,
+    gap: sizes.md,
   },
 });

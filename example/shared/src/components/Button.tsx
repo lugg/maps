@@ -5,6 +5,7 @@ import {
   type PressableProps,
   type ViewStyle,
 } from 'react-native';
+import { sizes, useTheme } from '../theme';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -12,10 +13,13 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
 }
 
 export const Button = ({ title, disabled, style, ...props }: ButtonProps) => {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.button,
+        { backgroundColor: colors.primary },
         pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
         style,
@@ -30,10 +34,9 @@ export const Button = ({ title, disabled, style, ...props }: ButtonProps) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#007AFF',
-    height: 40,
-    paddingHorizontal: 16,
-    borderRadius: 4,
+    height: sizes.buttonHeight,
+    paddingHorizontal: sizes.lg,
+    borderRadius: sizes.radiusFull,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -45,7 +48,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: sizes.fontLg,
     fontWeight: '600',
   },
 });

@@ -11,6 +11,7 @@ import {
 } from '@lodev09/react-native-true-sheet';
 
 import { Button, ThemedText } from '../components';
+import { sizes, useTheme } from '../theme';
 
 interface StatusInfo {
   text: string;
@@ -67,6 +68,8 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
 
     useImperativeHandle(ref, () => ({ animatedPosition }));
 
+    const { colors } = useTheme();
+
     return (
       <ReanimatedTrueSheet
         ref={sheetRef}
@@ -81,7 +84,10 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
         onDetentChange={onDetentChange}
       >
         <ThemedText
-          style={[styles.statusText, status.error && styles.statusError]}
+          style={[
+            { color: colors.textSecondary },
+            status.error && { color: colors.textError },
+          ]}
         >
           {status.text}
         </ThemedText>
@@ -137,20 +143,14 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
 );
 
 const styles = StyleSheet.create({
-  statusText: {
-    color: '#666',
-  },
-  statusError: {
-    color: '#D32F2F',
-  },
   sheet: {
-    padding: 24,
-    gap: 12,
+    padding: sizes.xl,
+    gap: sizes.md,
   },
   sheetContent: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: sizes.sm,
   },
   sheetButton: {
     flex: 1,
