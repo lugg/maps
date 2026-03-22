@@ -222,7 +222,10 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
             anchor={markerElement}
             pixelOffset={
               !calloutBubbled
-                ? [calloutOffset?.x ?? 0, CALLOUT_ARROW_HEIGHT + (calloutOffset?.y ?? 0)]
+                ? [
+                    calloutOffset?.x ?? 0,
+                    CALLOUT_ARROW_HEIGHT + (calloutOffset?.y ?? 0),
+                  ]
                 : undefined
             }
             headerDisabled
