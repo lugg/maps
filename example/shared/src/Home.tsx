@@ -356,18 +356,24 @@ const HomeContent = () => {
         style={styles.geojsonSheet}
       >
         <ThemedText variant="title">Map Type</ThemedText>
-        {(['standard', 'satellite', 'terrain', 'hybrid', 'muted-standard'] as MapType[]).map(
-          (type) => (
-            <Button
-              key={type}
-              title={type === mapType ? `${type} ✓` : type}
-              onPress={() => {
-                setMapType(type);
-                mapTypeSheetRef.current?.dismiss();
-              }}
-            />
-          )
-        )}
+        {(
+          [
+            'standard',
+            'satellite',
+            'terrain',
+            'hybrid',
+            'muted-standard',
+          ] as MapType[]
+        ).map((type) => (
+          <Button
+            key={type}
+            title={type === mapType ? `${type} ✓` : type}
+            onPress={() => {
+              setMapType(type);
+              mapTypeSheetRef.current?.dismiss();
+            }}
+          />
+        ))}
       </TrueSheet>
 
       <TrueSheet
