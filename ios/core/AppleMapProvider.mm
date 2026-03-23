@@ -328,8 +328,16 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
 
 - (void)setInsetAdjustment:
     (LuggMapViewInsetAdjustment)insetAdjustment {
-  _mapView.insetsLayoutMarginsFromSafeArea =
-      (insetAdjustment == LuggMapViewInsetAdjustment::Automatic);
+  BOOL automatic = (insetAdjustment == LuggMapViewInsetAdjustment::Automatic);
+  if (_mapView.insetsLayoutMarginsFromSafeArea == automatic)
+    return;
+
+  CLLocationCoordinate2D center = _mapView.centerCoordinate;
+  _mapView.insetsLayoutMarginsFromSafeArea = automatic;
+
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self->_mapView setCenterCoordinate:center animated:NO];
+  });
 }
 
 - (void)setPoiEnabled:(BOOL)enabled {
