@@ -1,7 +1,9 @@
 package com.luggmaps.core
 
 import android.annotation.SuppressLint
+import android.content.ComponentCallbacks2
 import android.content.Context
+import android.content.res.Configuration
 import android.view.View
 import android.widget.ImageView
 import androidx.core.graphics.createBitmap
@@ -63,7 +65,8 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
-  GoogleMap.InfoWindowAdapter {
+  GoogleMap.InfoWindowAdapter,
+  ComponentCallbacks2 {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -71,6 +74,7 @@ class GoogleMapProvider(private val context: Context) :
   var mapId: String = DEMO_MAP_ID
 
   private var wrapperView: LuggMapWrapperView? = null
+  private var currentNightMode: Int = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
   private var mapView: MapView? = null
   private var googleMap: GoogleMap? = null
   private var _isMapReady = false
@@ -125,6 +129,8 @@ class GoogleMapProvider(private val context: Context) :
     val wrapper = wrapperView as LuggMapWrapperView
     this.wrapperView = wrapper
 
+    context.applicationContext.registerComponentCallbacks(this)
+
     val options = GoogleMapOptions().mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
@@ -135,6 +141,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun destroy() {
+    context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
     for (markerView in liveMarkerViews) {
       markerView.onUpdate = null
@@ -1172,6 +1179,17 @@ class GoogleMapProvider(private val context: Context) :
   private fun applyEdgeInsets() {
     googleMap?.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
   }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (newNightMode != currentNightMode) {
+      currentNightMode = newNightMode
+      applyTheme()
+    }
+  }
+
+  override fun onLowMemory() {}
+  override fun onTrimMemory(level: Int) {}
 
   private fun applyTheme() {
     val colorScheme = when (theme) {
