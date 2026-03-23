@@ -78,7 +78,7 @@ export interface NativeProps extends ViewProps {
   edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
   userLocationButtonEnabled?: boolean;
-  moveOnMarkerPress?: boolean;
+  moveOnMarkerPress?: WithDefault<boolean, true>;
   poiEnabled?: boolean;
   poiFilterMode?: WithDefault<'including' | 'excluding', 'including'>;
   poiFilterCategories?: ReadonlyArray<string>;
