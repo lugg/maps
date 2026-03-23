@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.TileOverlay
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
+import com.luggmaps.extensions.findViewByTag
 import com.luggmaps.LuggCalloutView
 import com.luggmaps.LuggCircleView
 import com.luggmaps.LuggCircleViewDelegate
@@ -1183,7 +1184,7 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun applyWatermarkTranslation(duration: Int = 0) {
     val view = mapView ?: return
-    findViewByTag(view, "GoogleWatermark")?.let { watermark ->
+    view.findViewByTag("GoogleWatermark")?.let { watermark ->
       val targetY = -edgeInsets.bottom.toFloat()
       val targetX = edgeInsets.left.toFloat()
       if (duration > 0) {
@@ -1204,15 +1205,7 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  private fun findViewByTag(parent: View, tag: String): View? {
-    if (parent.tag?.toString() == tag) return parent
-    if (parent !is android.view.ViewGroup) return null
-    for (i in 0 until parent.childCount) {
-      val found = findViewByTag(parent.getChildAt(i), tag)
-      if (found != null) return found
-    }
-    return null
-  }
+
 
   override fun onConfigurationChanged(newConfig: Configuration) {
     val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
