@@ -18,6 +18,7 @@
     "react-native-svg": "*"
   },
   "dependencies": {
-    "geolib": "^3.3.4"
+    "geolib": "^3.3.4",
+    "react-native-safe-area-context": "^5.7.0"
   }
 }
