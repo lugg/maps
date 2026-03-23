@@ -66,6 +66,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
+  private var moveOnMarkerPress: Boolean = true
   private var poiEnabled: Boolean = true
   private var poiFilterMode: String = "including"
   private var poiFilterCategories: List<String> = emptyList()
@@ -187,6 +188,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setPitchEnabled(pitchEnabled)
     provider?.setUserLocationEnabled(userLocationEnabled)
     provider?.setUserLocationButtonEnabled(userLocationButtonEnabled)
+    provider?.setMoveOnMarkerPress(moveOnMarkerPress)
     provider?.setMapType(mapType)
     provider?.setTheme(theme)
     minZoom?.let { provider?.setMinZoom(it) }
@@ -251,6 +253,12 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (userLocationButtonEnabled == enabled) return
     userLocationButtonEnabled = enabled
     provider?.setUserLocationButtonEnabled(enabled)
+  }
+
+  fun setMoveOnMarkerPress(enabled: Boolean) {
+    if (moveOnMarkerPress == enabled) return
+    moveOnMarkerPress = enabled
+    provider?.setMoveOnMarkerPress(enabled)
   }
 
   fun setMinZoom(zoom: Double) {

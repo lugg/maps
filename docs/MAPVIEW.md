@@ -35,6 +35,7 @@ import { MapView } from '@lugg/maps';
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
+| `moveOnMarkerPress` | `boolean` | `true` | If false, the map won't move when a marker is pressed (Android only) |
 | `poiEnabled` | `boolean` | `true` | Show points of interest (Apple Maps only) |
 | `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |

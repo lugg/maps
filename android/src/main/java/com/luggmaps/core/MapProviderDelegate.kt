@@ -32,6 +32,7 @@ interface MapProvider {
   fun setPitchEnabled(enabled: Boolean)
   fun setUserLocationEnabled(enabled: Boolean)
   fun setUserLocationButtonEnabled(enabled: Boolean)
+  fun setMoveOnMarkerPress(enabled: Boolean)
   fun setMapType(value: String)
   fun setTheme(value: String)
   fun setMinZoom(zoom: Double)

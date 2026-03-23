@@ -129,6 +129,12 @@ export interface MapViewProps extends ViewProps {
    */
   userLocationButtonEnabled?: boolean;
   /**
+   * If false, the map won't move when a marker is pressed (Android only).
+   * @default true
+   * @platform android
+   */
+  moveOnMarkerPress?: boolean;
+  /**
    * Show points of interest on the map (Apple Maps only).
    * When false, hides all POIs regardless of poiFilter.
    * @default true

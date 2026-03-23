@@ -142,6 +142,11 @@ class LuggMapViewManager :
     view.setUserLocationButtonEnabled(value)
   }
 
+  @ReactProp(name = "moveOnMarkerPress", defaultBoolean = true)
+  override fun setMoveOnMarkerPress(view: LuggMapView, value: Boolean) {
+    view.setMoveOnMarkerPress(value)
+  }
+
   @ReactProp(name = "minZoom")
   override fun setMinZoom(view: LuggMapView, value: Double) {
     view.setMinZoom(value)

@@ -106,6 +106,7 @@ class GoogleMapProvider(private val context: Context) :
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
+  private var moveOnMarkerPress: Boolean = true
 
   // Zoom limits
   private var minZoom: Float? = null
@@ -296,12 +297,21 @@ class GoogleMapProvider(private val context: Context) :
 
       val calloutView = view.calloutView
       if (calloutView != null && !calloutView.bubbled && calloutView.hasCustomContent) {
-        googleMap?.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        if (moveOnMarkerPress) {
+          googleMap?.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        }
         showNonBubbledCallout(marker, calloutView)
         return true
       }
     }
-    return false
+
+    val consumeEvent = !moveOnMarkerPress
+    if (consumeEvent) {
+      // Prevent camera movement by consuming the click event,
+      // while still explicitly showing the marker's info window or bubbled callout.
+      marker.showInfoWindow()
+    }
+    return consumeEvent
   }
 
   override fun onMarkerDragStart(marker: Marker) {
@@ -456,6 +466,10 @@ class GoogleMapProvider(private val context: Context) :
   override fun setUserLocationButtonEnabled(enabled: Boolean) {
     userLocationButtonEnabled = enabled
     googleMap?.uiSettings?.isMyLocationButtonEnabled = enabled
+  }
+
+  override fun setMoveOnMarkerPress(enabled: Boolean) {
+    moveOnMarkerPress = enabled
   }
 
   override fun setMapType(value: String) {

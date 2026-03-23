@@ -95,6 +95,7 @@ export class MapView
       edgeInsets,
       userLocationEnabled,
       userLocationButtonEnabled,
+      moveOnMarkerPress,
       poiEnabled,
       poiFilter,
       theme,
@@ -125,6 +126,7 @@ export class MapView
         edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
         userLocationButtonEnabled={userLocationButtonEnabled}
+        moveOnMarkerPress={moveOnMarkerPress}
         poiEnabled={poiEnabled}
         poiFilterMode={poiFilter?.mode}
         poiFilterCategories={poiFilter?.categories}
