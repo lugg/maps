@@ -170,8 +170,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.myLocationEnabled = enabled;
 }
 
-- (void)setInsetAdjustment:
-    (LuggMapViewInsetAdjustment)insetAdjustment {
+- (void)setInsetAdjustment:(LuggMapViewInsetAdjustment)insetAdjustment {
   _mapView.paddingAdjustmentBehavior =
       (insetAdjustment == LuggMapViewInsetAdjustment::Automatic)
           ? kGMSMapViewPaddingAdjustmentBehaviorAlways
@@ -188,7 +187,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
-  if (!_mapView) return;
+  if (!_mapView)
+    return;
 
   switch (mapType) {
   case LuggMapViewMapType::Satellite:

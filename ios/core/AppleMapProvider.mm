@@ -301,11 +301,13 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
 
 - (void)applyPoiFilter {
   if (!_poiEnabled) {
-    _mapView.pointOfInterestFilter = MKPointOfInterestFilter.filterExcludingAllCategories;
+    _mapView.pointOfInterestFilter =
+        MKPointOfInterestFilter.filterExcludingAllCategories;
     return;
   }
   if (_poiFilterCategories.count > 0) {
-    NSMutableArray<MKPointOfInterestCategory> *categories = [NSMutableArray array];
+    NSMutableArray<MKPointOfInterestCategory> *categories =
+        [NSMutableArray array];
     for (NSString *name in _poiFilterCategories) {
       MKPointOfInterestCategory category = poiCategoryFromString(name);
       if (category) {
@@ -314,11 +316,11 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
     }
     if (categories.count > 0) {
       if (_poiFilterMode == LuggMapViewPoiFilterMode::Excluding) {
-        _mapView.pointOfInterestFilter =
-            [[MKPointOfInterestFilter alloc] initExcludingCategories:categories];
+        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
+            initExcludingCategories:categories];
       } else {
-        _mapView.pointOfInterestFilter =
-            [[MKPointOfInterestFilter alloc] initIncludingCategories:categories];
+        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
+            initIncludingCategories:categories];
       }
       return;
     }
@@ -326,8 +328,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   _mapView.pointOfInterestFilter = nil;
 }
 
-- (void)setInsetAdjustment:
-    (LuggMapViewInsetAdjustment)insetAdjustment {
+- (void)setInsetAdjustment:(LuggMapViewInsetAdjustment)insetAdjustment {
   BOOL automatic = (insetAdjustment == LuggMapViewInsetAdjustment::Automatic);
   if (_mapView.insetsLayoutMarginsFromSafeArea == automatic)
     return;

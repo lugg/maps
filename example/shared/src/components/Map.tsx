@@ -14,7 +14,6 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   MapView,
   Marker,
@@ -268,7 +267,6 @@ export const Map = forwardRef<MapRef, MapProps>(
     ref
   ) => {
     const { height: screenHeight } = useWindowDimensions();
-    const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
     const mapRef = useRef<MapView>(null);
     const markerRefsMap = useRef(new globalThis.Map<string, Marker>());
     const [zoom, setZoom] = useState(INITIAL_ZOOM);
@@ -307,11 +305,7 @@ export const Map = forwardRef<MapRef, MapProps>(
       const bottom = animatedPosition
         ? screenHeight - animatedPosition.value
         : 0;
-      return {
-        transform: [
-          { translateY: (safeTop - safeBottom - bottom) / 2 },
-        ],
-      };
+      return { transform: [{ translateY: -bottom / 2 }] };
     });
 
     const handleMarkerPress = (e: MarkerPressEvent, marker: MarkerData) => {
@@ -334,7 +328,6 @@ export const Map = forwardRef<MapRef, MapProps>(
           initialZoom={INITIAL_ZOOM}
           userLocationEnabled
           edgeInsets={edgeInsets}
-          insetAdjustment="automatic"
           onPress={onPress}
           onLongPress={onLongPress}
           onCameraMove={onCameraMove}

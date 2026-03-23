@@ -12,7 +12,6 @@ import {
   TrueSheetProvider,
   type DetentChangeEvent,
 } from '@lodev09/react-native-true-sheet';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ReanimatedTrueSheetProvider } from '@lodev09/react-native-true-sheet/reanimated';
 
 import { Map, type MapRef, MapTypeButton } from './components';
@@ -38,15 +37,13 @@ export const Home = () => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   return (
-    <SafeAreaProvider>
-      <TrueSheetProvider>
-        <ReanimatedTrueSheetProvider>
-          <MapProvider apiKey={apiKey}>
-            <HomeContent />
-          </MapProvider>
-        </ReanimatedTrueSheetProvider>
-      </TrueSheetProvider>
-    </SafeAreaProvider>
+    <TrueSheetProvider>
+      <ReanimatedTrueSheetProvider>
+        <MapProvider apiKey={apiKey}>
+          <HomeContent />
+        </MapProvider>
+      </ReanimatedTrueSheetProvider>
+    </TrueSheetProvider>
   );
 };
 

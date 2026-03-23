@@ -32,7 +32,6 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.TileOverlay
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
-import com.luggmaps.extensions.findViewByTag
 import com.luggmaps.LuggCalloutView
 import com.luggmaps.LuggCircleView
 import com.luggmaps.LuggCircleViewDelegate
@@ -47,6 +46,7 @@ import com.luggmaps.LuggPolylineView
 import com.luggmaps.LuggPolylineViewDelegate
 import com.luggmaps.LuggTileOverlayView
 import com.luggmaps.LuggTileOverlayViewDelegate
+import com.luggmaps.extensions.findViewByTag
 import java.net.URL
 
 class GoogleMapProvider(private val context: Context) :
@@ -1201,8 +1201,8 @@ class GoogleMapProvider(private val context: Context) :
     applyEdgeInsets()
   }
 
-  private fun combinedEdgeInsets(): EdgeInsets {
-    return if (insetAdjustment == "automatic") {
+  private fun combinedEdgeInsets(): EdgeInsets =
+    if (insetAdjustment == "automatic") {
       EdgeInsets(
         edgeInsets.top + systemInsets.top,
         edgeInsets.left + systemInsets.left,
@@ -1212,7 +1212,6 @@ class GoogleMapProvider(private val context: Context) :
     } else {
       edgeInsets
     }
-  }
 
   private fun applyEdgeInsets(duration: Int = 0) {
     val combined = combinedEdgeInsets()
@@ -1242,8 +1241,6 @@ class GoogleMapProvider(private val context: Context) :
       }
     }
   }
-
-
 
   private fun attachWindowInsetsListener() {
     val view = mapView ?: return
