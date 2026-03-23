@@ -36,6 +36,7 @@ export type {
   MapPressEvent,
   MapType,
   MapTheme,
+  InsetAdjustment,
   PoiCategory,
   PoiFilter,
 } from './MapView.types';

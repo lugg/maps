@@ -7,6 +7,8 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.ImageView
 import androidx.core.graphics.createBitmap
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.facebook.react.uimanager.PixelUtil.dpToPx
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -118,6 +120,10 @@ class GoogleMapProvider(private val context: Context) :
   // Edge Insets
   private var edgeInsets: EdgeInsets = EdgeInsets()
 
+  // Inset adjustment
+  private var insetAdjustment: String = "never"
+  private var systemInsets: EdgeInsets = EdgeInsets()
+
   // region MapProvider
 
   override fun initializeMap(wrapperView: View, latitude: Double, longitude: Double, zoom: Float) {
@@ -142,6 +148,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun destroy() {
+    detachWindowInsetsListener()
     context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
     for (markerView in liveMarkerViews) {
@@ -209,6 +216,7 @@ class GoogleMapProvider(private val context: Context) :
     applyUiSettings()
     applyZoomLimits()
     applyEdgeInsets()
+    applyInsetAdjustment()
     applyTheme()
     applyUserLocation()
     processPendingMarkers()
@@ -516,6 +524,11 @@ class GoogleMapProvider(private val context: Context) :
     } else {
       applyEdgeInsets()
     }
+  }
+
+  override fun setInsetAdjustment(value: String) {
+    insetAdjustment = value
+    applyInsetAdjustment()
   }
 
   override fun setPoiEnabled(enabled: Boolean) {}
@@ -1138,11 +1151,12 @@ class GoogleMapProvider(private val context: Context) :
     val bottom = edgeInsetsBottom.toFloat().dpToPx().toInt()
     val right = edgeInsetsRight.toFloat().dpToPx().toInt()
 
+    val combined = combinedEdgeInsets()
     map.setPadding(
-      edgeInsets.left + left,
-      edgeInsets.top + top,
-      edgeInsets.right + right,
-      edgeInsets.bottom + bottom
+      combined.left + left,
+      combined.top + top,
+      combined.right + right,
+      combined.bottom + bottom
     )
 
     val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 0)
@@ -1153,7 +1167,7 @@ class GoogleMapProvider(private val context: Context) :
       else -> map.moveCamera(cameraUpdate)
     }
 
-    map.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
+    map.setPadding(combined.left, combined.top, combined.right, combined.bottom)
   }
 
   // endregion
@@ -1177,16 +1191,40 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  private fun applyEdgeInsets(duration: Int = 0) {
-    googleMap?.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
-    applyWatermarkTranslation(duration)
+  private fun applyInsetAdjustment() {
+    if (insetAdjustment == "automatic") {
+      attachWindowInsetsListener()
+    } else {
+      detachWindowInsetsListener()
+      systemInsets = EdgeInsets()
+    }
+    applyEdgeInsets()
   }
 
-  private fun applyWatermarkTranslation(duration: Int = 0) {
+  private fun combinedEdgeInsets(): EdgeInsets {
+    return if (insetAdjustment == "automatic") {
+      EdgeInsets(
+        edgeInsets.top + systemInsets.top,
+        edgeInsets.left + systemInsets.left,
+        edgeInsets.bottom + systemInsets.bottom,
+        edgeInsets.right + systemInsets.right
+      )
+    } else {
+      edgeInsets
+    }
+  }
+
+  private fun applyEdgeInsets(duration: Int = 0) {
+    val combined = combinedEdgeInsets()
+    googleMap?.setPadding(combined.left, combined.top, combined.right, combined.bottom)
+    applyWatermarkTranslation(combined, duration)
+  }
+
+  private fun applyWatermarkTranslation(insets: EdgeInsets, duration: Int = 0) {
     val view = mapView ?: return
     view.findViewByTag("GoogleWatermark")?.let { watermark ->
-      val targetY = -edgeInsets.bottom.toFloat()
-      val targetX = edgeInsets.left.toFloat()
+      val targetY = -insets.bottom.toFloat()
+      val targetX = insets.left.toFloat()
       if (duration > 0) {
         watermark.animate()
           .translationY(targetY)
@@ -1206,6 +1244,21 @@ class GoogleMapProvider(private val context: Context) :
   }
 
 
+
+  private fun attachWindowInsetsListener() {
+    val view = mapView ?: return
+    ViewCompat.setOnApplyWindowInsetsListener(view) { _, windowInsets ->
+      val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+      systemInsets = EdgeInsets(insets.top, insets.left, insets.bottom, insets.right)
+      applyEdgeInsets()
+      windowInsets
+    }
+    ViewCompat.requestApplyInsets(view)
+  }
+
+  private fun detachWindowInsetsListener() {
+    mapView?.let { ViewCompat.setOnApplyWindowInsetsListener(it, null) }
+  }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
     val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK

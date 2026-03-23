@@ -16,6 +16,8 @@ export type MapType =
 
 export type MapTheme = 'light' | 'dark' | 'system';
 
+export type InsetAdjustment = 'automatic' | 'never';
+
 export type PoiCategory =
   | 'airport'
   | 'amusement-park'
@@ -203,6 +205,11 @@ export interface MapViewProps extends ViewProps {
    * @default 'system'
    */
   theme?: MapTheme;
+  /**
+   * Safe area inset adjustment behavior
+   * @default 'never'
+   */
+  insetAdjustment?: InsetAdjustment;
   /**
    * Called when the map is pressed
    */

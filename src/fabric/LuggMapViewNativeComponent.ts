@@ -81,7 +81,8 @@ export interface NativeProps extends ViewProps {
   poiEnabled?: boolean;
   poiFilterMode?: WithDefault<'including' | 'excluding', 'including'>;
   poiFilterCategories?: ReadonlyArray<string>;
-  theme?: WithDefault<'light' | 'dark' | 'system', 'system'>;
+  theme?: WithDefault<'system' | 'light' | 'dark', 'system'>;
+  insetAdjustment?: WithDefault<'never' | 'automatic', 'never'>;
   onMapPress?: DirectEventHandler<PressEvent>;
   onMapLongPress?: DirectEventHandler<LongPressEvent>;
   onCameraMove?: DirectEventHandler<CameraMoveEvent>;

@@ -183,6 +183,11 @@ class LuggMapViewManager :
     view.setPoiFilterCategories(categories)
   }
 
+  @ReactProp(name = "insetAdjustment")
+  override fun setInsetAdjustment(view: LuggMapView, value: String?) {
+    view.setInsetAdjustment(value ?: "never")
+  }
+
   @ReactProp(name = "edgeInsets")
   override fun setEdgeInsets(view: LuggMapView, value: ReadableMap?) {
     value?.let {

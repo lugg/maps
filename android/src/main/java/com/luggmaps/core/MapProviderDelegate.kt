@@ -38,6 +38,7 @@ interface MapProvider {
   fun setMaxZoom(zoom: Double)
   fun setEdgeInsets(edgeInsets: EdgeInsets)
   fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int)
+  fun setInsetAdjustment(value: String)
   fun setPoiEnabled(enabled: Boolean)
   fun setPoiFilterMode(mode: String)
   fun setPoiFilterCategories(categories: List<String>)

@@ -49,6 +49,7 @@ using namespace luggmaps::events;
   double _maxZoom;
   UIEdgeInsets _edgeInsets;
   UIEdgeInsets _oldEdgeInsets;
+  LuggMapViewInsetAdjustment _insetAdjustment;
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider {
@@ -74,6 +75,7 @@ using namespace luggmaps::events;
     _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
     _edgeInsets = UIEdgeInsetsZero;
+    _insetAdjustment = LuggMapViewInsetAdjustment::Never;
   }
   return self;
 }
@@ -287,6 +289,7 @@ using namespace luggmaps::events;
   [_provider setPoiFilterCategories:_poiFilterCategories];
   [_provider setMinZoom:_minZoom];
   [_provider setMaxZoom:_maxZoom];
+  [_provider setInsetAdjustment:_insetAdjustment];
 }
 
 - (void)updateProps:(Props::Shared const &)props
@@ -355,6 +358,10 @@ using namespace luggmaps::events;
   if (newViewProps.theme != prevViewProps.theme) {
     _theme = newViewProps.theme;
     [_provider setTheme:_theme];
+  }
+  if (newViewProps.insetAdjustment != prevViewProps.insetAdjustment) {
+    _insetAdjustment = newViewProps.insetAdjustment;
+    [_provider setInsetAdjustment:_insetAdjustment];
   }
 
   UIEdgeInsets newEdgeInsets = UIEdgeInsetsMake(

@@ -1,5 +1,6 @@
 #import "GoogleMapProvider.h"
 
+using facebook::react::LuggMapViewInsetAdjustment;
 using facebook::react::LuggMapViewMapType;
 using facebook::react::LuggMapViewPoiFilterMode;
 using facebook::react::LuggMapViewTheme;
@@ -167,6 +168,14 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.myLocationEnabled = enabled;
+}
+
+- (void)setInsetAdjustment:
+    (LuggMapViewInsetAdjustment)insetAdjustment {
+  _mapView.paddingAdjustmentBehavior =
+      (insetAdjustment == LuggMapViewInsetAdjustment::Automatic)
+          ? kGMSMapViewPaddingAdjustmentBehaviorAlways
+          : kGMSMapViewPaddingAdjustmentBehaviorNever;
 }
 
 - (void)setPoiEnabled:(BOOL)enabled {

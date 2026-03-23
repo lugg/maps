@@ -42,6 +42,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)destroy;
 
 // Props
+- (void)setInsetAdjustment:
+    (facebook::react::LuggMapViewInsetAdjustment)insetAdjustment;
 - (void)setZoomEnabled:(BOOL)enabled;
 - (void)setScrollEnabled:(BOOL)enabled;
 - (void)setRotateEnabled:(BOOL)enabled;

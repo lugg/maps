@@ -72,6 +72,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var minZoom: Double? = null
   private var maxZoom: Double? = null
   private var edgeInsets: EdgeInsets = EdgeInsets()
+  private var insetAdjustment: String = "never"
 
   // region View Lifecycle
 
@@ -192,6 +193,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
     provider?.setEdgeInsets(edgeInsets)
+    provider?.setInsetAdjustment(insetAdjustment)
     provider?.setPoiEnabled(poiEnabled)
     provider?.setPoiFilterMode(poiFilterMode)
     provider?.setPoiFilterCategories(poiFilterCategories)
@@ -293,6 +295,12 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (poiFilterCategories == categories) return
     poiFilterCategories = categories
     provider?.setPoiFilterCategories(categories)
+  }
+
+  fun setInsetAdjustment(value: String) {
+    if (insetAdjustment == value) return
+    insetAdjustment = value
+    provider?.setInsetAdjustment(value)
   }
 
   fun setEdgeInsets(

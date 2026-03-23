@@ -98,6 +98,7 @@ export class MapView
       poiEnabled,
       poiFilter,
       theme,
+      insetAdjustment,
       onPress,
       onLongPress,
       onCameraMove,
@@ -129,6 +130,7 @@ export class MapView
         poiFilterMode={poiFilter?.mode}
         poiFilterCategories={poiFilter?.categories}
         theme={theme}
+        insetAdjustment={insetAdjustment}
         onMapPress={onPress}
         onMapLongPress={onLongPress}
         onCameraMove={onCameraMove}

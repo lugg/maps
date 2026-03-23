@@ -1,5 +1,6 @@
 #import "AppleMapProvider.h"
 
+using facebook::react::LuggMapViewInsetAdjustment;
 using facebook::react::LuggMapViewMapType;
 using facebook::react::LuggMapViewPoiFilterMode;
 using facebook::react::LuggMapViewTheme;
@@ -323,6 +324,12 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
     }
   }
   _mapView.pointOfInterestFilter = nil;
+}
+
+- (void)setInsetAdjustment:
+    (LuggMapViewInsetAdjustment)insetAdjustment {
+  _mapView.insetsLayoutMarginsFromSafeArea =
+      (insetAdjustment == LuggMapViewInsetAdjustment::Automatic);
 }
 
 - (void)setPoiEnabled:(BOOL)enabled {

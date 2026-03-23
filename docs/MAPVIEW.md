@@ -38,6 +38,7 @@ import { MapView } from '@lugg/maps';
 | `poiEnabled` | `boolean` | `true` | Show points of interest (Apple Maps only) |
 | `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
+| `insetAdjustment` | `'automatic' \| 'never'` | `'never'` | Safe area inset adjustment behavior |
 | `onPress` | `(event: MapPressEvent) => void` | - | Called when the map is pressed |
 | `onLongPress` | `(event: MapPressEvent) => void` | - | Called when the map is long pressed |
 | `onCameraMove` | `(event: MapCameraEvent) => void` | - | Called when camera moves |
@@ -70,6 +71,13 @@ import { MapView } from '@lugg/maps';
 | `'light'` | Light appearance |
 | `'dark'` | Dark appearance |
 | `'system'` | Follow system appearance |
+
+### InsetAdjustment
+
+| Value | Description |
+|-------|-------------|
+| `'never'` | No safe area inset adjustment |
+| `'automatic'` | Automatically adjust for safe area insets |
 
 ### PoiFilter
 
