@@ -506,7 +506,7 @@ class GoogleMapProvider(private val context: Context) :
 
     if (map != null && oldInsets != edgeInsets) {
       val cameraUpdate = CameraUpdateFactory.newCameraPosition(map.cameraPosition)
-      applyEdgeInsets()
+      applyEdgeInsets(duration)
       when {
         duration < 0 -> map.animateCamera(cameraUpdate)
         duration > 0 -> map.animateCamera(cameraUpdate, duration, null)
@@ -1176,8 +1176,42 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  private fun applyEdgeInsets() {
+  private fun applyEdgeInsets(duration: Int = 0) {
     googleMap?.setPadding(edgeInsets.left, edgeInsets.top, edgeInsets.right, edgeInsets.bottom)
+    applyWatermarkTranslation(duration)
+  }
+
+  private fun applyWatermarkTranslation(duration: Int = 0) {
+    val view = mapView ?: return
+    findViewByTag(view, "GoogleWatermark")?.let { watermark ->
+      val targetY = -edgeInsets.bottom.toFloat()
+      val targetX = edgeInsets.left.toFloat()
+      if (duration > 0) {
+        watermark.animate()
+          .translationY(targetY)
+          .translationX(targetX)
+          .setDuration(duration.toLong())
+          .start()
+      } else if (duration < 0) {
+        watermark.animate()
+          .translationY(targetY)
+          .translationX(targetX)
+          .start()
+      } else {
+        watermark.translationY = targetY
+        watermark.translationX = targetX
+      }
+    }
+  }
+
+  private fun findViewByTag(parent: View, tag: String): View? {
+    if (parent.tag?.toString() == tag) return parent
+    if (parent !is android.view.ViewGroup) return null
+    for (i in 0 until parent.childCount) {
+      val found = findViewByTag(parent.getChildAt(i), tag)
+      if (found != null) return found
+    }
+    return null
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
