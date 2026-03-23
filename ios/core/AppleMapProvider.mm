@@ -135,6 +135,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
   UIEdgeInsets _edgeInsetsTo;
+  UIEdgeInsets _edgeInsetsCurrent;
   CFTimeInterval _edgeInsetsAnimationStart;
   CFTimeInterval _edgeInsetsAnimationDuration;
   BOOL _poiEnabled;
@@ -394,6 +395,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   CGFloat deltaY = newOffsetY - oldOffsetY;
 
   _mapView.layoutMargins = edgeInsets;
+  _edgeInsetsCurrent = edgeInsets;
 
   if (deltaX != 0 || deltaY != 0) {
     CLLocationCoordinate2D currentCenter = _mapView.centerCoordinate;
@@ -444,7 +446,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
       _edgeInsetsFrom.right +
           (_edgeInsetsTo.right - _edgeInsetsFrom.right) * t);
 
-  [self setEdgeInsets:current oldEdgeInsets:_mapView.layoutMargins];
+  [self setEdgeInsets:current oldEdgeInsets:_edgeInsetsCurrent];
 
   if (progress >= 1.0) {
     [self stopEdgeInsetsAnimation];
