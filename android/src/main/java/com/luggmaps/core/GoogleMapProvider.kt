@@ -29,7 +29,6 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
-import com.google.android.gms.maps.model.TileOverlay
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
 import com.luggmaps.LuggCalloutView
@@ -48,6 +47,9 @@ import com.luggmaps.LuggTileOverlayView
 import com.luggmaps.LuggTileOverlayViewDelegate
 import com.luggmaps.extensions.findViewByTag
 import java.net.URL
+import kotlin.math.atan
+import kotlin.math.pow
+import kotlin.math.sinh
 
 class GoogleMapProvider(private val context: Context) :
   MapProvider,
@@ -305,8 +307,15 @@ class GoogleMapProvider(private val context: Context) :
 
       val calloutView = view.calloutView
       if (calloutView != null && !calloutView.bubbled && calloutView.hasCustomContent) {
-        googleMap?.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        if (view.centerOnPress) {
+          googleMap?.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        }
         showNonBubbledCallout(marker, calloutView)
+        return true
+      }
+
+      if (!view.centerOnPress) {
+        marker.showInfoWindow()
         return true
       }
     }
@@ -1058,9 +1067,9 @@ class GoogleMapProvider(private val context: Context) :
     val tileProvider = object : UrlTileProvider(tileSize, tileSize) {
       override fun getTileUrl(x: Int, y: Int, zoom: Int): URL? {
         if (hasBounds) {
-          val n = Math.pow(2.0, zoom.toDouble())
-          val tileSWLat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2.0 * (y + 1) / n))))
-          val tileNELat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2.0 * y / n))))
+          val n = 2.0.pow(zoom.toDouble())
+          val tileSWLat = Math.toDegrees(atan(sinh(Math.PI * (1 - 2.0 * (y + 1) / n))))
+          val tileNELat = Math.toDegrees(atan(sinh(Math.PI * (1 - 2.0 * y / n))))
           val tileSWLng = x / n * 360.0 - 180.0
           val tileNELng = (x + 1) / n * 360.0 - 180.0
 
@@ -1139,11 +1148,11 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
     if (coordinates.isEmpty()) return
 
-    val latLngs = coordinates.filterIsInstance<LatLng>()
-    if (latLngs.isEmpty()) return
+    val latLongs = coordinates.filterIsInstance<LatLng>()
+    if (latLongs.isEmpty()) return
 
-    val boundsBuilder = com.google.android.gms.maps.model.LatLngBounds.Builder()
-    latLngs.forEach { boundsBuilder.include(it) }
+    val boundsBuilder = LatLngBounds.Builder()
+    latLongs.forEach { boundsBuilder.include(it) }
     val bounds = boundsBuilder.build()
 
     val top = edgeInsetsTop.toFloat().dpToPx().toInt()
@@ -1265,7 +1274,9 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
+  @Deprecated("Deprecated in Java")
   override fun onLowMemory() {}
+
   override fun onTrimMemory(level: Int) {}
 
   private fun applyTheme() {
@@ -1274,7 +1285,7 @@ class GoogleMapProvider(private val context: Context) :
       "light" -> MapColorScheme.LIGHT
       else -> MapColorScheme.FOLLOW_SYSTEM
     }
-    googleMap?.setMapColorScheme(colorScheme)
+    googleMap?.mapColorScheme = colorScheme
   }
 
   @SuppressLint("MissingPermission")

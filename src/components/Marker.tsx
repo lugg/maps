@@ -58,6 +58,7 @@ export class Marker
       rotate = 0,
       scale = 1,
       rasterize = true,
+      centerOnPress = true,
       draggable = false,
       onPress,
       onDragStart,
@@ -88,6 +89,7 @@ export class Marker
         rotate={rotate}
         scale={scale}
         rasterize={rasterize}
+        centerOnPress={centerOnPress}
         draggable={draggable}
         onMarkerPress={onPress}
         onMarkerDragStart={onDragStart}

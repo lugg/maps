@@ -39,6 +39,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
 | `scale` | `number` | `1` | Scale factor for the marker |
 | `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android only) |
+| `centerOnPress` | `boolean` | `true` | Whether the map centers on the marker when pressed |
 | `draggable` | `boolean` | `false` | Whether the marker can be dragged by the user |
 | `onPress` | `(event: MarkerPressEvent) => void` | - | Called when the marker is pressed. Event includes `coordinate` and `point` |
 | `onDragStart` | `(event: MarkerDragEvent) => void` | - | Called when marker drag starts. Event includes `coordinate` and `point` |

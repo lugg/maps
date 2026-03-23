@@ -92,6 +92,11 @@ class LuggMarkerViewManager :
     view.setRasterize(value)
   }
 
+  @ReactProp(name = "centerOnPress", defaultBoolean = true)
+  override fun setCenterOnPress(view: LuggMarkerView, value: Boolean) {
+    view.setCenterOnPress(value)
+  }
+
   @ReactProp(name = "draggable", defaultBoolean = false)
   override fun setDraggable(view: LuggMarkerView, value: Boolean) {
     view.setDraggable(value)

@@ -26,6 +26,7 @@ using namespace luggmaps::events;
   CLLocationDegrees _rotate;
   CGFloat _scale;
   BOOL _rasterize;
+  BOOL _centerOnPress;
   BOOL _draggable;
   BOOL _didLayout;
   UIView *_iconView;
@@ -49,6 +50,7 @@ using namespace luggmaps::events;
     _rotate = 0;
     _scale = 1;
     _rasterize = YES;
+    _centerOnPress = YES;
     _didLayout = NO;
 
     _iconView = [[UIView alloc] init];
@@ -78,6 +80,7 @@ using namespace luggmaps::events;
   _rotate = newViewProps.rotate;
   _scale = newViewProps.scale;
   _rasterize = newViewProps.rasterize;
+  _centerOnPress = newViewProps.centerOnPress;
   _draggable = newViewProps.draggable;
 }
 
@@ -172,6 +175,10 @@ using namespace luggmaps::events;
 
 - (BOOL)rasterize {
   return _rasterize;
+}
+
+- (BOOL)centerOnPress {
+  return _centerOnPress;
 }
 
 - (BOOL)draggable {

@@ -70,6 +70,7 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
       zIndex,
       rotate,
       scale,
+      centerOnPress = true,
       draggable,
       onPress,
       onDragStart,
@@ -140,14 +141,22 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
         const coord = pos
           ? { latitude: pos.lat, longitude: pos.lng }
           : coordinate;
-        moveCamera(coord);
+        if (centerOnPress) moveCamera(coord);
         onPress?.(createEvent(e, coordinate));
         if (hasCallout) {
           closeCallouts(closeCallout);
           setInfoWindowOpen((prev) => !prev);
         }
       },
-      [moveCamera, onPress, coordinate, hasCallout, closeCallouts, closeCallout]
+      [
+        centerOnPress,
+        moveCamera,
+        onPress,
+        coordinate,
+        hasCallout,
+        closeCallouts,
+        closeCallout,
+      ]
     );
 
     const handleDragStart = useCallback(

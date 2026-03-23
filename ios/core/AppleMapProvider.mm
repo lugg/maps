@@ -1019,7 +1019,9 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   if ([view.annotation isKindOfClass:[AppleMarkerAnnotation class]]) {
     AppleMarkerAnnotation *annotation =
         (AppleMarkerAnnotation *)view.annotation;
-    [_mapView setCenterCoordinate:annotation.coordinate animated:YES];
+    if (annotation.markerView.centerOnPress) {
+      [_mapView setCenterCoordinate:annotation.coordinate animated:YES];
+    }
   }
 }
 

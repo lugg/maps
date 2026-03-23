@@ -59,6 +59,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   var rasterize: Boolean = true
     private set
 
+  var centerOnPress: Boolean = true
+    private set
+
   var draggable: Boolean = false
     private set
 
@@ -272,6 +275,10 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   fun setRasterize(rasterize: Boolean) {
     this.rasterize = rasterize
+  }
+
+  fun setCenterOnPress(centerOnPress: Boolean) {
+    this.centerOnPress = centerOnPress
   }
 
   fun setDraggable(draggable: Boolean) {

@@ -74,6 +74,11 @@ export interface MarkerProps {
    */
   rasterize?: boolean;
   /**
+   * Whether the map centers on the marker when pressed.
+   * @default true
+   */
+  centerOnPress?: boolean;
+  /**
    * Whether the marker can be dragged by the user.
    * @default false
    */

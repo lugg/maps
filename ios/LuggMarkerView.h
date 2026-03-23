@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) CLLocationDegrees rotate;
 @property(nonatomic, readonly) CGFloat scale;
 @property(nonatomic, readonly) BOOL rasterize;
+@property(nonatomic, readonly) BOOL centerOnPress;
 @property(nonatomic, readonly) BOOL draggable;
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;
