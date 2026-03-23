@@ -162,6 +162,27 @@ class LuggMapViewManager :
     view.setTheme(value ?: "system")
   }
 
+  @ReactProp(name = "poiEnabled", defaultBoolean = true)
+  override fun setPoiEnabled(view: LuggMapView, value: Boolean) {
+    view.setPoiEnabled(value)
+  }
+
+  @ReactProp(name = "poiFilterMode")
+  override fun setPoiFilterMode(view: LuggMapView, value: String?) {
+    view.setPoiFilterMode(value ?: "including")
+  }
+
+  @ReactProp(name = "poiFilterCategories")
+  override fun setPoiFilterCategories(view: LuggMapView, value: ReadableArray?) {
+    val categories = mutableListOf<String>()
+    value?.let { array ->
+      for (i in 0 until array.size()) {
+        array.getString(i)?.let { categories.add(it) }
+      }
+    }
+    view.setPoiFilterCategories(categories)
+  }
+
   @ReactProp(name = "edgeInsets")
   override fun setEdgeInsets(view: LuggMapView, value: ReadableMap?) {
     value?.let {

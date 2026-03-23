@@ -56,6 +56,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
              duration:(double)duration;
+- (void)setPoiEnabled:(BOOL)enabled;
+- (void)setPoiFilterMode:(facebook::react::LuggMapViewPoiFilterMode)mode;
+- (void)setPoiFilterCategories:(NSArray<NSString *> *)categories;
 
 // Children
 - (void)addMarkerView:(LuggMarkerView *)markerView;

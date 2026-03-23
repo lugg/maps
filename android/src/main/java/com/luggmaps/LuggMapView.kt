@@ -66,6 +66,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var pitchEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
+  private var poiEnabled: Boolean = true
+  private var poiFilterMode: String = "including"
+  private var poiFilterCategories: List<String> = emptyList()
   private var minZoom: Double? = null
   private var maxZoom: Double? = null
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -189,6 +192,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     minZoom?.let { provider?.setMinZoom(it) }
     maxZoom?.let { provider?.setMaxZoom(it) }
     provider?.setEdgeInsets(edgeInsets)
+    provider?.setPoiEnabled(poiEnabled)
+    provider?.setPoiFilterMode(poiFilterMode)
+    provider?.setPoiFilterCategories(poiFilterCategories)
   }
 
   fun setProvider(value: String?) {
@@ -269,6 +275,24 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (theme == value) return
     theme = value
     provider?.setTheme(value)
+  }
+
+  fun setPoiEnabled(enabled: Boolean) {
+    if (poiEnabled == enabled) return
+    poiEnabled = enabled
+    provider?.setPoiEnabled(enabled)
+  }
+
+  fun setPoiFilterMode(value: String) {
+    if (poiFilterMode == value) return
+    poiFilterMode = value
+    provider?.setPoiFilterMode(value)
+  }
+
+  fun setPoiFilterCategories(categories: List<String>) {
+    if (poiFilterCategories == categories) return
+    poiFilterCategories = categories
+    provider?.setPoiFilterCategories(categories)
   }
 
   fun setEdgeInsets(

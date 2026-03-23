@@ -35,6 +35,8 @@ import { MapView } from '@lugg/maps';
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
+| `poiEnabled` | `boolean` | `true` | Show points of interest (Apple Maps only) |
+| `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
 | `onPress` | `(event: MapPressEvent) => void` | - | Called when the map is pressed |
 | `onLongPress` | `(event: MapPressEvent) => void` | - | Called when the map is long pressed |
@@ -68,6 +70,62 @@ import { MapView } from '@lugg/maps';
 | `'light'` | Light appearance |
 | `'dark'` | Dark appearance |
 | `'system'` | Follow system appearance |
+
+### PoiFilter
+
+```ts
+interface PoiFilter {
+  mode?: 'including' | 'excluding'; // default: 'including'
+  categories: PoiCategory[];
+}
+```
+
+When `mode` is `'including'`, only the specified categories are shown. When `'excluding'`, all categories are shown except the specified ones.
+
+### PoiCategory
+
+| Value | Description |
+|-------|-------------|
+| `'airport'` | Airports |
+| `'amusement-park'` | Amusement parks |
+| `'aquarium'` | Aquariums |
+| `'atm'` | ATMs |
+| `'bakery'` | Bakeries |
+| `'bank'` | Banks |
+| `'beach'` | Beaches |
+| `'brewery'` | Breweries |
+| `'cafe'` | Cafes |
+| `'campground'` | Campgrounds |
+| `'car-rental'` | Car rental locations |
+| `'ev-charger'` | EV charging stations |
+| `'fire-station'` | Fire stations |
+| `'fitness-center'` | Fitness centers |
+| `'food-market'` | Food markets |
+| `'gas-station'` | Gas stations |
+| `'hospital'` | Hospitals |
+| `'hotel'` | Hotels |
+| `'laundry'` | Laundry services |
+| `'library'` | Libraries |
+| `'marina'` | Marinas |
+| `'movie-theater'` | Movie theaters |
+| `'museum'` | Museums |
+| `'national-park'` | National parks |
+| `'nightlife'` | Nightlife venues |
+| `'park'` | Parks |
+| `'parking'` | Parking lots |
+| `'pharmacy'` | Pharmacies |
+| `'police'` | Police stations |
+| `'post-office'` | Post offices |
+| `'public-transport'` | Public transport stations |
+| `'restaurant'` | Restaurants |
+| `'restroom'` | Restrooms |
+| `'school'` | Schools |
+| `'stadium'` | Stadiums |
+| `'store'` | Stores |
+| `'theater'` | Theaters |
+| `'university'` | Universities |
+| `'winery'` | Wineries |
+| `'zoo'` | Zoos |
 
 ## Ref Methods
 

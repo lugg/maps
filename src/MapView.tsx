@@ -25,6 +25,7 @@ export class MapView
     scrollEnabled: true,
     rotateEnabled: true,
     pitchEnabled: true,
+    poiEnabled: true,
     theme: 'system',
   };
 
@@ -94,6 +95,8 @@ export class MapView
       edgeInsets,
       userLocationEnabled,
       userLocationButtonEnabled,
+      poiEnabled,
+      poiFilter,
       theme,
       onPress,
       onLongPress,
@@ -122,6 +125,9 @@ export class MapView
         edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
         userLocationButtonEnabled={userLocationButtonEnabled}
+        poiEnabled={poiEnabled}
+        poiFilterMode={poiFilter?.mode}
+        poiFilterCategories={poiFilter?.categories}
         theme={theme}
         onMapPress={onPress}
         onMapLongPress={onLongPress}

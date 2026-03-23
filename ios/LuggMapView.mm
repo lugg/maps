@@ -42,6 +42,9 @@ using namespace luggmaps::events;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
+  BOOL _poiEnabled;
+  LuggMapViewPoiFilterMode _poiFilterMode;
+  NSArray<NSString *> *_poiFilterCategories;
   double _minZoom;
   double _maxZoom;
   UIEdgeInsets _edgeInsets;
@@ -65,6 +68,9 @@ using namespace luggmaps::events;
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _userLocationEnabled = NO;
+    _poiEnabled = NO;
+    _poiFilterMode = LuggMapViewPoiFilterMode::Including;
+    _poiFilterCategories = @[];
     _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
     _edgeInsets = UIEdgeInsetsZero;
@@ -276,6 +282,9 @@ using namespace luggmaps::events;
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
   [_provider setTheme:_theme];
+  [_provider setPoiEnabled:_poiEnabled];
+  [_provider setPoiFilterMode:_poiFilterMode];
+  [_provider setPoiFilterCategories:_poiFilterCategories];
   [_provider setMinZoom:_minZoom];
   [_provider setMaxZoom:_maxZoom];
 }
@@ -314,6 +323,22 @@ using namespace luggmaps::events;
   if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
     _userLocationEnabled = newViewProps.userLocationEnabled;
     [_provider setUserLocationEnabled:_userLocationEnabled];
+  }
+  if (newViewProps.poiEnabled != prevViewProps.poiEnabled) {
+    _poiEnabled = newViewProps.poiEnabled;
+    [_provider setPoiEnabled:_poiEnabled];
+  }
+  if (newViewProps.poiFilterMode != prevViewProps.poiFilterMode) {
+    _poiFilterMode = newViewProps.poiFilterMode;
+    [_provider setPoiFilterMode:_poiFilterMode];
+  }
+  if (newViewProps.poiFilterCategories != prevViewProps.poiFilterCategories) {
+    NSMutableArray<NSString *> *categories = [NSMutableArray array];
+    for (const auto &category : newViewProps.poiFilterCategories) {
+      [categories addObject:[NSString stringWithUTF8String:category.c_str()]];
+    }
+    _poiFilterCategories = [categories copy];
+    [_provider setPoiFilterCategories:_poiFilterCategories];
   }
   if (newViewProps.mapType != prevViewProps.mapType) {
     _mapType = newViewProps.mapType;

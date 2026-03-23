@@ -43,6 +43,8 @@ export type {
   Point,
   EdgeInsets,
   PressEventPayload,
+  PoiCategory,
+  PoiFilter,
 } from './types';
 export type {
   GeoJSON,

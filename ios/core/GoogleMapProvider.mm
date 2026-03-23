@@ -1,6 +1,7 @@
 #import "GoogleMapProvider.h"
 
 using facebook::react::LuggMapViewMapType;
+using facebook::react::LuggMapViewPoiFilterMode;
 using facebook::react::LuggMapViewTheme;
 
 #import "../LuggCalloutView.h"
@@ -166,6 +167,15 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.myLocationEnabled = enabled;
+}
+
+- (void)setPoiEnabled:(BOOL)enabled {
+}
+
+- (void)setPoiFilterMode:(LuggMapViewPoiFilterMode)mode {
+}
+
+- (void)setPoiFilterCategories:(NSArray<NSString *> *)categories {
 }
 
 - (void)setMapType:(LuggMapViewMapType)mapType {

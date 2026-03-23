@@ -38,6 +38,9 @@ interface MapProvider {
   fun setMaxZoom(zoom: Double)
   fun setEdgeInsets(edgeInsets: EdgeInsets)
   fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int)
+  fun setPoiEnabled(enabled: Boolean)
+  fun setPoiFilterMode(mode: String)
+  fun setPoiFilterCategories(categories: List<String>)
 
   // Children
   fun addMarkerView(markerView: LuggMarkerView)

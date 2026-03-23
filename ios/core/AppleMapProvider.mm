@@ -1,6 +1,7 @@
 #import "AppleMapProvider.h"
 
 using facebook::react::LuggMapViewMapType;
+using facebook::react::LuggMapViewPoiFilterMode;
 using facebook::react::LuggMapViewTheme;
 
 #import "../LuggCalloutView.h"
@@ -136,6 +137,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
   UIEdgeInsets _edgeInsetsTo;
   CFTimeInterval _edgeInsetsAnimationStart;
   CFTimeInterval _edgeInsetsAnimationDuration;
+  BOOL _poiEnabled;
+  LuggMapViewPoiFilterMode _poiFilterMode;
+  NSArray<NSString *> *_poiFilterCategories;
 }
 
 @synthesize delegate = _delegate;
@@ -147,6 +151,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
     _overlayToCircleMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToGroundOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToTileOverlayMap = [NSMapTable strongToWeakObjectsMapTable];
+    _poiEnabled = YES;
+    _poiFilterMode = LuggMapViewPoiFilterMode::Including;
+    _poiFilterCategories = @[];
   }
   return self;
 }
@@ -238,6 +245,98 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.showsUserLocation = enabled;
+}
+
+static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
+  static NSDictionary<NSString *, MKPointOfInterestCategory> *map;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    map = @{
+      @"airport" : MKPointOfInterestCategoryAirport,
+      @"amusement-park" : MKPointOfInterestCategoryAmusementPark,
+      @"aquarium" : MKPointOfInterestCategoryAquarium,
+      @"atm" : MKPointOfInterestCategoryATM,
+      @"bakery" : MKPointOfInterestCategoryBakery,
+      @"bank" : MKPointOfInterestCategoryBank,
+      @"beach" : MKPointOfInterestCategoryBeach,
+      @"brewery" : MKPointOfInterestCategoryBrewery,
+      @"cafe" : MKPointOfInterestCategoryCafe,
+      @"campground" : MKPointOfInterestCategoryCampground,
+      @"car-rental" : MKPointOfInterestCategoryCarRental,
+      @"ev-charger" : MKPointOfInterestCategoryEVCharger,
+      @"fire-station" : MKPointOfInterestCategoryFireStation,
+      @"fitness-center" : MKPointOfInterestCategoryFitnessCenter,
+      @"food-market" : MKPointOfInterestCategoryFoodMarket,
+      @"gas-station" : MKPointOfInterestCategoryGasStation,
+      @"hospital" : MKPointOfInterestCategoryHospital,
+      @"hotel" : MKPointOfInterestCategoryHotel,
+      @"laundry" : MKPointOfInterestCategoryLaundry,
+      @"library" : MKPointOfInterestCategoryLibrary,
+      @"marina" : MKPointOfInterestCategoryMarina,
+      @"movie-theater" : MKPointOfInterestCategoryMovieTheater,
+      @"museum" : MKPointOfInterestCategoryMuseum,
+      @"national-park" : MKPointOfInterestCategoryNationalPark,
+      @"nightlife" : MKPointOfInterestCategoryNightlife,
+      @"park" : MKPointOfInterestCategoryPark,
+      @"parking" : MKPointOfInterestCategoryParking,
+      @"pharmacy" : MKPointOfInterestCategoryPharmacy,
+      @"police" : MKPointOfInterestCategoryPolice,
+      @"post-office" : MKPointOfInterestCategoryPostOffice,
+      @"public-transport" : MKPointOfInterestCategoryPublicTransport,
+      @"restaurant" : MKPointOfInterestCategoryRestaurant,
+      @"restroom" : MKPointOfInterestCategoryRestroom,
+      @"school" : MKPointOfInterestCategorySchool,
+      @"stadium" : MKPointOfInterestCategoryStadium,
+      @"store" : MKPointOfInterestCategoryStore,
+      @"theater" : MKPointOfInterestCategoryTheater,
+      @"university" : MKPointOfInterestCategoryUniversity,
+      @"winery" : MKPointOfInterestCategoryWinery,
+      @"zoo" : MKPointOfInterestCategoryZoo,
+    };
+  });
+  return map[string];
+}
+
+- (void)applyPoiFilter {
+  if (!_poiEnabled) {
+    _mapView.pointOfInterestFilter = MKPointOfInterestFilter.filterExcludingAllCategories;
+    return;
+  }
+  if (_poiFilterCategories.count > 0) {
+    NSMutableArray<MKPointOfInterestCategory> *categories = [NSMutableArray array];
+    for (NSString *name in _poiFilterCategories) {
+      MKPointOfInterestCategory category = poiCategoryFromString(name);
+      if (category) {
+        [categories addObject:category];
+      }
+    }
+    if (categories.count > 0) {
+      if (_poiFilterMode == LuggMapViewPoiFilterMode::Excluding) {
+        _mapView.pointOfInterestFilter =
+            [[MKPointOfInterestFilter alloc] initExcludingCategories:categories];
+      } else {
+        _mapView.pointOfInterestFilter =
+            [[MKPointOfInterestFilter alloc] initIncludingCategories:categories];
+      }
+      return;
+    }
+  }
+  _mapView.pointOfInterestFilter = nil;
+}
+
+- (void)setPoiEnabled:(BOOL)enabled {
+  _poiEnabled = enabled;
+  [self applyPoiFilter];
+}
+
+- (void)setPoiFilterMode:(LuggMapViewPoiFilterMode)mode {
+  _poiFilterMode = mode;
+  [self applyPoiFilter];
+}
+
+- (void)setPoiFilterCategories:(NSArray<NSString *> *)categories {
+  _poiFilterCategories = categories;
+  [self applyPoiFilter];
 }
 
 - (void)setMapType:(LuggMapViewMapType)mapType {

@@ -510,6 +510,12 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
+  override fun setPoiEnabled(enabled: Boolean) {}
+
+  override fun setPoiFilterMode(mode: String) {}
+
+  override fun setPoiFilterCategories(categories: List<String>) {}
+
   // endregion
 
   // region MarkerViewDelegate

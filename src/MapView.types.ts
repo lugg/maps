@@ -6,6 +6,7 @@ import type {
   Coordinate,
   EdgeInsets,
   MapTheme,
+  PoiFilter,
   PressEventPayload,
 } from './types';
 
@@ -127,6 +128,19 @@ export interface MapViewProps extends ViewProps {
    * @platform android
    */
   userLocationButtonEnabled?: boolean;
+  /**
+   * Show points of interest on the map (Apple Maps only).
+   * When false, hides all POIs regardless of poiFilter.
+   * @default true
+   * @platform ios
+   */
+  poiEnabled?: boolean;
+  /**
+   * Filter POI categories to show or hide (Apple Maps only).
+   * Only takes effect when poiEnabled is true.
+   * @platform ios
+   */
+  poiFilter?: PoiFilter;
   /**
    * Map color theme
    * @default 'system'

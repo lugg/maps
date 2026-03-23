@@ -34,6 +34,8 @@ export type {
   Coordinate,
   Point,
   EdgeInsets,
+  PoiCategory,
+  PoiFilter,
 } from './types';
 export type {
   GeoJSON,
