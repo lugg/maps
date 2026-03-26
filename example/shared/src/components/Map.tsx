@@ -212,6 +212,21 @@ const renderMarker = (
           />
         </Marker>
       );
+    case 'navigate':
+      return (
+        <Marker
+          key={id}
+          ref={markerRef}
+          {...shared}
+          anchor={{ x: 0.5, y: 1 }}
+          centerOnPress={false}
+        >
+          <View style={styles.navigateMarker}>
+            <Text style={styles.navigateMarkerText}>GO</Text>
+            <View style={styles.navigateMarkerArrow} />
+          </View>
+        </Marker>
+      );
     default:
       return (
         <Marker
@@ -423,6 +438,30 @@ const styles = StyleSheet.create({
     height: 30,
     width: 30,
     borderRadius: sizes.radiusFull,
+  },
+  navigateMarker: {
+    backgroundColor: '#4285F4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: sizes.radiusMd,
+    alignItems: 'center',
+  },
+  navigateMarkerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: sizes.fontSm,
+  },
+  navigateMarkerArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#4285F4',
+    position: 'absolute',
+    bottom: -6,
   },
   callout: {
     minWidth: 140,

@@ -1,5 +1,5 @@
-import { Home } from '@lugg/shared-example';
+import { HomeScreen } from '@lugg/shared-example';
 
 export default function App() {
-  return <Home />;
+  return <HomeScreen />;
 }

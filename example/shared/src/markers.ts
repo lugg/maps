@@ -17,6 +17,7 @@ export const MARKER_TYPES: MarkerData['type'][] = [
   'icon',
   'text',
   'image',
+  'navigate',
   'custom',
 ];
 
@@ -89,5 +90,17 @@ export const INITIAL_MARKERS: MarkerData[] = [
     name: 'marker-5',
     coordinate: { latitude: 37.79, longitude: -122.435 },
     type: 'basic',
+  },
+  {
+    id: '11',
+    name: 'nav-marker-1',
+    coordinate: { latitude: 37.778, longitude: -122.418 },
+    type: 'navigate',
+  },
+  {
+    id: '12',
+    name: 'nav-marker-2',
+    coordinate: { latitude: 37.786, longitude: -122.43 },
+    type: 'navigate',
   },
 ];

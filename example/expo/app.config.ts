@@ -6,6 +6,7 @@ const config: ExpoConfig = {
   name: 'LuggMapsExpo',
   slug: 'lugg-maps-expo',
   version: '1.0.0',
+  scheme: 'lugg-maps-expo',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
@@ -40,6 +41,7 @@ const config: ExpoConfig = {
         locationWhenInUsePermission: 'Show current location on map',
       },
     ],
+    'expo-router',
   ],
 };
 

@@ -16,9 +16,9 @@ import {
 } from '@lodev09/react-native-true-sheet';
 import { ReanimatedTrueSheetProvider } from '@lodev09/react-native-true-sheet/reanimated';
 
-import { Map, type MapRef, type MarkerData, MapTypeButton } from './components';
-import { useLocationPermission, useMarkers } from './hooks';
-import { randomFrom } from './utils';
+import { Map, type MapRef, type MarkerData, MapTypeButton } from '../components';
+import { useLocationPermission, useMarkers } from '../hooks';
+import { randomFrom } from '../utils';
 import {
   ControlSheet,
   type ControlSheetRef,
@@ -26,7 +26,7 @@ import {
   type MapTypeSheetRef,
   GeoJsonSheet,
   type GeoJsonSheetRef,
-} from './sheets';
+} from '../sheets';
 
 const bottomEdgeInsets = (bottom: number) => ({
   top: 0,
@@ -35,21 +35,25 @@ const bottomEdgeInsets = (bottom: number) => ({
   right: 0,
 });
 
-export const Home = () => {
+interface HomeProps {
+  onMarkerPress?: (e: MarkerPressEvent, marker: MarkerData) => void;
+}
+
+export const HomeScreen = ({ onMarkerPress }: HomeProps) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   return (
     <TrueSheetProvider>
       <ReanimatedTrueSheetProvider>
         <MapProvider apiKey={apiKey}>
-          <HomeContent />
+          <HomeContent onMarkerPress={onMarkerPress} />
         </MapProvider>
       </ReanimatedTrueSheetProvider>
     </TrueSheetProvider>
   );
 };
 
-const HomeContent = () => {
+const HomeContent = ({ onMarkerPress: onMarkerPressProp }: HomeProps) => {
   const mapRef = useRef<MapRef>(null);
   const controlSheetRef = useRef<ControlSheetRef>(null);
   const mapTypeSheetRef = useRef<MapTypeSheetRef>(null);
@@ -179,9 +183,13 @@ const HomeContent = () => {
   );
 
   const handleMarkerPress = useCallback(
-    (e: MarkerPressEvent, m: MarkerData) =>
-      formatPressEvent(e, `Marker(${m.name})`),
-    [formatPressEvent]
+    (e: MarkerPressEvent, m: MarkerData) => {
+      formatPressEvent(e, `Marker(${m.name})`);
+      if (m.type === 'navigate') {
+        onMarkerPressProp?.(e, m);
+      }
+    },
+    [formatPressEvent, onMarkerPressProp]
   );
 
   const handleMarkerDragStart = useCallback(

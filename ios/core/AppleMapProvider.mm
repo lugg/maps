@@ -900,12 +900,6 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   LuggMarkerView *markerView = annotation.markerView;
 
   if (markerView) {
-    if (!_isProgrammaticSelect) {
-      CGPoint point = [_mapView convertCoordinate:markerView.coordinate
-                                    toPointToView:_mapView];
-      [markerView emitPressEventWithPoint:point];
-    }
-
     LuggCalloutView *calloutView = markerView.calloutView;
     if (calloutView && !calloutView.bubbled && calloutView.hasCustomContent) {
       [self showNonBubbledCallout:markerView];
@@ -1058,8 +1052,16 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   if ([view.annotation isKindOfClass:[AppleMarkerAnnotation class]]) {
     AppleMarkerAnnotation *annotation =
         (AppleMarkerAnnotation *)view.annotation;
-    if (annotation.markerView.centerOnPress) {
-      [_mapView setCenterCoordinate:annotation.coordinate animated:YES];
+    LuggMarkerView *markerView = annotation.markerView;
+
+    if (markerView) {
+      CGPoint point = [_mapView convertCoordinate:markerView.coordinate
+                                    toPointToView:_mapView];
+      [markerView emitPressEventWithPoint:point];
+
+      if (markerView.centerOnPress) {
+        [_mapView setCenterCoordinate:annotation.coordinate animated:YES];
+      }
     }
   }
 }

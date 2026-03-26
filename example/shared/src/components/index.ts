@@ -13,7 +13,7 @@ export type MarkerData = {
   id: string;
   name: string;
   coordinate: { latitude: number; longitude: number };
-  type: 'basic' | 'icon' | 'text' | 'image' | 'custom';
+  type: 'basic' | 'icon' | 'text' | 'image' | 'custom' | 'navigate';
   title?: string;
   description?: string;
   anchor?: { x: number; y: number };
