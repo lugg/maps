@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { PolylineProps, PolylineEasing } from './Polyline.types';
 
@@ -51,7 +51,7 @@ const getGradientColor = (colors: string[], position: number): string => {
   return interpolateColor(colors[index]!, colors[index + 1]!, t);
 };
 
-export const Polyline = ({
+export const Polyline = memo(({
   coordinates,
   strokeColors,
   strokeWidth = 1,
@@ -317,4 +317,4 @@ export const Polyline = ({
   ]);
 
   return null;
-};
+});

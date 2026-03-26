@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { TileOverlayProps } from './TileOverlay.types';
 
-export const TileOverlay = ({
+export const TileOverlay = memo(({
   urlTemplate,
   tileSize = 256,
   opacity = 1,
@@ -92,4 +92,4 @@ export const TileOverlay = ({
   ]);
 
   return null;
-};
+});

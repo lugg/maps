@@ -1,9 +1,11 @@
 import {
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useId,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -96,7 +98,7 @@ const UserLocationMarker = ({ enabled }: { enabled?: boolean }) => {
   );
 };
 
-export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
+export const MapView = memo(forwardRef<MapViewRef, MapViewProps>(function MapView(
   props,
   ref
 ) {
@@ -369,54 +371,67 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
     };
   }, [map, onLongPress, handleMouseDown, handleMouseUp]);
 
-  const handleDragStart = () => {
+  const isDraggingRef = useRef(false);
+
+  const handleDragStart = useCallback(() => {
     handleMouseUp();
+    isDraggingRef.current = true;
     setIsDragging(true);
     wasGesture.current = true;
-  };
+  }, [handleMouseUp]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
+    isDraggingRef.current = false;
     setIsDragging(false);
-  };
+  }, []);
 
-  const handleCameraChanged = (event: MapCameraChangedEvent) => {
-    const logicalCenter = offsetCenter(
-      { latitude: event.detail.center.lat, longitude: event.detail.center.lng },
-      event.detail.zoom,
-      undefined,
-      true
-    );
-    const payload: CameraEventPayload = {
-      coordinate: {
-        latitude: logicalCenter.lat,
-        longitude: logicalCenter.lng,
-      },
-      zoom: event.detail.zoom,
-      gesture: isDragging,
-    };
-    onCameraMove?.(createSyntheticEvent(payload));
-  };
+  const handleCameraChanged = useCallback(
+    (event: MapCameraChangedEvent) => {
+      const logicalCenter = offsetCenter(
+        {
+          latitude: event.detail.center.lat,
+          longitude: event.detail.center.lng,
+        },
+        event.detail.zoom,
+        undefined,
+        true
+      );
+      const payload: CameraEventPayload = {
+        coordinate: {
+          latitude: logicalCenter.lat,
+          longitude: logicalCenter.lng,
+        },
+        zoom: event.detail.zoom,
+        gesture: isDraggingRef.current,
+      };
+      onCameraMove?.(createSyntheticEvent(payload));
+    },
+    [offsetCenter, onCameraMove]
+  );
 
-  const handleIdle = (event: MapEvent) => {
-    const center = event.map.getCenter();
-    const zoom = event.map.getZoom() ?? 0;
-    const logicalCenter = offsetCenter(
-      { latitude: center?.lat() ?? 0, longitude: center?.lng() ?? 0 },
-      zoom,
-      undefined,
-      true
-    );
-    const payload: CameraEventPayload = {
-      coordinate: {
-        latitude: logicalCenter.lat,
-        longitude: logicalCenter.lng,
-      },
-      zoom,
-      gesture: wasGesture.current,
-    };
-    onCameraIdle?.(createSyntheticEvent(payload));
-    wasGesture.current = false;
-  };
+  const handleIdle = useCallback(
+    (event: MapEvent) => {
+      const center = event.map.getCenter();
+      const zoom = event.map.getZoom() ?? 0;
+      const logicalCenter = offsetCenter(
+        { latitude: center?.lat() ?? 0, longitude: center?.lng() ?? 0 },
+        zoom,
+        undefined,
+        true
+      );
+      const payload: CameraEventPayload = {
+        coordinate: {
+          latitude: logicalCenter.lat,
+          longitude: logicalCenter.lng,
+        },
+        zoom,
+        gesture: wasGesture.current,
+      };
+      onCameraIdle?.(createSyntheticEvent(payload));
+      wasGesture.current = false;
+    },
+    [offsetCenter, onCameraIdle]
+  );
 
   const mapTypeId =
     mapType === 'satellite'
@@ -447,13 +462,16 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
 
   return (
     <MapContext.Provider
-      value={{
-        map,
-        isDragging,
-        moveCamera: panToCoordinate,
-        onCalloutClose,
-        closeCallouts,
-      }}
+      value={useMemo(
+        () => ({
+          map,
+          isDragging,
+          moveCamera: panToCoordinate,
+          onCalloutClose,
+          closeCallouts,
+        }),
+        [map, isDragging, panToCoordinate, onCalloutClose, closeCallouts]
+      )}
     >
       <View ref={containerRef} style={style}>
         <Map
@@ -481,4 +499,4 @@ export const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(
       </View>
     </MapContext.Provider>
   );
-});
+}));

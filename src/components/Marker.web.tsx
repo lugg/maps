@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   isValidElement,
+  memo,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -60,7 +61,7 @@ const createEvent = (
     },
   } as any);
 
-export const Marker = forwardRef<MarkerRef, MarkerProps>(
+export const Marker = memo(forwardRef<MarkerRef, MarkerProps>(
   (
     {
       coordinate,
@@ -250,4 +251,4 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
       </>
     );
   }
-);
+));

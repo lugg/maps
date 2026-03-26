@@ -1,4 +1,4 @@
-import React, { useMemo, type ReactElement } from 'react';
+import React, { memo, useMemo, type ReactElement } from 'react';
 import type {
   Feature,
   FeatureCollection,
@@ -199,7 +199,7 @@ const renderGeometry = (
   return elements;
 };
 
-export const GeoJson = (props: GeoJsonProps) => {
+export const GeoJson = memo((props: GeoJsonProps) => {
   const { geojson } = props;
 
   const elements = useMemo(() => {
@@ -218,4 +218,4 @@ export const GeoJson = (props: GeoJsonProps) => {
   }, [geojson, props]);
 
   return <>{elements}</>;
-};
+});

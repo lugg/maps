@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  memo,
   useCallback,
   useImperativeHandle,
   useMemo,
@@ -238,7 +239,7 @@ export interface MapRef extends MapViewRef {
   hideMarkerCallout(markerId: string): void;
 }
 
-export const Map = forwardRef<MapRef, MapProps>(
+export const Map = memo(forwardRef<MapRef, MapProps>(
   (
     {
       markers,
@@ -391,7 +392,7 @@ export const Map = forwardRef<MapRef, MapProps>(
       </View>
     );
   }
-);
+));
 
 const styles = StyleSheet.create({
   container: {

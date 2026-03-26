@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { CircleProps } from './Circle.types';
 
-export const Circle = ({
+export const Circle = memo(({
   center,
   radius,
   strokeColor = '#000000',
@@ -90,4 +90,4 @@ export const Circle = ({
   ]);
 
   return null;
-};
+});

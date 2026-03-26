@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { PolygonProps } from './Polygon.types';
 
-export const Polygon = ({
+export const Polygon = memo(({
   coordinates,
   holes,
   strokeColor = '#000000',
@@ -101,4 +101,4 @@ export const Polygon = ({
   ]);
 
   return null;
-};
+});

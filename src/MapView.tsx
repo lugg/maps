@@ -14,7 +14,7 @@ import type {
 import type { Coordinate, EdgeInsets } from './types';
 
 export class MapView
-  extends React.Component<MapViewProps>
+  extends React.PureComponent<MapViewProps>
   implements MapViewRef
 {
   static defaultProps: Partial<MapViewProps> = {

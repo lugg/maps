@@ -6,6 +6,8 @@ import {
   type MapType,
   type MapCameraEvent,
   type MapPressEvent,
+  type MarkerPressEvent,
+  type MarkerDragEvent,
   type GeoJSON,
 } from '@lugg/maps';
 import {
@@ -14,7 +16,7 @@ import {
 } from '@lodev09/react-native-true-sheet';
 import { ReanimatedTrueSheetProvider } from '@lodev09/react-native-true-sheet/reanimated';
 
-import { Map, type MapRef, MapTypeButton } from './components';
+import { Map, type MapRef, type MarkerData, MapTypeButton } from './components';
 import { useLocationPermission, useMarkers } from './hooks';
 import { randomFrom } from './utils';
 import {
@@ -153,6 +155,68 @@ const HomeContent = () => {
     );
   };
 
+  const handlePress = useCallback(
+    (e: MapPressEvent) => formatPressEvent(e, 'Press'),
+    [formatPressEvent]
+  );
+
+  const handleLongPress = useCallback(
+    (e: MapPressEvent) => {
+      formatPressEvent(e, 'Long press');
+      addMarker(e.nativeEvent.coordinate);
+    },
+    [formatPressEvent, addMarker]
+  );
+
+  const handleCameraMove = useCallback(
+    (e: MapCameraEvent) => formatCameraEvent(e, false),
+    [formatCameraEvent]
+  );
+
+  const handleCameraIdle = useCallback(
+    (e: MapCameraEvent) => formatCameraEvent(e, true),
+    [formatCameraEvent]
+  );
+
+  const handleMarkerPress = useCallback(
+    (e: MarkerPressEvent, m: MarkerData) =>
+      formatPressEvent(e, `Marker(${m.name})`),
+    [formatPressEvent]
+  );
+
+  const handleMarkerDragStart = useCallback(
+    (e: MarkerDragEvent, m: MarkerData) =>
+      formatPressEvent(e, `Drag start(${m.name})`),
+    [formatPressEvent]
+  );
+
+  const handleMarkerDragChange = useCallback(
+    (e: MarkerDragEvent, m: MarkerData) =>
+      formatPressEvent(e, `Dragging(${m.name})`),
+    [formatPressEvent]
+  );
+
+  const handleMarkerDragEnd = useCallback(
+    (e: MarkerDragEvent, m: MarkerData) =>
+      formatPressEvent(e, `Drag end(${m.name})`),
+    [formatPressEvent]
+  );
+
+  const handlePolygonPress = useCallback(
+    () => handleOverlayPress('Polygon'),
+    [handleOverlayPress]
+  );
+
+  const handleCirclePress = useCallback(
+    () => handleOverlayPress('Circle'),
+    [handleOverlayPress]
+  );
+
+  const handleGroundOverlayPress = useCallback(
+    () => handleOverlayPress('Ground overlay'),
+    [handleOverlayPress]
+  );
+
   return (
     <View style={styles.container}>
       {showMap && (
@@ -166,24 +230,17 @@ const HomeContent = () => {
           animatedPosition={controlSheetRef.current?.animatedPosition}
           userLocationEnabled={locationPermission}
           onReady={handleMapReady}
-          onPress={(e) => formatPressEvent(e, 'Press')}
-          onLongPress={(e) => {
-            formatPressEvent(e, 'Long press');
-            addMarker(e.nativeEvent.coordinate);
-          }}
-          onCameraMove={(e) => formatCameraEvent(e, false)}
-          onCameraIdle={(e) => formatCameraEvent(e, true)}
-          onMarkerPress={(e, m) => formatPressEvent(e, `Marker(${m.name})`)}
-          onMarkerDragStart={(e, m) =>
-            formatPressEvent(e, `Drag start(${m.name})`)
-          }
-          onMarkerDragChange={(e, m) =>
-            formatPressEvent(e, `Dragging(${m.name})`)
-          }
-          onMarkerDragEnd={(e, m) => formatPressEvent(e, `Drag end(${m.name})`)}
-          onPolygonPress={() => handleOverlayPress('Polygon')}
-          onCirclePress={() => handleOverlayPress('Circle')}
-          onGroundOverlayPress={() => handleOverlayPress('Ground overlay')}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+          onCameraMove={handleCameraMove}
+          onCameraIdle={handleCameraIdle}
+          onMarkerPress={handleMarkerPress}
+          onMarkerDragStart={handleMarkerDragStart}
+          onMarkerDragChange={handleMarkerDragChange}
+          onMarkerDragEnd={handleMarkerDragEnd}
+          onPolygonPress={handlePolygonPress}
+          onCirclePress={handleCirclePress}
+          onGroundOverlayPress={handleGroundOverlayPress}
         />
       )}
 

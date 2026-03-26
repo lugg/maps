@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useMapContext } from '../MapProvider.web';
 import type { GroundOverlayProps } from './GroundOverlay.types';
 
-export const GroundOverlay = ({
+export const GroundOverlay = memo(({
   image,
   bounds,
   opacity = 1,
@@ -82,4 +82,4 @@ export const GroundOverlay = ({
   }, [map, image, bounds, opacity, zIndex, onPress, handleClick]);
 
   return null;
-};
+});
