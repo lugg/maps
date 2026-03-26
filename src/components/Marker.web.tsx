@@ -215,9 +215,9 @@ export const Marker = forwardRef<MarkerRef, MarkerProps>(
           clickable
           draggable={draggable}
           onClick={handleClick}
-          onDragStart={handleDragStart}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
+          onDragStart={draggable ? handleDragStart : undefined}
+          onDrag={draggable ? handleDrag : undefined}
+          onDragEnd={draggable ? handleDragEnd : undefined}
           style={
             transforms.length > 0
               ? { transform: transforms.join(' ') }
