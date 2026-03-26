@@ -239,160 +239,162 @@ export interface MapRef extends MapViewRef {
   hideMarkerCallout(markerId: string): void;
 }
 
-export const Map = memo(forwardRef<MapRef, MapProps>(
-  (
-    {
-      markers,
-      geojson,
-      provider,
-      edgeInsets,
-      animatedPosition,
-      onCameraIdle,
-      onCameraMove,
-      onPress,
-      onLongPress,
-      onPolygonPress,
-      onCirclePress,
-      onGroundOverlayPress,
-      onMarkerPress,
-      onMarkerDragStart,
-      onMarkerDragChange,
-      onMarkerDragEnd,
-      ...props
-    },
-    ref
-  ) => {
-    const { height: screenHeight } = useWindowDimensions();
-    const mapRef = useRef<MapView>(null);
-    const markerRefsMap = useRef(new globalThis.Map<string, Marker>());
-    const [zoom, setZoom] = useState(INITIAL_ZOOM);
+export const Map = memo(
+  forwardRef<MapRef, MapProps>(
+    (
+      {
+        markers,
+        geojson,
+        provider,
+        edgeInsets,
+        animatedPosition,
+        onCameraIdle,
+        onCameraMove,
+        onPress,
+        onLongPress,
+        onPolygonPress,
+        onCirclePress,
+        onGroundOverlayPress,
+        onMarkerPress,
+        onMarkerDragStart,
+        onMarkerDragChange,
+        onMarkerDragEnd,
+        ...props
+      },
+      ref
+    ) => {
+      const { height: screenHeight } = useWindowDimensions();
+      const mapRef = useRef<MapView>(null);
+      const markerRefsMap = useRef(new globalThis.Map<string, Marker>());
+      const [zoom, setZoom] = useState(INITIAL_ZOOM);
 
-    const handleMarkerRef = useCallback((id: string, r: Marker | null) => {
-      if (r) {
-        markerRefsMap.current.set(id, r);
-      } else {
-        markerRefsMap.current.delete(id);
-      }
-    }, []);
+      const handleMarkerRef = useCallback((id: string, r: Marker | null) => {
+        if (r) {
+          markerRefsMap.current.set(id, r);
+        } else {
+          markerRefsMap.current.delete(id);
+        }
+      }, []);
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        moveCamera: (...args) => mapRef.current?.moveCamera(...args),
-        fitCoordinates: (...args) => mapRef.current?.fitCoordinates(...args),
-        setEdgeInsets: (...args) => mapRef.current?.setEdgeInsets(...args),
-        showMarkerCallout: (markerId) =>
-          markerRefsMap.current.get(markerId)?.showCallout(),
-        hideMarkerCallout: (markerId) =>
-          markerRefsMap.current.get(markerId)?.hideCallout(),
-      }),
-      []
-    );
+      useImperativeHandle(
+        ref,
+        () => ({
+          moveCamera: (...args) => mapRef.current?.moveCamera(...args),
+          fitCoordinates: (...args) => mapRef.current?.fitCoordinates(...args),
+          setEdgeInsets: (...args) => mapRef.current?.setEdgeInsets(...args),
+          showMarkerCallout: (markerId) =>
+            markerRefsMap.current.get(markerId)?.showCallout(),
+          hideMarkerCallout: (markerId) =>
+            markerRefsMap.current.get(markerId)?.hideCallout(),
+        }),
+        []
+      );
 
-    const smoothedRoute = useMemo(
-      () => smoothCoordinates(markers.map((m) => m.coordinate)),
-      [markers]
-    );
+      const smoothedRoute = useMemo(
+        () => smoothCoordinates(markers.map((m) => m.coordinate)),
+        [markers]
+      );
 
-    const centerPinStyle = useAnimatedStyle(() => {
-      const bottom = animatedPosition
-        ? screenHeight - animatedPosition.value
-        : 0;
-      return { transform: [{ translateY: -bottom / 2 }] };
-    });
+      const centerPinStyle = useAnimatedStyle(() => {
+        const bottom = animatedPosition
+          ? screenHeight - animatedPosition.value
+          : 0;
+        return { transform: [{ translateY: -bottom / 2 }] };
+      });
 
-    const handleMarkerPress = (e: MarkerPressEvent, marker: MarkerData) => {
-      onMarkerPress?.(e, marker);
-    };
+      const handleMarkerPress = (e: MarkerPressEvent, marker: MarkerData) => {
+        onMarkerPress?.(e, marker);
+      };
 
-    const handleCameraIdle = (e: MapCameraEvent) => {
-      setZoom(e.nativeEvent.zoom);
-      onCameraIdle?.(e);
-    };
+      const handleCameraIdle = (e: MapCameraEvent) => {
+        setZoom(e.nativeEvent.zoom);
+        onCameraIdle?.(e);
+      };
 
-    return (
-      <View style={styles.container}>
-        <MapView
-          ref={mapRef}
-          style={StyleSheet.absoluteFill}
-          provider={provider}
-          initialCoordinate={CIRCLE_CENTER}
-          initialZoom={INITIAL_ZOOM}
-          userLocationEnabled
-          edgeInsets={edgeInsets}
-          onPress={onPress}
-          onLongPress={onLongPress}
-          onCameraMove={onCameraMove}
-          onCameraIdle={handleCameraIdle}
-          {...props}
-        >
-          {markers.map((m) =>
-            renderMarker(
-              m,
-              handleMarkerPress,
-              onMarkerDragStart,
-              onMarkerDragChange,
-              onMarkerDragEnd,
-              handleMarkerRef,
-              provider === 'apple' || Platform.OS === 'android'
-            )
-          )}
-          <Route coordinates={smoothedRoute} />
-          <CrewMarker route={smoothedRoute} zoom={zoom} />
-          <Polygon
-            coordinates={CIRCLE_COORDS}
-            holes={CIRCLE_HOLES}
-            fillColor="rgba(66, 133, 244, 0.15)"
-            strokeColor="#4285F4"
-            strokeWidth={2}
-            onPress={onPolygonPress}
-          />
-          <Circle
-            center={{ latitude: 37.78, longitude: -122.427 }}
-            radius={300}
-            fillColor="rgba(244, 67, 54, 0.3)"
-            strokeColor="#F44336"
-            strokeWidth={2}
-            onPress={onCirclePress}
-          />
-          <MarkerText
-            name="inline-marker"
-            coordinate={{ latitude: 37.782, longitude: -122.425 }}
-            text="LO"
-            color="#34A853"
-          />
-          <GeoJson geojson={SAMPLE_GEOJSON} />
-          <GroundOverlay
-            image={{ uri: 'https://picsum.photos/320/240' }}
-            bounds={{
-              southwest: { latitude: 37.7765, longitude: -122.435 },
-              northeast: { latitude: 37.7805, longitude: -122.43 },
-            }}
-            opacity={0.6}
-            onPress={onGroundOverlayPress}
-          />
-          {geojson && (
-            <GeoJson
-              geojson={geojson}
-              renderPolygon={(polygonProps) => (
-                <Polygon
-                  key={`geojson-${polygonProps.coordinates[0]?.latitude}`}
-                  {...polygonProps}
-                  fillColor="rgba(66, 133, 244, 0.2)"
-                  strokeColor="#4285F4"
-                  strokeWidth={1}
-                />
-              )}
+      return (
+        <View style={styles.container}>
+          <MapView
+            ref={mapRef}
+            style={StyleSheet.absoluteFill}
+            provider={provider}
+            initialCoordinate={CIRCLE_CENTER}
+            initialZoom={INITIAL_ZOOM}
+            userLocationEnabled
+            edgeInsets={edgeInsets}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            onCameraMove={onCameraMove}
+            onCameraIdle={handleCameraIdle}
+            {...props}
+          >
+            {markers.map((m) =>
+              renderMarker(
+                m,
+                handleMarkerPress,
+                onMarkerDragStart,
+                onMarkerDragChange,
+                onMarkerDragEnd,
+                handleMarkerRef,
+                provider === 'apple' || Platform.OS === 'android'
+              )
+            )}
+            <Route coordinates={smoothedRoute} />
+            <CrewMarker route={smoothedRoute} zoom={zoom} />
+            <Polygon
+              coordinates={CIRCLE_COORDS}
+              holes={CIRCLE_HOLES}
+              fillColor="rgba(66, 133, 244, 0.15)"
+              strokeColor="#4285F4"
+              strokeWidth={2}
+              onPress={onPolygonPress}
             />
-          )}
-        </MapView>
-        <Animated.View style={[styles.centerPin, centerPinStyle]}>
-          <View style={styles.centerPinDot} />
-        </Animated.View>
-      </View>
-    );
-  }
-));
+            <Circle
+              center={{ latitude: 37.78, longitude: -122.427 }}
+              radius={300}
+              fillColor="rgba(244, 67, 54, 0.3)"
+              strokeColor="#F44336"
+              strokeWidth={2}
+              onPress={onCirclePress}
+            />
+            <MarkerText
+              name="inline-marker"
+              coordinate={{ latitude: 37.782, longitude: -122.425 }}
+              text="LO"
+              color="#34A853"
+            />
+            <GeoJson geojson={SAMPLE_GEOJSON} />
+            <GroundOverlay
+              image={{ uri: 'https://picsum.photos/320/240' }}
+              bounds={{
+                southwest: { latitude: 37.7765, longitude: -122.435 },
+                northeast: { latitude: 37.7805, longitude: -122.43 },
+              }}
+              opacity={0.6}
+              onPress={onGroundOverlayPress}
+            />
+            {geojson && (
+              <GeoJson
+                geojson={geojson}
+                renderPolygon={(polygonProps) => (
+                  <Polygon
+                    key={`geojson-${polygonProps.coordinates[0]?.latitude}`}
+                    {...polygonProps}
+                    fillColor="rgba(66, 133, 244, 0.2)"
+                    strokeColor="#4285F4"
+                    strokeWidth={1}
+                  />
+                )}
+              />
+            )}
+          </MapView>
+          <Animated.View style={[styles.centerPin, centerPinStyle]}>
+            <View style={styles.centerPinDot} />
+          </Animated.View>
+        </View>
+      );
+    }
+  )
+);
 
 const styles = StyleSheet.create({
   container: {
