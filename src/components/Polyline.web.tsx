@@ -61,7 +61,7 @@ export const Polyline = memo(
     zIndex,
   }: PolylineProps) => {
     const resolvedZIndex = zIndex ?? (animated ? 1 : 0);
-    const { map, isDragging } = useMapContext();
+    const { map, isDraggingRef } = useMapContext();
 
     const { duration, easing, trailLength, delay } = useMemo(
       () => ({
@@ -82,7 +82,6 @@ export const Polyline = memo(
     );
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
     const animationRef = useRef<number>(0);
-    const isPausedRef = useRef(false);
 
     const colors = useMemo(
       () =>
@@ -177,11 +176,6 @@ export const Polyline = memo(
       };
     }, []);
 
-    // Pause/resume animation during drag
-    useEffect(() => {
-      isPausedRef.current = isDragging;
-    }, [isDragging]);
-
     // Main effect
     useEffect(() => {
       if (!propsRef.current.map || coordinates.length === 0) return;
@@ -209,7 +203,7 @@ export const Polyline = memo(
       let pausedAt: number | null = null;
 
       const animate = (time: number) => {
-        if (isPausedRef.current) {
+        if (isDraggingRef.current) {
           if (pausedAt === null) pausedAt = time;
           animationRef.current = requestAnimationFrame(animate);
           return;
@@ -318,6 +312,7 @@ export const Polyline = memo(
       hasGradient,
       updatePath,
       mapReady,
+      isDraggingRef,
     ]);
 
     return null;

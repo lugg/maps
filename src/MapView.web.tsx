@@ -126,7 +126,7 @@ export const MapView = memo(
     const map = useMap(id);
     const containerRef = useRef<View>(null);
     const readyFired = useRef(false);
-    const [isDragging, setIsDragging] = useState(false);
+    const isDraggingRef = useRef(false);
     const wasGesture = useRef(false);
     const prevEdgeInsets = useRef(edgeInsets);
 
@@ -378,18 +378,14 @@ export const MapView = memo(
       };
     }, [map, onLongPress, handleMouseDown, handleMouseUp]);
 
-    const isDraggingRef = useRef(false);
-
     const handleDragStart = useCallback(() => {
       handleMouseUp();
       isDraggingRef.current = true;
-      setIsDragging(true);
       wasGesture.current = true;
     }, [handleMouseUp]);
 
     const handleDragEnd = useCallback(() => {
       isDraggingRef.current = false;
-      setIsDragging(false);
     }, []);
 
     const handleCameraChanged = useCallback(
@@ -472,12 +468,12 @@ export const MapView = memo(
         value={useMemo(
           () => ({
             map,
-            isDragging,
+            isDraggingRef,
             moveCamera: panToCoordinate,
             onCalloutClose,
             closeCallouts,
           }),
-          [map, isDragging, panToCoordinate, onCalloutClose, closeCallouts]
+          [map, panToCoordinate, onCalloutClose, closeCallouts]
         )}
       >
         <View ref={containerRef} style={style}>
