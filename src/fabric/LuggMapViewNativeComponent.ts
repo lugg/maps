@@ -71,10 +71,10 @@ export interface NativeProps extends ViewProps {
   initialZoom?: Double;
   minZoom?: Double;
   maxZoom?: Double;
-  zoomEnabled?: boolean;
-  scrollEnabled?: boolean;
-  rotateEnabled?: boolean;
-  pitchEnabled?: boolean;
+  zoomEnabled?: WithDefault<boolean, true>;
+  scrollEnabled?: WithDefault<boolean, true>;
+  rotateEnabled?: WithDefault<boolean, true>;
+  pitchEnabled?: WithDefault<boolean, true>;
   edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
   userLocationButtonEnabled?: boolean;
