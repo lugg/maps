@@ -2,6 +2,7 @@
 #import <QuartzCore/QuartzCore.h>
 
 static const NSUInteger kMaxAnimationSpans = 16;
+static const NSUInteger kMaxGradientSpans = 512;
 
 @interface GMSDisplayLinkProxy : NSObject
 @property(nonatomic, weak) id target;
@@ -272,12 +273,14 @@ static const NSUInteger kMaxAnimationSpans = 16;
 - (NSArray<GMSStyleSpan *> *)createGradientSpans {
   NSMutableArray<GMSStyleSpan *> *spans = [NSMutableArray array];
   NSUInteger segmentCount = self.coordinates.count - 1;
+  NSUInteger spanCount = MIN(segmentCount, kMaxGradientSpans);
+  double segmentsPerSpan = (double)segmentCount / spanCount;
 
-  for (NSUInteger i = 0; i < segmentCount; i++) {
-    CGFloat position = (CGFloat)i / (CGFloat)segmentCount;
+  for (NSUInteger i = 0; i < spanCount; i++) {
+    CGFloat position = ((CGFloat)i + 0.5) / spanCount;
     UIColor *color = [self colorAtGradientPosition:position];
     GMSStrokeStyle *style = [GMSStrokeStyle solidColor:color];
-    [spans addObject:[GMSStyleSpan spanWithStyle:style]];
+    [spans addObject:[GMSStyleSpan spanWithStyle:style segments:segmentsPerSpan]];
   }
 
   return spans;

@@ -15,6 +15,7 @@ import kotlin.math.min
 class PolylineAnimator {
   companion object {
     private const val MAX_ANIMATION_SPANS = 16
+    private const val MAX_GRADIENT_SPANS = 512
   }
 
   var polyline: Polyline? = null
@@ -255,10 +256,12 @@ class PolylineAnimator {
 
   private fun createGradientSpans(): List<StyleSpan> {
     val segmentCount = coordinates.size - 1
-    return (0 until segmentCount).map { i ->
-      val position = i.toFloat() / segmentCount
+    val spanCount = min(segmentCount, MAX_GRADIENT_SPANS)
+    val segmentsPerSpan = segmentCount.toDouble() / spanCount
+    return (0 until spanCount).map { i ->
+      val position = (i + 0.5f) / spanCount
       val color = colorAtGradientPosition(position)
-      StyleSpan(StrokeStyle.colorBuilder(color).build())
+      StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan)
     }
   }
 
