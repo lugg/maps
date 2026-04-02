@@ -259,7 +259,7 @@ class PolylineAnimator {
     val spanCount = min(segmentCount, MAX_GRADIENT_SPANS)
     val segmentsPerSpan = segmentCount.toDouble() / spanCount
     return (0 until spanCount).map { i ->
-      val position = i.toFloat() / spanCount
+      val position = (i + 0.5f) / spanCount
       val color = colorAtGradientPosition(position)
       StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan)
     }
