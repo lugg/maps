@@ -218,6 +218,9 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     return null
   }
 
+  // no-op: avoid accessibility traversal of detached marker children
+  override fun addChildrenForAccessibility(outChildren: ArrayList<View>) {}
+
   override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     super.onSizeChanged(w, h, oldw, oldh)
     didLayout = false

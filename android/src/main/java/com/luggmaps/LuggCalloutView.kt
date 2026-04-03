@@ -51,6 +51,9 @@ class LuggCalloutView(context: Context) : ReactViewGroup(context) {
 
   override fun getChildAt(index: Int): View? = contentView.getChildAt(index)
 
+  // no-op: avoid accessibility traversal of detached callout children
+  override fun addChildrenForAccessibility(outChildren: ArrayList<View>) {}
+
   fun createContentBitmap(): Bitmap? {
     var maxWidth = 0
     var maxHeight = 0
