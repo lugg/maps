@@ -3,6 +3,7 @@ package com.luggmaps
 import android.content.Context
 import android.graphics.Canvas
 import android.view.View
+import android.view.accessibility.AccessibilityEvent
 import androidx.core.graphics.createBitmap
 import androidx.core.view.isNotEmpty
 import com.facebook.react.views.view.ReactViewGroup
@@ -220,6 +221,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   // no-op: avoid accessibility traversal of detached marker children
   override fun addChildrenForAccessibility(outChildren: ArrayList<View>) {}
+  override fun dispatchPopulateAccessibilityEvent(event: AccessibilityEvent): Boolean = false
 
   override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
     super.onSizeChanged(w, h, oldw, oldh)

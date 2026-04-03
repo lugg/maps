@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
+import android.view.accessibility.AccessibilityEvent
 import androidx.core.graphics.createBitmap
 import androidx.core.view.isNotEmpty
 import com.facebook.react.uimanager.PointerEvents
@@ -53,6 +54,7 @@ class LuggCalloutView(context: Context) : ReactViewGroup(context) {
 
   // no-op: avoid accessibility traversal of detached callout children
   override fun addChildrenForAccessibility(outChildren: ArrayList<View>) {}
+  override fun dispatchPopulateAccessibilityEvent(event: AccessibilityEvent): Boolean = false
 
   fun createContentBitmap(): Bitmap? {
     var maxWidth = 0
