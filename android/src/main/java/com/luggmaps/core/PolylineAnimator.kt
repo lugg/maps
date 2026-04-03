@@ -210,8 +210,9 @@ class PolylineAnimator {
     }
 
     if (headDist <= tailDist) {
-      poly.points = listOf(coordinates.firstOrNull() ?: LatLng(0.0, 0.0))
+      val point = coordinates.firstOrNull() ?: LatLng(0.0, 0.0)
       poly.color = strokeColors.firstOrNull() ?: Color.BLACK
+      poly.points = listOf(point, point)
       return
     }
 
@@ -235,11 +236,12 @@ class PolylineAnimator {
 
     if (reusablePoints.size < 2) return
 
+    // Clear spans before setting points to prevent IndexOutOfBoundsException
+    // when the new points list is shorter than what existing spans reference
+    poly.color = strokeColors.firstOrNull() ?: Color.BLACK
     poly.points = ArrayList(reusablePoints)
 
-    if (strokeColors.size <= 1) {
-      poly.color = strokeColors.firstOrNull() ?: Color.BLACK
-    } else {
+    if (strokeColors.size > 1) {
       val segmentCount = reusablePoints.size - 1
       val spanCount = min(segmentCount, MAX_ANIMATION_SPANS)
       val segmentsPerSpan = segmentCount.toDouble() / spanCount
