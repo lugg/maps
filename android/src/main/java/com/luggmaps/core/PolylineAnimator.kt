@@ -21,12 +21,19 @@ class PolylineAnimator {
   var polyline: Polyline? = null
   var coordinates: List<LatLng> = emptyList()
     set(value) {
+      if (field === value) return
       field = value
+      dirty = true
       if (animated && animator != null) {
         computeCumulativeDistances()
       }
     }
   var strokeColors: List<Int> = listOf(Color.BLACK)
+    set(value) {
+      if (field === value) return
+      field = value
+      dirty = true
+    }
   var strokeWidth: Float = 1f
   var animatedOptions: AnimatedOptions = AnimatedOptions()
     set(value) {
@@ -53,6 +60,7 @@ class PolylineAnimator {
   private var animationProgress: Float = 0f
   private var cumulativeDistances: FloatArray = floatArrayOf()
   private var totalLength: Float = 0f
+  private var dirty: Boolean = true
 
   // Reusable collections to avoid per-frame allocations
   private val reusablePoints = ArrayList<LatLng>()
@@ -73,14 +81,16 @@ class PolylineAnimator {
 
   fun update() {
     if (animated) return
+    if (!dirty) return
 
     val poly = polyline ?: return
     if (coordinates.size < 2) return
 
+    dirty = false
     poly.points = coordinates
 
     if (strokeColors.size > 1) {
-      poly.setSpans(createGradientSpans())
+      applyGradientSpans(poly)
     } else {
       poly.color = strokeColors.firstOrNull() ?: Color.BLACK
     }
@@ -256,15 +266,18 @@ class PolylineAnimator {
     }
   }
 
-  private fun createGradientSpans(): List<StyleSpan> {
+  private fun applyGradientSpans(poly: Polyline) {
     val segmentCount = coordinates.size - 1
     val spanCount = min(segmentCount, MAX_GRADIENT_SPANS)
     val segmentsPerSpan = segmentCount.toDouble() / spanCount
-    return (0 until spanCount).map { i ->
+
+    reusableSpans.clear()
+    for (i in 0 until spanCount) {
       val position = (i + 0.5f) / spanCount
       val color = colorAtGradientPosition(position)
-      StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan)
+      reusableSpans.add(StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan))
     }
+    poly.setSpans(reusableSpans)
   }
 
   private fun colorAtGradientPosition(position: Float): Int {
