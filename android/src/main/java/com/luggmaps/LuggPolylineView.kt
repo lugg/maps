@@ -40,6 +40,7 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
 
   fun setCoordinates(coords: List<LatLng>) {
     coordinates = coords
+    polyline?.points = coords
   }
 
   fun setStrokeColors(colors: List<Int>) {

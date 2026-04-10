@@ -43,10 +43,12 @@ class LuggPolygonView(context: Context) : ReactViewGroup(context) {
 
   fun setCoordinates(coords: List<LatLng>) {
     coordinates = coords
+    polygon?.points = coords
   }
 
   fun setHoles(value: List<List<LatLng>>) {
     holes = value
+    polygon?.holes = value
   }
 
   fun setStrokeColor(color: Int) {
