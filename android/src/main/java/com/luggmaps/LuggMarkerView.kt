@@ -10,6 +10,7 @@ import com.facebook.react.views.view.ReactViewGroup
 import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.luggmaps.events.MarkerDragEvent
 import com.luggmaps.events.MarkerPressEvent
 import com.luggmaps.extensions.dispatchEvent
@@ -246,6 +247,13 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
   fun setCoordinate(latitude: Double, longitude: Double) {
     this.latitude = latitude
     this.longitude = longitude
+    val m = marker ?: return
+    if (!isDragging) {
+      m.position = LatLng(latitude, longitude)
+      if (!rasterize) {
+        onUpdate?.invoke()
+      }
+    }
   }
 
   fun setTitle(title: String?) {
