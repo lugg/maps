@@ -15,8 +15,6 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.AdvancedMarker
-import com.google.android.gms.maps.model.AdvancedMarkerOptions
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
@@ -26,6 +24,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapColorScheme
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -692,12 +691,12 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
 
     val position = LatLng(markerView.latitude, markerView.longitude)
-    val options = AdvancedMarkerOptions()
+    val options = MarkerOptions()
       .position(position)
       .title(markerView.title)
       .snippet(markerView.description)
 
-    val marker = map.addMarker(options) as AdvancedMarker
+    val marker = map.addMarker(options) ?: return
     marker.setAnchor(markerView.anchorX, markerView.anchorY)
     marker.zIndex = markerView.zIndex
     marker.rotation = markerView.rotate
@@ -715,9 +714,8 @@ class GoogleMapProvider(private val context: Context) :
     }
   }
 
-  // Workaround: AdvancedMarker.iconView is buggy on Android, so we manually add the custom
-  // content view to the wrapper and position it via screen projection instead. The underlying
-  // marker uses a transparent bitmap matching the content size so taps still trigger onMarkerClick.
+  // Live marker: content view is added to the wrapper and positioned via screen projection.
+  // The underlying marker uses a transparent bitmap matching the content size so taps still trigger onMarkerClick.
   private fun showLiveMarker(markerView: LuggMarkerView) {
     val wrapper = wrapperView ?: return
 

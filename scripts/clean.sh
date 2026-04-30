@@ -78,7 +78,7 @@ clean_bare_example() {
   cd example/bare/android
   ./gradlew clean -q
   cd ../../..
-  npx pod-install example/bare
+  cd example/bare/ios && pod install && cd ../../..
 }
 
 clean_expo_example() {
