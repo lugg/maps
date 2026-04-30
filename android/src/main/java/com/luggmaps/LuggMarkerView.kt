@@ -7,9 +7,9 @@ import android.view.accessibility.AccessibilityEvent
 import androidx.core.graphics.createBitmap
 import androidx.core.view.isNotEmpty
 import com.facebook.react.views.view.ReactViewGroup
-import com.google.android.gms.maps.model.AdvancedMarker
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.Marker
 import com.luggmaps.events.MarkerDragEvent
 import com.luggmaps.events.MarkerPressEvent
 import com.luggmaps.extensions.dispatchEvent
@@ -38,7 +38,7 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     private set
 
   var delegate: LuggMarkerViewDelegate? = null
-  var marker: AdvancedMarker? = null
+  var marker: Marker? = null
 
   var anchorX: Float = 0.5f
     private set
