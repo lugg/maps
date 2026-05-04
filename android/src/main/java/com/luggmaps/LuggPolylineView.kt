@@ -8,6 +8,7 @@ import com.google.android.gms.maps.model.Polyline
 
 interface LuggPolylineViewDelegate {
   fun polylineViewDidUpdate(polylineView: LuggPolylineView)
+  fun polylineViewDidDrop(polylineView: LuggPolylineView)
 }
 
 data class AnimatedOptions(val duration: Long = 2150L, val easing: String = "linear", val trailLength: Float = 1f, val delay: Long = 0L)
@@ -67,8 +68,8 @@ class LuggPolylineView(context: Context) : ReactViewGroup(context) {
   }
 
   fun onDropViewInstance() {
+    delegate?.polylineViewDidDrop(this)
     delegate = null
-    polyline?.remove()
     polyline = null
   }
 }
