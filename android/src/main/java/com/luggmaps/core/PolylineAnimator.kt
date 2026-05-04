@@ -249,7 +249,7 @@ class PolylineAnimator {
     // Clear spans before setting points to prevent IndexOutOfBoundsException
     // when the new points list is shorter than what existing spans reference
     poly.color = strokeColors.firstOrNull() ?: Color.BLACK
-    poly.points = ArrayList(reusablePoints)
+    poly.points = reusablePoints
 
     if (strokeColors.size > 1) {
       val segmentCount = reusablePoints.size - 1

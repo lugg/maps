@@ -598,6 +598,10 @@ class GoogleMapProvider(private val context: Context) :
     syncPolylineView(polylineView)
   }
 
+  override fun polylineViewDidDrop(polylineView: LuggPolylineView) {
+    teardownPolyline(polylineView)
+  }
+
   // endregion
 
   // region PolygonViewDelegate
@@ -773,8 +777,12 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun removePolylineView(polylineView: LuggPolylineView) {
-    polylineAnimators[polylineView]?.destroy()
-    polylineAnimators.remove(polylineView)
+    teardownPolyline(polylineView)
+  }
+
+  private fun teardownPolyline(polylineView: LuggPolylineView) {
+    pendingPolylineViews.remove(polylineView)
+    polylineAnimators.remove(polylineView)?.destroy()
     polylineView.polyline?.remove()
     polylineView.polyline = null
   }
@@ -811,6 +819,8 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun addPolylineViewToMap(polylineView: LuggPolylineView) {
     val map = googleMap ?: return
+
+    polylineAnimators.remove(polylineView)?.destroy()
 
     val options = PolylineOptions()
       .width(polylineView.strokeWidth.dpToPx())
