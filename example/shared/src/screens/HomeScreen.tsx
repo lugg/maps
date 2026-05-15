@@ -153,14 +153,14 @@ const HomeContent = ({ onMarkerPress: onMarkerPressProp }: HomeProps) => {
   const moveToRandomMarker = () => {
     if (markers.length === 0) return;
     const marker = randomFrom(markers);
-    mapRef.current?.moveCamera(marker.coordinate);
+    mapRef.current?.moveCamera(marker.coordinate, { duration: 2000 });
     mapRef.current?.showMarkerCallout(marker.id);
   };
 
   const fitAllMarkers = () => {
     mapRef.current?.fitCoordinates(
       markers.map((m) => m.coordinate),
-      { padding: { top: 60, left: 40, right: 40, bottom: 40 } }
+      { duration: 2000, padding: { top: 60, left: 40, right: 40, bottom: 40 } }
     );
   };
 

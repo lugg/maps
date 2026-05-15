@@ -1778,7 +1778,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
                                                           zoomLevel:targetZoom];
     [UIView animateWithDuration:duration / 1000.0
                      animations:^{
-                       [self->_mapView setRegion:region animated:NO];
+                       [self->_mapView setRegion:region animated:YES];
                      }];
   } else {
     [_mapView
@@ -1823,7 +1823,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
                      animations:^{
                        [self->_mapView setVisibleMapRect:mapRect
                                              edgePadding:insets
-                                                animated:NO];
+                                                animated:YES];
                      }];
   } else {
     [_mapView setVisibleMapRect:mapRect edgePadding:insets animated:NO];
