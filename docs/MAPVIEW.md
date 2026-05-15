@@ -32,6 +32,7 @@ import { MapView } from '@lugg/maps';
 | `scrollEnabled` | `boolean` | `true` | Enable scroll/pan gestures |
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
+| `compassEnabled` | `boolean` | `true` | Show compass on the map |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |

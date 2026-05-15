@@ -205,6 +205,11 @@ export interface MapViewProps extends ViewProps {
    */
   pitchEnabled?: boolean;
   /**
+   * Show compass on the map.
+   * @default true
+   */
+  compassEnabled?: boolean;
+  /**
    * Map content edge insets
    */
   edgeInsets?: EdgeInsets;

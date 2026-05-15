@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setScrollEnabled:(BOOL)enabled;
 - (void)setRotateEnabled:(BOOL)enabled;
 - (void)setPitchEnabled:(BOOL)enabled;
+- (void)setCompassEnabled:(BOOL)enabled;
 - (void)setUserLocationEnabled:(BOOL)enabled;
 - (void)setMapType:(facebook::react::LuggMapViewMapType)mapType;
 - (void)setTheme:(facebook::react::LuggMapViewTheme)theme;

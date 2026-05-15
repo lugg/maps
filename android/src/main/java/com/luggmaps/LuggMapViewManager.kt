@@ -132,6 +132,11 @@ class LuggMapViewManager :
     view.setPitchEnabled(value)
   }
 
+  @ReactProp(name = "compassEnabled", defaultBoolean = true)
+  override fun setCompassEnabled(view: LuggMapView, value: Boolean) {
+    view.setCompassEnabled(value)
+  }
+
   @ReactProp(name = "userLocationEnabled", defaultBoolean = false)
   override fun setUserLocationEnabled(view: LuggMapView, value: Boolean) {
     view.setUserLocationEnabled(value)

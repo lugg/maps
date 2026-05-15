@@ -242,6 +242,7 @@ const HomeContent = ({ onMarkerPress: onMarkerPressProp }: HomeProps) => {
           geojson={geojson}
           animatedPosition={controlSheetRef.current?.animatedPosition}
           userLocationEnabled={locationPermission}
+          compassEnabled={false}
           onReady={handleMapReady}
           onPress={handlePress}
           onLongPress={handleLongPress}

@@ -39,6 +39,7 @@ using namespace luggmaps::events;
   BOOL _scrollEnabled;
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
+  BOOL _compassEnabled;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -68,6 +69,7 @@ using namespace luggmaps::events;
     _scrollEnabled = YES;
     _rotateEnabled = YES;
     _pitchEnabled = YES;
+    _compassEnabled = YES;
     _userLocationEnabled = NO;
     _poiEnabled = NO;
     _poiFilterMode = LuggMapViewPoiFilterMode::Including;
@@ -281,6 +283,7 @@ using namespace luggmaps::events;
   [_provider setScrollEnabled:_scrollEnabled];
   [_provider setRotateEnabled:_rotateEnabled];
   [_provider setPitchEnabled:_pitchEnabled];
+  [_provider setCompassEnabled:_compassEnabled];
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
   [_provider setTheme:_theme];
@@ -322,6 +325,10 @@ using namespace luggmaps::events;
   if (newViewProps.pitchEnabled != prevViewProps.pitchEnabled) {
     _pitchEnabled = newViewProps.pitchEnabled;
     [_provider setPitchEnabled:_pitchEnabled];
+  }
+  if (newViewProps.compassEnabled != prevViewProps.compassEnabled) {
+    _compassEnabled = newViewProps.compassEnabled;
+    [_provider setCompassEnabled:_compassEnabled];
   }
   if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
     _userLocationEnabled = newViewProps.userLocationEnabled;
