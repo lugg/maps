@@ -6,8 +6,10 @@ namespace luggmaps {
 namespace events {
 
 struct GroundOverlayPressEvent {
-  template <typename Emitter>
-  static void emit(const facebook::react::SharedEventEmitter &eventEmitter) {
+  // Holder type is templated to bridge RN versions: SharedEventEmitter went
+  // from shared_ptr<const EventEmitter> to shared_ptr<EventEmitter> in 0.85.
+  template <typename Emitter, typename EventEmitterPtr>
+  static void emit(const EventEmitterPtr &eventEmitter) {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
