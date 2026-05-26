@@ -10,7 +10,7 @@
     "build:ios": "react-native build-ios --mode Debug"
   },
   "dependencies": {
-    "@lodev09/react-native-true-sheet": "3.9.0-beta.0",
+    "@lodev09/react-native-true-sheet": "3.11.0-beta.10",
     "@lugg/maps": "workspace:*",
     "@lugg/shared-example": "workspace:*",
     "@react-navigation/native": "^7.2.1",
