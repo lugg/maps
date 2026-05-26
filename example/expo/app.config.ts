@@ -10,12 +10,6 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
-  newArchEnabled: true,
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff',
-  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.luggmaps.expo.example',
@@ -39,6 +33,14 @@ const config: ExpoConfig = {
       'expo-location',
       {
         locationWhenInUsePermission: 'Show current location on map',
+      },
+    ],
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#ffffff',
       },
     ],
     'expo-router',
