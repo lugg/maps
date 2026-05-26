@@ -11,8 +11,10 @@ struct MarkerDragStartEvent {
   double x;
   double y;
 
-  template <typename Emitter>
-  void emit(const facebook::react::SharedEventEmitter &eventEmitter) const {
+  // Holder type is templated to bridge RN versions: SharedEventEmitter went
+  // from shared_ptr<const EventEmitter> to shared_ptr<EventEmitter> in 0.85.
+  template <typename Emitter, typename EventEmitterPtr>
+  void emit(const EventEmitterPtr &eventEmitter) const {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
@@ -31,8 +33,10 @@ struct MarkerDragChangeEvent {
   double x;
   double y;
 
-  template <typename Emitter>
-  void emit(const facebook::react::SharedEventEmitter &eventEmitter) const {
+  // Holder type is templated to bridge RN versions: SharedEventEmitter went
+  // from shared_ptr<const EventEmitter> to shared_ptr<EventEmitter> in 0.85.
+  template <typename Emitter, typename EventEmitterPtr>
+  void emit(const EventEmitterPtr &eventEmitter) const {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
@@ -51,8 +55,10 @@ struct MarkerDragEndEvent {
   double x;
   double y;
 
-  template <typename Emitter>
-  void emit(const facebook::react::SharedEventEmitter &eventEmitter) const {
+  // Holder type is templated to bridge RN versions: SharedEventEmitter went
+  // from shared_ptr<const EventEmitter> to shared_ptr<EventEmitter> in 0.85.
+  template <typename Emitter, typename EventEmitterPtr>
+  void emit(const EventEmitterPtr &eventEmitter) const {
     if (!eventEmitter)
       return;
     auto emitter = std::static_pointer_cast<Emitter const>(eventEmitter);
