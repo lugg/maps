@@ -206,6 +206,7 @@ export interface MapViewProps extends ViewProps {
   pitchEnabled?: boolean;
   /**
    * Show compass on the map.
+   * On web (Google Maps) this toggles the rotate/compass control.
    * @default true
    */
   compassEnabled?: boolean;
