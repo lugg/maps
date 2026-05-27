@@ -8,6 +8,11 @@ NS_ASSUME_NONNULL_BEGIN
                   zoomLevel:(double)zoomLevel
                    animated:(BOOL)animated;
 
+/// Returns a camera for the given center and zoom level, preserving the current
+/// heading and pitch
+- (MKMapCamera *)cameraForCenterCoordinate:(CLLocationCoordinate2D)centerCoordinate
+                                 zoomLevel:(double)zoomLevel;
+
 - (MKCoordinateRegion)regionForCenterCoordinate:
                           (CLLocationCoordinate2D)centerCoordinate
                                       zoomLevel:(double)zoomLevel;

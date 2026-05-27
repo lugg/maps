@@ -1129,9 +1129,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     return;
 
   float targetZoom = zoom > 0 ? (float)zoom : _mapView.camera.zoom;
-  GMSCameraPosition *camera = [GMSCameraPosition cameraWithLatitude:latitude
-                                                          longitude:longitude
-                                                               zoom:targetZoom];
+  GMSCameraPosition *camera = [GMSCameraPosition
+      cameraWithTarget:CLLocationCoordinate2DMake(latitude, longitude)
+                  zoom:targetZoom
+               bearing:_mapView.camera.bearing
+          viewingAngle:_mapView.camera.viewingAngle];
   if (duration < 0) {
     [_mapView animateToCameraPosition:camera];
   } else if (duration > 0) {

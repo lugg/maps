@@ -16,6 +16,7 @@ import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.GroundOverlay
@@ -1143,7 +1144,11 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
     val position = LatLng(latitude, longitude)
     val targetZoom = if (zoom > 0) zoom.toFloat() else map.cameraPosition.zoom
-    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(position, targetZoom)
+    val cameraPosition = CameraPosition.Builder(map.cameraPosition)
+      .target(position)
+      .zoom(targetZoom)
+      .build()
+    val cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
     when {
       duration < 0 -> map.animateCamera(cameraUpdate)
       duration > 0 -> map.animateCamera(cameraUpdate, duration, null)

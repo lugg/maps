@@ -1778,11 +1778,11 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   } else if (duration > 0) {
     CLLocationCoordinate2D center =
         CLLocationCoordinate2DMake(latitude, longitude);
-    MKCoordinateRegion region = [_mapView regionForCenterCoordinate:center
-                                                          zoomLevel:targetZoom];
+    MKMapCamera *camera = [_mapView cameraForCenterCoordinate:center
+                                                    zoomLevel:targetZoom];
     [UIView animateWithDuration:duration / 1000.0
                      animations:^{
-                       [self->_mapView setRegion:region animated:NO];
+                       [self->_mapView setCamera:camera animated:NO];
                      }];
   } else {
     [_mapView
