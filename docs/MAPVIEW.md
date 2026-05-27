@@ -201,7 +201,7 @@ mapRef.current?.setEdgeInsets(
 
 ### moveCamera
 
-Move the camera to a coordinate with optional zoom and animation duration.
+Move the camera to a coordinate with optional zoom and animation duration. The current heading and pitch are preserved.
 
 ```ts
 moveCamera(coordinate: Coordinate, options: MoveCameraOptions): void
@@ -214,7 +214,7 @@ interface MoveCameraOptions {
 
 ### fitCoordinates
 
-Fit multiple coordinates in the visible map area.
+Fit multiple coordinates in the visible map area. Resets heading to north (`0°`).
 
 ```ts
 fitCoordinates(coordinates: Coordinate[], options?: FitCoordinatesOptions): void
