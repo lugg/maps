@@ -110,6 +110,7 @@ export const MapView = memo(
       zoomEnabled = true,
       scrollEnabled = true,
       pitchEnabled = true,
+      compassEnabled = true,
       edgeInsets,
       userLocationEnabled,
       theme = 'system',
@@ -488,6 +489,7 @@ export const MapView = memo(
             gestureHandling={gestureHandling}
             colorScheme={colorScheme}
             disableDefaultUI
+            rotateControl={compassEnabled}
             isFractionalZoomEnabled
             tilt={pitchEnabled === false ? 0 : undefined}
             onClick={handleClick}

@@ -245,6 +245,10 @@ static double tileToLng(NSInteger x, NSInteger z) {
   _mapView.pitchEnabled = enabled;
 }
 
+- (void)setCompassEnabled:(BOOL)enabled {
+  _mapView.showsCompass = enabled;
+}
+
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.showsUserLocation = enabled;
 }

@@ -25,6 +25,7 @@ export class MapView
     scrollEnabled: true,
     rotateEnabled: true,
     pitchEnabled: true,
+    compassEnabled: true,
     poiEnabled: true,
     theme: 'system',
   };
@@ -92,6 +93,7 @@ export class MapView
       scrollEnabled,
       rotateEnabled,
       pitchEnabled,
+      compassEnabled,
       edgeInsets,
       userLocationEnabled,
       userLocationButtonEnabled,
@@ -123,6 +125,7 @@ export class MapView
         scrollEnabled={scrollEnabled}
         rotateEnabled={rotateEnabled}
         pitchEnabled={pitchEnabled}
+        compassEnabled={compassEnabled}
         edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
         userLocationButtonEnabled={userLocationButtonEnabled}

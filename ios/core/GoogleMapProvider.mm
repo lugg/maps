@@ -166,6 +166,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.settings.tiltGestures = enabled;
 }
 
+- (void)setCompassEnabled:(BOOL)enabled {
+  _mapView.settings.compassButton = enabled;
+}
+
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.myLocationEnabled = enabled;
 }
