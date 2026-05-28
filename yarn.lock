@@ -3402,10 +3402,13 @@ __metadata:
     typescript: "npm:^5.9.2"
   peerDependencies:
     "@vis.gl/react-google-maps": ">=1.0.0"
+    expo: "*"
     react: "*"
     react-native: "*"
   peerDependenciesMeta:
     "@vis.gl/react-google-maps":
+      optional: true
+    expo:
       optional: true
   languageName: unknown
   linkType: soft
