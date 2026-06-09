@@ -37,7 +37,7 @@ import { MapView } from '@lugg/maps';
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
 | `poiEnabled` | `boolean` | `true` | Show points of interest. On Android, hides POIs and transit stops via map style. |
-| `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
+| `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories. On Android, categories map to Google Maps Style feature types (coarser granularity). |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
 | `insetAdjustment` | `'automatic' \| 'never'` | `'never'` | Safe area inset adjustment behavior |
 | `onPress` | `(event: MapPressEvent) => void` | - | Called when the map is pressed |

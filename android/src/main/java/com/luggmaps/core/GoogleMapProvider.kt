@@ -1318,12 +1318,126 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun onTrimMemory(level: Int) {}
 
-  private fun applyPoiEnabled() {
-    val style = if (poiEnabled) null else MapStyleOptions(
-      """[{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},
-         {"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]}]"""
+  private fun applyPoiStyle() {
+    if (!poiEnabled) {
+      googleMap?.setMapStyle(MapStyleOptions(POI_STYLE_HIDE_ALL))
+      return
+    }
+
+    val mappedFeatureTypes = poiFilterCategories
+      .mapNotNull { POI_CATEGORY_TO_FEATURE_TYPE[it] }
+      .toSet()
+
+    if (mappedFeatureTypes.isEmpty()) {
+      googleMap?.setMapStyle(null)
+      return
+    }
+
+    val styleJson = buildString {
+      append("[")
+      if (poiFilterMode == "excluding") {
+        mappedFeatureTypes.forEach { featureType ->
+          append("""{"featureType":"$featureType","elementType":"all","stylers":[{"visibility":"off"}]},""")
+        }
+      } else {
+        // including: hide all POIs/transit, then re-enable only matching feature types
+        append("""{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},""")
+        append("""{"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]},""")
+        mappedFeatureTypes.forEach { featureType ->
+          append("""{"featureType":"$featureType","elementType":"all","stylers":[{"visibility":"on"}]},""")
+        }
+      }
+      if (endsWith(",")) deleteCharAt(length - 1)
+      append("]")
+    }
+
+    googleMap?.setMapStyle(MapStyleOptions(styleJson))
+  }
+
+  companion object {
+    const val DEMO_MAP_ID = "DEMO_MAP_ID"
+
+    private val POI_CATEGORY_TO_FEATURE_TYPE = mapOf(
+      "airport" to "transit.station.airport",
+      "amusement-park" to "poi.attraction",
+      "aquarium" to "poi.attraction",
+      "atm" to "poi.business",
+      "bakery" to "poi.business",
+      "bank" to "poi.business",
+      "beach" to "poi",
+      "brewery" to "poi.business",
+      "cafe" to "poi.business",
+      "campground" to "poi",
+      "car-rental" to "poi.business",
+      "ev-charger" to "poi.business",
+      "fire-station" to "poi.government",
+      "fitness-center" to "poi.sports_complex",
+      "food-market" to "poi.business",
+      "gas-station" to "poi.business",
+      "hospital" to "poi.medical",
+      "hotel" to "poi.business",
+      "laundry" to "poi.business",
+      "library" to "poi.government",
+      "marina" to "poi",
+      "movie-theater" to "poi.attraction",
+      "museum" to "poi.attraction",
+      "national-park" to "poi.park",
+      "nightlife" to "poi.business",
+      "park" to "poi.park",
+      "parking" to "poi.business",
+      "pharmacy" to "poi.medical",
+      "police" to "poi.government",
+      "post-office" to "poi.government",
+      "public-transport" to "transit",
+      "restaurant" to "poi.business",
+      "restroom" to "poi",
+      "school" to "poi.school",
+      "stadium" to "poi.sports_complex",
+      "store" to "poi.business",
+      "theater" to "poi.attraction",
+      "university" to "poi.school",
+      "winery" to "poi.business",
+      "zoo" to "poi.attraction",
+      // iOS 18+
+      "animal-service" to "poi.business",
+      "automotive-repair" to "poi.business",
+      "baseball" to "poi.sports_complex",
+      "basketball" to "poi.sports_complex",
+      "beauty" to "poi.business",
+      "bowling" to "poi.sports_complex",
+      "castle" to "poi.attraction",
+      "convention-center" to "poi.business",
+      "distillery" to "poi.business",
+      "fairground" to "poi.attraction",
+      "fishing" to "poi",
+      "fortress" to "poi.attraction",
+      "go-kart" to "poi.sports_complex",
+      "golf" to "poi.sports_complex",
+      "hiking" to "poi.park",
+      "kayaking" to "poi",
+      "landmark" to "poi.attraction",
+      "mailbox" to "poi.government",
+      "mini-golf" to "poi.sports_complex",
+      "music-venue" to "poi.attraction",
+      "national-monument" to "poi.attraction",
+      "planetarium" to "poi.attraction",
+      "rock-climbing" to "poi.sports_complex",
+      "rv-park" to "poi",
+      "skate-park" to "poi.sports_complex",
+      "skating" to "poi.sports_complex",
+      "skiing" to "poi.sports_complex",
+      "soccer" to "poi.sports_complex",
+      "spa" to "poi.business",
+      "surfing" to "poi",
+      "swimming" to "poi.sports_complex",
+      "tennis" to "poi.sports_complex",
+      "volleyball" to "poi.sports_complex",
     )
-    googleMap?.setMapStyle(style)
+
+    private val POI_STYLE_HIDE_ALL = """[
+      {"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},
+      {"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]}
+    ]"""
   }
 
   private fun applyTheme() {
@@ -1348,8 +1462,4 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   // endregion
-
-  companion object {
-    const val DEMO_MAP_ID = "DEMO_MAP_ID"
-  }
 }
