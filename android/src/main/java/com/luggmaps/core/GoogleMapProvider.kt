@@ -29,6 +29,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.TileOverlayOptions
 import com.google.android.gms.maps.model.UrlTileProvider
 import com.luggmaps.LuggCalloutView
@@ -119,6 +120,11 @@ class GoogleMapProvider(private val context: Context) :
 
   // Theme
   private var theme: String = "system"
+
+  // POI
+  private var poiEnabled: Boolean = true
+  private var poiFilterMode: String = "including"
+  private var poiFilterCategories: List<String> = emptyList()
 
   // Edge Insets
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -221,6 +227,7 @@ class GoogleMapProvider(private val context: Context) :
     applyEdgeInsets()
     applyInsetAdjustment()
     applyTheme()
+    applyPoiStyle()
     applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
@@ -546,11 +553,23 @@ class GoogleMapProvider(private val context: Context) :
     applyInsetAdjustment()
   }
 
-  override fun setPoiEnabled(enabled: Boolean) {}
+  override fun setPoiEnabled(enabled: Boolean) {
+    if (poiEnabled == enabled) return
+    poiEnabled = enabled
+    applyPoiStyle()
+  }
 
-  override fun setPoiFilterMode(mode: String) {}
+  override fun setPoiFilterMode(mode: String) {
+    if (poiFilterMode == mode) return
+    poiFilterMode = mode
+    applyPoiStyle()
+  }
 
-  override fun setPoiFilterCategories(categories: List<String>) {}
+  override fun setPoiFilterCategories(categories: List<String>) {
+    if (poiFilterCategories == categories) return
+    poiFilterCategories = categories
+    applyPoiStyle()
+  }
 
   // endregion
 
@@ -1298,6 +1317,14 @@ class GoogleMapProvider(private val context: Context) :
   override fun onLowMemory() {}
 
   override fun onTrimMemory(level: Int) {}
+
+  private fun applyPoiEnabled() {
+    val style = if (poiEnabled) null else MapStyleOptions(
+      """[{"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},
+         {"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]}]"""
+    )
+    googleMap?.setMapStyle(style)
+  }
 
   private fun applyTheme() {
     val colorScheme = when (theme) {

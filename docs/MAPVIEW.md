@@ -36,7 +36,7 @@ import { MapView } from '@lugg/maps';
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
-| `poiEnabled` | `boolean` | `true` | Show points of interest (Apple Maps only) |
+| `poiEnabled` | `boolean` | `true` | Show points of interest. On Android, hides POIs and transit stops via map style. |
 | `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
 | `insetAdjustment` | `'automatic' \| 'never'` | `'never'` | Safe area inset adjustment behavior |
