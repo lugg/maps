@@ -98,6 +98,8 @@ class GoogleMapProvider(private val context: Context) :
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
   private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
+  private var tapDownPoint: android.graphics.Point? = null
+  private var earlyFiredMarker: Marker? = null
 
   // Initial camera settings
   private var initialLatitude: Double = 0.0
@@ -211,8 +213,25 @@ class GoogleMapProvider(private val context: Context) :
     map.setInfoWindowAdapter(this)
 
     wrapperView?.touchEventHandler = { event ->
-      if (event.action == android.view.MotionEvent.ACTION_DOWN) {
-        tapLocation = map.projection.fromScreenLocation(android.graphics.Point(event.x.toInt(), event.y.toInt()))
+      when (event.action) {
+        android.view.MotionEvent.ACTION_DOWN -> {
+          val point = android.graphics.Point(event.x.toInt(), event.y.toInt())
+          tapLocation = map.projection.fromScreenLocation(point)
+          tapDownPoint = point
+          earlyFiredMarker = null
+        }
+        android.view.MotionEvent.ACTION_UP -> {
+          val downPoint = tapDownPoint
+          if (downPoint != null) {
+            val upX = event.x.toInt()
+            val upY = event.y.toInt()
+            val dx = upX - downPoint.x
+            val dy = upY - downPoint.y
+            if (dx * dx + dy * dy <= TAP_SLOP_PX * TAP_SLOP_PX) {
+              fireMarkerPressIfNearby(map, upX, upY)
+            }
+          }
+        }
       }
     }
 
@@ -303,8 +322,11 @@ class GoogleMapProvider(private val context: Context) :
     dismissNonBubbledCallout()
 
     markerToViewMap[marker]?.let { view ->
-      val point = googleMap?.projection?.toScreenLocation(marker.position)
-      view.emitPressEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+      if (marker != earlyFiredMarker) {
+        val point = googleMap?.projection?.toScreenLocation(marker.position)
+        view.emitPressEvent(point?.x?.toFloat() ?: 0f, point?.y?.toFloat() ?: 0f)
+      }
+      earlyFiredMarker = null
 
       val calloutView = view.calloutView
       if (calloutView != null && !calloutView.bubbled && calloutView.hasCustomContent) {
@@ -316,7 +338,6 @@ class GoogleMapProvider(private val context: Context) :
       }
 
       if (!view.centerOnPress) {
-        marker.showInfoWindow()
         return true
       }
     }
@@ -1322,7 +1343,37 @@ class GoogleMapProvider(private val context: Context) :
 
   // endregion
 
+  private fun fireMarkerPressIfNearby(map: GoogleMap, x: Int, y: Int) {
+    val density = context.resources.displayMetrics.density
+    val hitRadiusPx = (HIT_RADIUS_DP * density).toInt()
+
+    var nearestMarker: Marker? = null
+    var nearestDistSq = hitRadiusPx * hitRadiusPx
+
+    for ((marker, view) in markerToViewMap) {
+      val anchorPoint = map.projection.toScreenLocation(marker.position)
+      // anchor is bottom-center by default; shift hit center upward by half the icon height
+      val iconHalfHeightPx = (view.scaledContentHeight / 2f).toInt()
+      val hitCenterY = anchorPoint.y - iconHalfHeightPx
+      val dx = anchorPoint.x - x
+      val dy = hitCenterY - y
+      val distSq = dx * dx + dy * dy
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq
+        nearestMarker = marker
+      }
+    }
+
+    nearestMarker?.let { marker ->
+      val view = markerToViewMap[marker] ?: return
+      earlyFiredMarker = marker
+      view.emitPressEvent(x.toFloat(), y.toFloat())
+    }
+  }
+
   companion object {
     const val DEMO_MAP_ID = "DEMO_MAP_ID"
+    private const val TAP_SLOP_PX = 20
+    private const val HIT_RADIUS_DP = 44f
   }
 }
