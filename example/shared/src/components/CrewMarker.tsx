@@ -21,6 +21,7 @@ interface CrewMarkerProps {
   loaded?: boolean;
   speed?: number;
   zoom?: number;
+  onSegment?: (index: number) => void;
 }
 
 const getBearing = (from: Coordinate, to: Coordinate, currentBearing = 0) => {
@@ -57,7 +58,10 @@ export const CrewMarker = ({
   loaded = false,
   speed = 1,
   zoom = BASE_ZOOM,
+  onSegment,
 }: CrewMarkerProps) => {
+  const onSegmentRef = useRef(onSegment);
+  onSegmentRef.current = onSegment;
   const latitude = useSharedValue(route[0]?.latitude ?? 0);
   const longitude = useSharedValue(route[0]?.longitude ?? 0);
   const bearingValue = useSharedValue(0);
@@ -101,6 +105,8 @@ export const CrewMarker = ({
         animateSegment(0);
         return;
       }
+
+      onSegmentRef.current?.(index);
 
       const from = route[index]!;
       const to = route[index + 1]!;

@@ -310,6 +310,12 @@ export const Map = memo(
         [markers]
       );
 
+      const [truckIndex, setTruckIndex] = useState(0);
+      const routeAhead = useMemo(
+        () => smoothedRoute.slice(truckIndex),
+        [smoothedRoute, truckIndex]
+      );
+
       const centerPinStyle = useAnimatedStyle(() => {
         const bottom = animatedPosition
           ? screenHeight - animatedPosition.value
@@ -353,8 +359,12 @@ export const Map = memo(
                 provider === 'apple' || Platform.OS === 'android'
               )
             )}
-            <Route coordinates={smoothedRoute} />
-            <CrewMarker route={smoothedRoute} zoom={zoom} />
+            <Route coordinates={routeAhead} />
+            <CrewMarker
+              route={smoothedRoute}
+              zoom={zoom}
+              onSegment={setTruckIndex}
+            />
             <Polygon
               coordinates={CIRCLE_COORDS}
               holes={CIRCLE_HOLES}

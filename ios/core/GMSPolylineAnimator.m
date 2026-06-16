@@ -148,13 +148,25 @@ static const NSUInteger kMaxGradientSpans = 512;
   }
 
   GMSMutablePath *path = [GMSMutablePath path];
-  for (CLLocation *location in self.coordinates) {
-    [path addCoordinate:location.coordinate];
+  CLLocationCoordinate2D lastCoord = self.coordinates.firstObject.coordinate;
+  [path addCoordinate:lastCoord];
+  for (NSUInteger i = 1; i < self.coordinates.count; i++) {
+    CLLocationCoordinate2D coord = self.coordinates[i].coordinate;
+    if (coord.latitude == lastCoord.latitude && coord.longitude == lastCoord.longitude) {
+      continue;
+    }
+    [path addCoordinate:coord];
+    lastCoord = coord;
   }
+
+  // Clear stale spans before swapping the path so Google Maps never rebuilds
+  // span models against a path with fewer segments (GMSModelStyleBuilder
+  // couldNotInstantiate -> EXC_BAD_ACCESS). Reassign spans once the new path is set.
+  _polyline.spans = nil;
   _polyline.path = path;
 
-  if (self.strokeColors.count > 1) {
-    _polyline.spans = [self createGradientSpans];
+  if (path.count > 1 && self.strokeColors.count > 1) {
+    _polyline.spans = [self createGradientSpansForSegmentCount:path.count - 1];
   } else {
     _polyline.strokeColor = self.strokeColors.firstObject ?: [UIColor blackColor];
   }
@@ -222,35 +234,44 @@ static const NSUInteger kMaxGradientSpans = 512;
   }
 
   if (headDist <= tailDist) {
+    _polyline.spans = nil;
     _polyline.path = [GMSMutablePath path];
     return;
   }
 
-  CGFloat visibleLength = headDist - tailDist;
   NSUInteger startIndex = [self indexForDistance:tailDist];
   NSUInteger endIndex = [self indexForDistance:headDist];
 
   GMSMutablePath *path = [GMSMutablePath path];
-  NSMutableArray<GMSStyleSpan *> *spans = [NSMutableArray array];
 
-  CLLocationCoordinate2D startCoord = [self coordinateAtDistance:tailDist];
-  [path addCoordinate:startCoord];
+  CLLocationCoordinate2D lastCoord = [self coordinateAtDistance:tailDist];
+  [path addCoordinate:lastCoord];
 
   for (NSUInteger i = startIndex + 1; i <= endIndex; i++) {
-    [path addCoordinate:self.coordinates[i].coordinate];
+    CLLocationCoordinate2D coord = self.coordinates[i].coordinate;
+    if (coord.latitude == lastCoord.latitude && coord.longitude == lastCoord.longitude) {
+      continue;
+    }
+    [path addCoordinate:coord];
+    lastCoord = coord;
   }
 
   CLLocationCoordinate2D endCoord = [self coordinateAtDistance:headDist];
-  CLLocationCoordinate2D lastAdded =
-      (endIndex < self.coordinates.count) ? self.coordinates[endIndex].coordinate : endCoord;
-  if (endCoord.latitude != lastAdded.latitude || endCoord.longitude != lastAdded.longitude) {
+  if (endCoord.latitude != lastCoord.latitude || endCoord.longitude != lastCoord.longitude) {
     [path addCoordinate:endCoord];
   }
 
   NSUInteger pathCount = path.count;
-  NSUInteger segmentCount = pathCount - 1;
+  NSUInteger segmentCount = (pathCount > 1) ? pathCount - 1 : 0;
+
+  if (segmentCount == 0) {
+    _polyline.spans = nil;
+    _polyline.path = path;
+    return;
+  }
 
   if (self.strokeColors.count <= 1) {
+    _polyline.spans = nil;
     _polyline.path = path;
     _polyline.strokeColor = self.strokeColors.firstObject ?: [UIColor blackColor];
     return;
@@ -259,6 +280,7 @@ static const NSUInteger kMaxGradientSpans = 512;
   NSUInteger spanCount = MIN(segmentCount, kMaxAnimationSpans);
   double segmentsPerSpan = (double)segmentCount / spanCount;
 
+  NSMutableArray<GMSStyleSpan *> *spans = [NSMutableArray array];
   for (NSUInteger i = 0; i < spanCount; i++) {
     CGFloat gradientPos = ((CGFloat)i + 0.5) / spanCount;
     UIColor *color = [self colorAtGradientPosition:gradientPos];
@@ -266,13 +288,16 @@ static const NSUInteger kMaxGradientSpans = 512;
     [spans addObject:[GMSStyleSpan spanWithStyle:style segments:segmentsPerSpan]];
   }
 
+  // Clear stale spans before swapping the path so Google Maps never rebuilds
+  // span models against a path with fewer segments (GMSModelStyleBuilder
+  // couldNotInstantiate -> EXC_BAD_ACCESS). Reassign spans once the new path is set.
+  _polyline.spans = nil;
   _polyline.path = path;
   _polyline.spans = spans;
 }
 
-- (NSArray<GMSStyleSpan *> *)createGradientSpans {
+- (NSArray<GMSStyleSpan *> *)createGradientSpansForSegmentCount:(NSUInteger)segmentCount {
   NSMutableArray<GMSStyleSpan *> *spans = [NSMutableArray array];
-  NSUInteger segmentCount = self.coordinates.count - 1;
   NSUInteger spanCount = MIN(segmentCount, kMaxGradientSpans);
   double segmentsPerSpan = (double)segmentCount / spanCount;
 
