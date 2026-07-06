@@ -35,8 +35,9 @@
   NSArray<NSNumber *> *_cumulativeDistances;
   CGFloat _totalLength;
   CGColorSpaceRef _colorSpace;
-  RGBAComponents *_colorCache;
-  NSUInteger _colorCacheCount;
+  // Immutable snapshot read by background draws; rebuilt (never mutated)
+  // on the main thread
+  NSData *_colorCacheData;
 }
 
 - (id)initWithPolyline:(MKPolyline *)polyline {
@@ -61,7 +62,6 @@
 
 - (void)dealloc {
   [self stopAnimation];
-  free(_colorCache);
   if (_colorSpace) {
     CGColorSpaceRelease(_colorSpace);
     _colorSpace = NULL;
@@ -123,20 +123,25 @@
   _displayLink.paused = NO;
 }
 
-- (NSUInteger)indexForDistance:(CGFloat)distance {
+- (NSUInteger)indexForDistance:(CGFloat)distance
+                   inDistances:(NSArray<NSNumber *> *)distances {
+  if (distances.count < 2) {
+    return 0;
+  }
+
   NSUInteger left = 0;
-  NSUInteger right = _cumulativeDistances.count - 1;
+  NSUInteger right = distances.count - 1;
 
   while (left < right) {
     NSUInteger mid = (left + right + 1) / 2;
-    if (_cumulativeDistances[mid].doubleValue <= distance) {
+    if (distances[mid].doubleValue <= distance) {
       left = mid;
     } else {
       right = mid - 1;
     }
   }
 
-  return MIN(left, _cumulativeDistances.count - 2);
+  return MIN(left, distances.count - 2);
 }
 
 - (CGFloat)applyEasing:(CGFloat)t {
@@ -208,44 +213,52 @@
 }
 
 - (void)rebuildColorCache {
-  free(_colorCache);
-  _colorCache = NULL;
-  _colorCacheCount = _strokeColors.count;
-  if (_colorCacheCount == 0) return;
-
-  _colorCache = (RGBAComponents *)malloc(sizeof(RGBAComponents) * _colorCacheCount);
-  for (NSUInteger i = 0; i < _colorCacheCount; i++) {
-    [_strokeColors[i] getRed:&_colorCache[i].r
-                       green:&_colorCache[i].g
-                        blue:&_colorCache[i].b
-                       alpha:&_colorCache[i].a];
+  NSUInteger count = _strokeColors.count;
+  if (count == 0) {
+    _colorCacheData = nil;
+    return;
   }
+
+  NSMutableData *data =
+      [NSMutableData dataWithLength:sizeof(RGBAComponents) * count];
+  RGBAComponents *cache = (RGBAComponents *)data.mutableBytes;
+  for (NSUInteger i = 0; i < count; i++) {
+    [_strokeColors[i] getRed:&cache[i].r
+                       green:&cache[i].g
+                        blue:&cache[i].b
+                       alpha:&cache[i].a];
+  }
+  _colorCacheData = data;
 }
 
 - (void)colorAtGradientPosition:(CGFloat)position rgba:(RGBAComponents *)out {
-  if (_colorCacheCount == 0) {
+  NSData *cacheData = _colorCacheData;
+  const RGBAComponents *cache = (const RGBAComponents *)cacheData.bytes;
+  NSUInteger count = cacheData.length / sizeof(RGBAComponents);
+
+  if (count == 0) {
     CGFloat r, g, b, a;
     [self.strokeColor getRed:&r green:&g blue:&b alpha:&a];
     *out = (RGBAComponents){r, g, b, a};
     return;
   }
-  if (_colorCacheCount == 1) {
-    *out = _colorCache[0];
+  if (count == 1) {
+    *out = cache[0];
     return;
   }
 
   position = MAX(0, MIN(1, position));
-  CGFloat scaledPos = position * (_colorCacheCount - 1);
+  CGFloat scaledPos = position * (count - 1);
   NSUInteger index = (NSUInteger)scaledPos;
   CGFloat t = scaledPos - index;
 
-  if (index >= _colorCacheCount - 1) {
-    *out = _colorCache[_colorCacheCount - 1];
+  if (index >= count - 1) {
+    *out = cache[count - 1];
     return;
   }
 
-  RGBAComponents c1 = _colorCache[index];
-  RGBAComponents c2 = _colorCache[index + 1];
+  RGBAComponents c1 = cache[index];
+  RGBAComponents c2 = cache[index + 1];
   out->r = c1.r + (c2.r - c1.r) * t;
   out->g = c1.g + (c2.g - c1.g) * t;
   out->b = c1.b + (c2.b - c1.b) * t;
@@ -272,13 +285,20 @@
   CGContextSetLineCap(context, self.lineCap);
   CGContextSetLineJoin(context, self.lineJoin);
 
-  NSUInteger segmentCount = _polyline.pointCount - 1;
-  if (segmentCount == 0) {
+  // drawMapRect: runs on MapKit's background render queues while
+  // updatePolyline: swaps these ivars on the main thread; snapshot them so
+  // one frame draws from a consistent pair
+  MKPolyline *polyline = _polyline;
+  NSArray<NSNumber *> *distances = _cumulativeDistances;
+  CGFloat totalLength = _totalLength;
+
+  if (polyline.pointCount < 2) {
     return;
   }
+  NSUInteger segmentCount = polyline.pointCount - 1;
 
   // Snake animation: grow from start, then shrink from start
-  if (_animated && _polyline.pointCount > 1 && _totalLength > 0) {
+  if (_animated && distances.count > 1 && totalLength > 0) {
     CGFloat trailLength = MAX(0.01, MIN(1.0, _animatedOptions.trailLength));
     CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.0;
     CGFloat progress = MIN(_animationProgress, maxProgress);
@@ -287,15 +307,15 @@
     CGFloat headDist, tailDist;
 
     if (trailLength < 1.0) {
-      headDist = easedProgress * _totalLength;
-      tailDist = MAX(0, headDist - _totalLength * trailLength);
+      headDist = easedProgress * totalLength;
+      tailDist = MAX(0, headDist - totalLength * trailLength);
     } else if (easedProgress <= 1.0) {
       tailDist = 0;
-      headDist = easedProgress * _totalLength;
+      headDist = easedProgress * totalLength;
     } else {
       CGFloat shrinkProgress = easedProgress - 1.0;
-      tailDist = shrinkProgress * _totalLength;
-      headDist = _totalLength;
+      tailDist = shrinkProgress * totalLength;
+      headDist = totalLength;
     }
 
     if (headDist <= tailDist) {
@@ -303,19 +323,23 @@
     }
 
     CGFloat visibleLength = headDist - tailDist;
-    NSUInteger startIndex = [self indexForDistance:tailDist];
-    NSUInteger endIndex = [self indexForDistance:headDist];
+    NSUInteger startIndex = [self indexForDistance:tailDist inDistances:distances];
+    NSUInteger endIndex = [self indexForDistance:headDist inDistances:distances];
 
-    for (NSUInteger i = startIndex; i <= endIndex && i < segmentCount; i++) {
-      CGFloat segStartDist = _cumulativeDistances[i].doubleValue;
-      CGFloat segEndDist = _cumulativeDistances[i + 1].doubleValue;
+    // distances may lag behind the polyline (or vice versa) for a frame;
+    // never index past either
+    NSUInteger maxSegment = MIN(segmentCount, distances.count - 1);
+
+    for (NSUInteger i = startIndex; i <= endIndex && i < maxSegment; i++) {
+      CGFloat segStartDist = distances[i].doubleValue;
+      CGFloat segEndDist = distances[i + 1].doubleValue;
 
       if (segEndDist <= tailDist || segStartDist >= headDist) {
         continue;
       }
 
-      CGPoint segStart = [self pointForMapPoint:_polyline.points[i]];
-      CGPoint segEnd = [self pointForMapPoint:_polyline.points[i + 1]];
+      CGPoint segStart = [self pointForMapPoint:polyline.points[i]];
+      CGPoint segEnd = [self pointForMapPoint:polyline.points[i + 1]];
 
       CGPoint drawStart = segStart;
       CGPoint drawEnd = segEnd;
@@ -368,8 +392,8 @@
   // Static gradient rendering
   if (_strokeColors && _strokeColors.count > 1) {
     for (NSUInteger i = 0; i < segmentCount; i++) {
-      CGPoint startPoint = [self pointForMapPoint:_polyline.points[i]];
-      CGPoint endPoint = [self pointForMapPoint:_polyline.points[i + 1]];
+      CGPoint startPoint = [self pointForMapPoint:polyline.points[i]];
+      CGPoint endPoint = [self pointForMapPoint:polyline.points[i + 1]];
 
       CGFloat gradientStart = (CGFloat)i / segmentCount;
       CGFloat gradientEnd = (CGFloat)(i + 1) / segmentCount;
