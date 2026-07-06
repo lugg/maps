@@ -264,6 +264,8 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
   [self pauseAnimations];
   [self destroyMapView];
+
+  [_delegate mapProviderDidFinishStaticSnapshot];
 }
 
 #pragma mark - Props

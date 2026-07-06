@@ -186,6 +186,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
   [self pauseAnimations];
   [self destroyMapView];
+
+  [_delegate mapProviderDidFinishStaticSnapshot];
 }
 
 #pragma mark - Props

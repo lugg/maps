@@ -79,6 +79,12 @@ Notes:
   and prop updates after the snapshot are ignored on iOS.
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.
+- On iOS, static map warmup is throttled - only a couple of live maps render
+  at a time and each is released once its snapshot is taken, so rows fill in
+  progressively.
+- In long lists, limit how many rows mount at once (e.g. `windowSize`,
+  `initialNumToRender`, `maxToRenderPerBatch` on `FlatList`) - every mounted
+  static map holds its snapshot image in memory.
 
 ## Types
 

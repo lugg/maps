@@ -8,6 +8,7 @@
 #import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
 #import "core/GoogleMapProvider.h"
+#import "core/LuggStaticMapWarmupQueue.h"
 #import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
@@ -41,6 +42,8 @@ using namespace luggmaps::events;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
   BOOL _staticMode;
+  BOOL _waitingForWarmupSlot;
+  BOOL _holdingWarmupSlot;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -172,16 +175,53 @@ using namespace luggmaps::events;
   [super didMoveToWindow];
   if (self.window) {
     if (!_provider && _mapWrapperView) {
-      [self initializeProvider];
+      if (_staticMode) {
+        [self requestStaticWarmup];
+      } else {
+        [self initializeProvider];
+      }
     }
     [_provider resumeAnimations];
   } else {
+    if (_waitingForWarmupSlot) {
+      [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
+      _waitingForWarmupSlot = NO;
+    }
     [_provider pauseAnimations];
+  }
+}
+
+- (void)requestStaticWarmup {
+  if (_waitingForWarmupSlot || _holdingWarmupSlot)
+    return;
+
+  _waitingForWarmupSlot = YES;
+  __weak LuggMapView *weakSelf = self;
+  [[LuggStaticMapWarmupQueue sharedQueue]
+      requestSlotForOwner:self
+               completion:^{
+                 LuggMapView *strongSelf = weakSelf;
+                 if (!strongSelf)
+                   return;
+                 strongSelf->_waitingForWarmupSlot = NO;
+                 strongSelf->_holdingWarmupSlot = YES;
+                 [strongSelf initializeProvider];
+               }];
+}
+
+- (void)releaseWarmupSlot {
+  if (_holdingWarmupSlot) {
+    _holdingWarmupSlot = NO;
+    [[LuggStaticMapWarmupQueue sharedQueue] releaseSlotForOwner:self];
   }
 }
 
 - (void)prepareForRecycle {
   [super prepareForRecycle];
+
+  [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
+  _waitingForWarmupSlot = NO;
+  [self releaseWarmupSlot];
 
   [_provider destroy];
   _provider = nil;
@@ -245,6 +285,10 @@ using namespace luggmaps::events;
 
 - (void)mapProviderDidReady {
   ReadyEvent::emit<LuggMapViewEventEmitter>(_eventEmitter);
+}
+
+- (void)mapProviderDidFinishStaticSnapshot {
+  [self releaseWarmupSlot];
 }
 
 - (void)mapProviderDidMoveCamera:(double)latitude

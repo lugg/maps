@@ -8,17 +8,39 @@ import {
   type MapProviderType,
 } from '@lugg/maps';
 
-import { Button, ThemedText } from '../components';
+import {
+  Button,
+  MarkerIcon,
+  MarkerImage,
+  MarkerText,
+  ThemedText,
+} from '../components';
 import { sizes, useTheme } from '../theme';
+
+type StaticMarkerType = 'default' | 'icon' | 'text' | 'image' | 'multiple';
+
+const MARKER_TYPES: StaticMarkerType[] = [
+  'default',
+  'icon',
+  'text',
+  'image',
+  'multiple',
+];
 
 export interface StaticPlace {
   id: string;
   name: string;
   description: string;
   coordinate: Coordinate;
+  markerType: StaticMarkerType;
+  markerText: string;
+  imageUrl: string;
 }
 
-const PLACES: StaticPlace[] = [
+const BASE_PLACES: Omit<
+  StaticPlace,
+  'markerType' | 'markerText' | 'imageUrl'
+>[] = [
   {
     id: 'golden-gate-bridge',
     name: 'Golden Gate Bridge',
@@ -57,6 +79,60 @@ const PLACES: StaticPlace[] = [
   },
 ];
 
+// Large list for performance testing - cycles the base places with
+// shifted coordinates so every map renders a unique region, and cycles
+// marker use-cases so snapshots cover default, custom, and live markers
+const PLACES: StaticPlace[] = Array.from({ length: 100 }, (_, i) => {
+  const base = BASE_PLACES[i % BASE_PLACES.length]!;
+  const shift = Math.floor(i / BASE_PLACES.length) * 0.015;
+  return {
+    ...base,
+    id: `${base.id}-${i}`,
+    name: `${i + 1}. ${base.name}`,
+    coordinate: {
+      latitude: base.coordinate.latitude + shift,
+      longitude: base.coordinate.longitude - shift,
+    },
+    markerType: MARKER_TYPES[i % MARKER_TYPES.length]!,
+    markerText: `${i + 1}`,
+    imageUrl: `https://i.pravatar.cc/100?img=${(i % 70) + 1}`,
+  };
+});
+
+const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
+  const { coordinate, markerType, markerText, imageUrl } = place;
+
+  switch (markerType) {
+    case 'icon':
+      return <MarkerIcon coordinate={coordinate} />;
+    case 'text':
+      return <MarkerText coordinate={coordinate} text={markerText} />;
+    case 'image':
+      return <MarkerImage coordinate={coordinate} source={{ uri: imageUrl }} />;
+    case 'multiple':
+      return (
+        <>
+          <Marker coordinate={coordinate} />
+          <MarkerText
+            coordinate={{
+              latitude: coordinate.latitude + 0.003,
+              longitude: coordinate.longitude - 0.004,
+            }}
+            text={markerText}
+          />
+          <MarkerIcon
+            coordinate={{
+              latitude: coordinate.latitude - 0.002,
+              longitude: coordinate.longitude + 0.004,
+            }}
+          />
+        </>
+      );
+    default:
+      return <Marker coordinate={coordinate} />;
+  }
+};
+
 interface StaticMapsScreenProps {
   onSelect?: (place: StaticPlace) => void;
 }
@@ -90,7 +166,7 @@ const PlaceCard = ({
           initialCoordinate={place.coordinate}
           initialZoom={14}
         >
-          <Marker coordinate={place.coordinate} />
+          <PlaceMarkers place={place} />
         </MapView>
       </View>
       <View style={styles.cardContent}>
@@ -98,6 +174,7 @@ const PlaceCard = ({
           {place.name}
         </ThemedText>
         <ThemedText variant="caption">{place.description}</ThemedText>
+        <ThemedText variant="caption">Marker: {place.markerType}</ThemedText>
       </View>
     </Pressable>
   );
