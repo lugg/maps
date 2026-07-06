@@ -369,7 +369,7 @@ export const MapView = memo(
     }, []);
 
     useEffect(() => {
-      if (!map || !onLongPress) return;
+      if (!map || !onLongPress || staticMode) return;
       const listeners = [
         map.addListener('mousedown', handleMouseDown),
         map.addListener('mouseup', handleMouseUp),
@@ -378,7 +378,7 @@ export const MapView = memo(
         listeners.forEach((l) => google.maps.event.removeListener(l));
         handleMouseUp();
       };
-    }, [map, onLongPress, handleMouseDown, handleMouseUp]);
+    }, [map, onLongPress, staticMode, handleMouseDown, handleMouseUp]);
 
     const handleDragStart = useCallback(() => {
       handleMouseUp();
@@ -491,10 +491,12 @@ export const MapView = memo(
             gestureHandling={gestureHandling}
             colorScheme={colorScheme}
             disableDefaultUI
-            rotateControl={compassEnabled}
+            rotateControl={staticMode ? false : compassEnabled}
+            clickableIcons={!staticMode}
+            keyboardShortcuts={!staticMode}
             isFractionalZoomEnabled
             tilt={pitchEnabled === false ? 0 : undefined}
-            onClick={handleClick}
+            onClick={staticMode ? undefined : handleClick}
             onDragstart={handleDragStart}
             onDragend={handleDragEnd}
             onCameraChanged={handleCameraChanged}

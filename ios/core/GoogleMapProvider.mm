@@ -198,8 +198,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
 
   UIImageView *imageView = [_mapView lugg_snapshotImageView];
-  if (!imageView)
+  if (!imageView) {
+    // Zero-size bounds; re-arm so resumeAnimations retries instead of
+    // silently keeping the live map forever
+    _needsStaticSnapshot = YES;
     return;
+  }
 
   _staticSnapshotView = imageView;
   [_wrapperView insertSubview:imageView aboveSubview:_mapView];

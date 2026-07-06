@@ -57,6 +57,8 @@ mounting many live maps is expensive:
   which renders a static bitmap instead of a live GL surface.
 - **iOS (Apple/Google)** - the live map is replaced with a rendered snapshot
   image once tiles finish loading, releasing the map's rendering resources.
+- **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
+  events are disabled; the map itself stays live.
 
 ```tsx
 <Pressable onPress={() => openPlace(place)}>
@@ -87,8 +89,11 @@ Notes:
   Set a `backgroundColor` style on the `MapView` to use your own.
 - Set `staticKey` (e.g. your list item's id) to cache snapshots across
   list recycling on iOS - scrolling back to a row reuses its snapshot
-  instead of rendering a live map again. The key must uniquely identify the
-  map's content, including markers; the cache is evicted on memory pressure.
+  instead of rendering a live map again. The camera and map settings are
+  part of the cache key automatically; the key must uniquely identify the
+  rest of the map's content (e.g. markers). Changing `staticKey` discards
+  the current snapshot and re-renders. The cache is bounded by count and
+  total memory.
 - Alternatively, keeping rows mounted (larger `windowSize` with
   `removeClippedSubviews`) avoids re-rendering entirely at the cost of
   holding every row's snapshot in memory.

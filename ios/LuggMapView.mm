@@ -27,14 +27,14 @@ using namespace facebook::react;
 using namespace luggmaps::events;
 
 // Static snapshots cached across view recycling, keyed by the user-provided
-// staticKey plus the map settings that affect appearance. Evicted on memory
-// pressure.
+// staticKey plus the map settings that affect appearance.
 static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   static NSCache<NSString *, UIImage *> *cache;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     cache = [[NSCache alloc] init];
     cache.countLimit = 100;
+    cache.totalCostLimit = 64 * 1024 * 1024; // bytes
   });
   return cache;
 }
@@ -247,9 +247,18 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
                         ? (NSInteger)self.traitCollection.userInterfaceStyle
                         : -(NSInteger)_theme;
 
-  return [NSString stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f", _staticKey,
-                                    (int)_providerType, _mapId, (int)_mapType,
-                                    (long)style, size.width, size.height];
+  // Camera is part of the key so a reused staticKey with a different
+  // location/zoom can't serve a stale snapshot
+  const auto &viewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
+
+  return [NSString stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f",
+                                    _staticKey, (int)_providerType, _mapId,
+                                    (int)_mapType, (long)style, size.width,
+                                    size.height,
+                                    viewProps.initialCoordinate.latitude,
+                                    viewProps.initialCoordinate.longitude,
+                                    viewProps.initialZoom];
 }
 
 - (BOOL)showCachedStaticSnapshot {
@@ -298,6 +307,29 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (_holdingWarmupSlot) {
     _holdingWarmupSlot = NO;
     [[LuggStaticMapWarmupQueue sharedQueue] releaseSlotForOwner:self];
+  }
+}
+
+// staticKey identifies the map's content; when it changes (e.g. a recycled
+// list row bound to a new item), any live warmup or displayed snapshot is
+// stale and the static lifecycle restarts. Without this, an in-flight
+// warmup caches the old item's map under the new key.
+- (void)resetStaticContent {
+  [_staticCachedImageView removeFromSuperview];
+  _staticCachedImageView = nil;
+
+  if (_provider) {
+    [self releaseWarmupSlot];
+    [_provider destroy];
+    _provider = nil;
+    _initialized = NO;
+  }
+
+  if (self.window) {
+    [self applyStaticPlaceholderBackground];
+    if (![self showCachedStaticSnapshot]) {
+      [self requestStaticWarmup];
+    }
   }
 }
 
@@ -382,7 +414,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 - (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
   NSString *key = [self staticSnapshotCacheKey];
   if (key) {
-    [StaticSnapshotCache() setObject:image forKey:key];
+    NSUInteger cost = (NSUInteger)(image.size.width * image.scale *
+                                   image.size.height * image.scale * 4);
+    [StaticSnapshotCache() setObject:image forKey:key cost:cost];
   }
 }
 
@@ -446,7 +480,11 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 
   _providerType = newViewProps.provider;
   _staticMode = newViewProps.staticMode;
-  _staticKey = [NSString stringWithUTF8String:newViewProps.staticKey.c_str()];
+
+  NSString *newStaticKey =
+      [NSString stringWithUTF8String:newViewProps.staticKey.c_str()];
+  BOOL staticKeyChanged = ![newStaticKey isEqualToString:_staticKey];
+  _staticKey = newStaticKey;
 
   NSString *newMapId =
       [NSString stringWithUTF8String:newViewProps.mapId.c_str()];
@@ -525,6 +563,11 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   }
 
   [super updateProps:props oldProps:oldProps];
+
+  // After super so the snapshot cache key sees the new camera props
+  if (staticKeyChanged && _staticMode && _mapWrapperView) {
+    [self resetStaticContent];
+  }
 }
 
 #pragma mark - Commands

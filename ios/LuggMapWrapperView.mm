@@ -29,6 +29,16 @@ using namespace facebook::react;
   return self;
 }
 
+- (void)prepareForRecycle {
+  [super prepareForRecycle];
+
+  // Static placeholder styling is applied outside of props
+  // (LuggMapView applyStaticPlaceholderBackground) and would otherwise
+  // leak into the next map that reuses this recycled view
+  self.backgroundColor = nil;
+  self.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
+}
+
 Class<RCTComponentViewProtocol> LuggMapWrapperViewCls(void) {
   return LuggMapWrapperView.class;
 }
