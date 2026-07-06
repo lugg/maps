@@ -33,6 +33,7 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
+| `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
@@ -45,6 +46,39 @@ import { MapView } from '@lugg/maps';
 | `onCameraMove` | `(event: MapCameraEvent) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event: MapCameraEvent) => void` | - | Called when camera stops moving |
 | `onReady` | `() => void` | - | Called when map is loaded and ready |
+
+## Static Maps
+
+Set `staticMode` to render a non-interactive map optimized for list views, where
+mounting many live maps is expensive:
+
+- **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
+  which renders a static bitmap instead of a live GL surface.
+- **iOS (Apple/Google)** - the live map is replaced with a rendered snapshot
+  image once tiles finish loading, releasing the map's rendering resources.
+
+```tsx
+<Pressable onPress={() => openPlace(place)}>
+  <View style={{ height: 140 }} pointerEvents="none">
+    <MapView
+      staticMode
+      style={StyleSheet.absoluteFill}
+      initialCoordinate={place.coordinate}
+      initialZoom={14}
+    >
+      <Marker coordinate={place.coordinate} />
+    </MapView>
+  </View>
+</Pressable>
+```
+
+Notes:
+
+- `staticMode` is creation-time only and cannot be toggled after the map is created.
+- The map renders once with its initial camera and children. Camera commands
+  and prop updates after the snapshot are ignored on iOS.
+- For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
+  map container (as above) instead of relying on `onPress`.
 
 ## Types
 

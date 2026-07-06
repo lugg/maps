@@ -76,6 +76,7 @@ export interface NativeProps extends ViewProps {
   rotateEnabled?: WithDefault<boolean, true>;
   pitchEnabled?: WithDefault<boolean, true>;
   compassEnabled?: WithDefault<boolean, true>;
+  staticMode?: boolean;
   edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
   userLocationButtonEnabled?: boolean;

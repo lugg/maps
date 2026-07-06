@@ -4,3 +4,4 @@ export * from './utils';
 export * from './markers';
 export * from './screens/HomeScreen';
 export * from './screens/MarkerDetailScreen';
+export * from './screens/StaticMapsScreen';

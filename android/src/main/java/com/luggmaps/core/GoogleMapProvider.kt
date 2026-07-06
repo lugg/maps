@@ -78,6 +78,9 @@ class GoogleMapProvider(private val context: Context) :
 
   var mapId: String = DEMO_MAP_ID
 
+  // Renders the map in lite mode (static bitmap). Creation-time only.
+  var staticMode: Boolean = false
+
   private var wrapperView: LuggMapWrapperView? = null
   private var currentNightMode: Int = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
   private var mapView: MapView? = null
@@ -141,7 +144,7 @@ class GoogleMapProvider(private val context: Context) :
 
     context.applicationContext.registerComponentCallbacks(this)
 
-    val options = GoogleMapOptions().mapId(mapId)
+    val options = GoogleMapOptions().mapId(mapId).liteMode(staticMode)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
@@ -194,6 +197,11 @@ class GoogleMapProvider(private val context: Context) :
   override fun onMapReady(map: GoogleMap) {
     googleMap = map
     _isMapReady = true
+
+    if (staticMode) {
+      // Lite mode shows an "open in Google Maps" toolbar on tap by default
+      map.uiSettings.isMapToolbarEnabled = false
+    }
 
     val position = LatLng(initialLatitude, initialLongitude)
     map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))

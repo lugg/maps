@@ -12,6 +12,7 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
 #import "../LuggTileOverlayView.h"
+#import "../extensions/UIView+Snapshot.h"
 #import "GMSPolylineAnimator.h"
 #import "PolylineAnimatorBase.h"
 
@@ -28,6 +29,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
+  UIImageView *_staticImageView;
+  BOOL _needsStaticSnapshot;
   LuggMapViewTheme _theme;
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
@@ -53,6 +56,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 @synthesize delegate = _delegate;
+@synthesize staticMode = _staticMode;
 
 - (instancetype)init {
   if (self = [super init]) {
@@ -113,6 +117,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   _mapView.paddingAdjustmentBehavior =
       kGMSMapViewPaddingAdjustmentBehaviorNever;
 
+  if (_staticMode) {
+    _mapView.userInteractionEnabled = NO;
+    _mapView.preferredFrameRate = kGMSFrameRateConservative;
+  }
+
   _wrapperView = wrapperView;
   [wrapperView addSubview:_mapView];
 
@@ -130,6 +139,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)destroy {
+  [_staticImageView removeFromSuperview];
+  _staticImageView = nil;
+  _needsStaticSnapshot = NO;
   [self stopEdgeInsetsAnimation];
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
@@ -142,10 +154,38 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_circleToViewMap removeAllObjects];
   [_markerToViewMap removeAllObjects];
   [_groundOverlayToViewMap removeAllObjects];
+  [self destroyMapView];
+  _isMapReady = NO;
+}
+
+- (void)destroyMapView {
+  _mapView.delegate = nil;
   [_mapView clear];
   [_mapView removeFromSuperview];
   _mapView = nil;
-  _isMapReady = NO;
+}
+
+// Static mode: once the map is fully rendered, swap the live map with a
+// snapshot image and release the map view.
+- (void)swapMapWithStaticImage {
+  if (_staticImageView || !_mapView)
+    return;
+
+  if (!_mapView.window) {
+    _needsStaticSnapshot = YES;
+    return;
+  }
+  _needsStaticSnapshot = NO;
+
+  UIImageView *imageView = [_mapView lugg_snapshotImageView];
+  if (!imageView)
+    return;
+
+  _staticImageView = imageView;
+  [_wrapperView insertSubview:imageView aboveSubview:_mapView];
+
+  [self pauseAnimations];
+  [self destroyMapView];
 }
 
 #pragma mark - Props
@@ -306,6 +346,12 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 #pragma mark - GMSMapViewDelegate
+
+- (void)mapViewSnapshotReady:(GMSMapView *)mapView {
+  if (_staticMode) {
+    [self swapMapWithStaticImage];
+  }
+}
 
 - (void)mapView:(GMSMapView *)mapView willMove:(BOOL)gesture {
   _isDragging = gesture;
@@ -1114,6 +1160,10 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)resumeAnimations {
+  if (_needsStaticSnapshot) {
+    [self swapMapWithStaticImage];
+    return;
+  }
   for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
     [animator resume];
   }

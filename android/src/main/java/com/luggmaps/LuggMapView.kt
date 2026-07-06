@@ -65,6 +65,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var compassEnabled: Boolean = true
+  private var staticMode: Boolean = false
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
   private var poiEnabled: Boolean = true
@@ -134,6 +135,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
     val google = GoogleMapProvider(context)
     google.mapId = mapId
+    google.staticMode = staticMode
     google.delegate = this
     provider = google
 
@@ -249,6 +251,10 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (compassEnabled == enabled) return
     compassEnabled = enabled
     provider?.setCompassEnabled(enabled)
+  }
+
+  fun setStaticMode(enabled: Boolean) {
+    staticMode = enabled
   }
 
   fun setUserLocationEnabled(enabled: Boolean) {

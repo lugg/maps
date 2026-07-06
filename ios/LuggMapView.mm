@@ -40,6 +40,7 @@ using namespace luggmaps::events;
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
+  BOOL _staticMode;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -70,6 +71,7 @@ using namespace luggmaps::events;
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _compassEnabled = YES;
+    _staticMode = NO;
     _userLocationEnabled = NO;
     _poiEnabled = NO;
     _poiFilterMode = LuggMapViewPoiFilterMode::Including;
@@ -205,6 +207,7 @@ using namespace luggmaps::events;
   }
 
   _provider.delegate = self;
+  _provider.staticMode = _staticMode;
 
   CLLocationCoordinate2D coordinate =
       CLLocationCoordinate2DMake(viewProps.initialCoordinate.latitude,
@@ -303,6 +306,7 @@ using namespace luggmaps::events;
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   _providerType = newViewProps.provider;
+  _staticMode = newViewProps.staticMode;
 
   NSString *newMapId =
       [NSString stringWithUTF8String:newViewProps.mapId.c_str()];

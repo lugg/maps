@@ -13,5 +13,14 @@ export default function MapScreen() {
     [router]
   );
 
-  return <HomeScreen onMarkerPress={handleMarkerPress} />;
+  const handleShowStaticMaps = useCallback(() => {
+    router.push('/static-maps');
+  }, [router]);
+
+  return (
+    <HomeScreen
+      onMarkerPress={handleMarkerPress}
+      onShowStaticMaps={handleShowStaticMaps}
+    />
+  );
 }

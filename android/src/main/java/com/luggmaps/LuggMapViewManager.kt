@@ -137,6 +137,11 @@ class LuggMapViewManager :
     view.setCompassEnabled(value)
   }
 
+  @ReactProp(name = "staticMode", defaultBoolean = false)
+  override fun setStaticMode(view: LuggMapView, value: Boolean) {
+    view.setStaticMode(value)
+  }
+
   @ReactProp(name = "userLocationEnabled", defaultBoolean = false)
   override fun setUserLocationEnabled(view: LuggMapView, value: Boolean) {
     view.setUserLocationEnabled(value)

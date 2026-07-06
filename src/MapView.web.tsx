@@ -111,6 +111,7 @@ export const MapView = memo(
       scrollEnabled = true,
       pitchEnabled = true,
       compassEnabled = true,
+      staticMode = false,
       edgeInsets,
       userLocationEnabled,
       theme = 'system',
@@ -446,12 +447,13 @@ export const MapView = memo(
         ? 'hybrid'
         : 'roadmap';
 
-    const gestureHandling =
-      scrollEnabled === false && zoomEnabled === false
-        ? 'none'
-        : scrollEnabled === false
-        ? 'cooperative'
-        : 'auto';
+    const gestureHandling = staticMode
+      ? 'none'
+      : scrollEnabled === false && zoomEnabled === false
+      ? 'none'
+      : scrollEnabled === false
+      ? 'cooperative'
+      : 'auto';
 
     const colorScheme =
       theme === 'dark'

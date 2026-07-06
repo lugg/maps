@@ -32,6 +32,7 @@ interface ControlSheetProps {
   onToggleMap: () => void;
   onToggleProvider: () => void;
   onLoadGeojson: () => void;
+  onShowStaticMaps?: () => void;
   onDidPresent?: (event: DetentChangeEvent) => void;
   onDetentChange?: (event: DetentChangeEvent) => void;
 }
@@ -58,6 +59,7 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
       onToggleMap,
       onToggleProvider,
       onLoadGeojson,
+      onShowStaticMaps,
       onDidPresent,
       onDetentChange,
     },
@@ -135,6 +137,12 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
             style={styles.sheetButton}
             title={hasGeojson ? 'GeoJSON (loaded)' : 'Load GeoJSON'}
             onPress={onLoadGeojson}
+          />
+          <Button
+            style={styles.sheetButton}
+            title="Static Maps"
+            disabled={!onShowStaticMaps}
+            onPress={() => onShowStaticMaps?.()}
           />
         </View>
       </ReanimatedTrueSheet>

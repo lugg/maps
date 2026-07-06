@@ -13,6 +13,7 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggPolylineView.h"
 #import "../LuggTileOverlayView.h"
 #import "../extensions/MKMapView+Zoom.h"
+#import "../extensions/UIView+Snapshot.h"
 #import "LuggAnnotationView.h"
 #import "MKPolylineAnimator.h"
 
@@ -119,6 +120,8 @@ static double tileToLng(NSInteger x, NSInteger z) {
   LuggAppleMapViewContent *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
+  UIImageView *_staticImageView;
+  BOOL _needsStaticSnapshot;
   double _minZoom;
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
@@ -145,6 +148,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 @synthesize delegate = _delegate;
+@synthesize staticMode = _staticMode;
 
 - (instancetype)init {
   if (self = [super init]) {
@@ -182,6 +186,10 @@ static double tileToLng(NSInteger x, NSInteger z) {
   _mapView.delegate = self;
   _mapView.insetsLayoutMarginsFromSafeArea = NO;
 
+  if (_staticMode) {
+    _mapView.userInteractionEnabled = NO;
+  }
+
   [self applyZoomRange];
 
   _tapGesture =
@@ -212,6 +220,14 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 - (void)destroy {
+  [_staticImageView removeFromSuperview];
+  _staticImageView = nil;
+  _needsStaticSnapshot = NO;
+  [self destroyMapView];
+  _isMapReady = NO;
+}
+
+- (void)destroyMapView {
   [self dismissNonBubbledCallout];
   [self stopEdgeInsetsAnimation];
   if (_tapGesture) {
@@ -222,9 +238,32 @@ static double tileToLng(NSInteger x, NSInteger z) {
     [_mapView removeGestureRecognizer:_longPressGesture];
     _longPressGesture = nil;
   }
+  _mapView.delegate = nil;
   [_mapView removeFromSuperview];
   _mapView = nil;
-  _isMapReady = NO;
+}
+
+// Static mode: once tiles are fully rendered, swap the live map with a
+// snapshot image and release the map view.
+- (void)swapMapWithStaticImage {
+  if (_staticImageView || !_mapView)
+    return;
+
+  if (!_mapView.window) {
+    _needsStaticSnapshot = YES;
+    return;
+  }
+  _needsStaticSnapshot = NO;
+
+  UIImageView *imageView = [_mapView lugg_snapshotImageView];
+  if (!imageView)
+    return;
+
+  _staticImageView = imageView;
+  [_wrapperView insertSubview:imageView aboveSubview:_mapView];
+
+  [self pauseAnimations];
+  [self destroyMapView];
 }
 
 #pragma mark - Props
@@ -764,6 +803,13 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
                             longitude:mapView.centerCoordinate.longitude
                                  zoom:mapView.zoomLevel
                               gesture:wasDragging];
+}
+
+- (void)mapViewDidFinishRenderingMap:(MKMapView *)mapView
+                       fullyRendered:(BOOL)fullyRendered {
+  if (_staticMode && fullyRendered) {
+    [self swapMapWithStaticImage];
+  }
 }
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView
@@ -1752,6 +1798,10 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
 }
 
 - (void)resumeAnimations {
+  if (_needsStaticSnapshot) {
+    [self swapMapWithStaticImage];
+    return;
+  }
   for (LuggPolylineView *polylineView in _overlayToPolylineMap
            .objectEnumerator) {
     MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
