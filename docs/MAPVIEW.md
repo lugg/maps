@@ -34,6 +34,7 @@ import { MapView } from '@lugg/maps';
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
 | `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
+| `staticKey` | `string` | - | Stable identity for the static snapshot cache (iOS). See [Static Maps](#static-maps) |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
@@ -62,6 +63,7 @@ mounting many live maps is expensive:
   <View style={{ height: 140 }} pointerEvents="none">
     <MapView
       staticMode
+      staticKey={place.id}
       style={StyleSheet.absoluteFill}
       initialCoordinate={place.coordinate}
       initialZoom={14}
@@ -79,9 +81,17 @@ Notes:
   and prop updates after the snapshot are ignored on iOS.
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.
-- On iOS, static map warmup is throttled - only a couple of live maps render
-  at a time and each is released once its snapshot is taken, so rows fill in
-  progressively.
+- On iOS, static map rendering is paced to never compete with scroll
+  gestures, so rows fill in progressively while scrolling stays smooth.
+- While a static map loads, a theme-aware placeholder background is shown.
+  Set a `backgroundColor` style on the `MapView` to use your own.
+- Set `staticKey` (e.g. your list item's id) to cache snapshots across
+  list recycling on iOS - scrolling back to a row reuses its snapshot
+  instead of rendering a live map again. The key must uniquely identify the
+  map's content, including markers; the cache is evicted on memory pressure.
+- Alternatively, keeping rows mounted (larger `windowSize` with
+  `removeClippedSubviews`) avoids re-rendering entirely at the cost of
+  holding every row's snapshot in memory.
 - In long lists, limit how many rows mount at once (e.g. `windowSize`,
   `initialNumToRender`, `maxToRenderPerBatch` on `FlatList`) - every mounted
   static map holds its snapshot image in memory.

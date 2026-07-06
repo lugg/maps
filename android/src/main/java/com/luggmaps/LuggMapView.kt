@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.view.View
 import android.view.View.VISIBLE
 import com.facebook.react.uimanager.ThemedReactContext
@@ -133,6 +134,10 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private fun initializeProvider() {
     if (provider != null || mapWrapperView == null) return
 
+    if (staticMode) {
+      applyStaticPlaceholder()
+    }
+
     val google = GoogleMapProvider(context)
     google.mapId = mapId
     google.staticMode = staticMode
@@ -154,6 +159,23 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
         is LuggTileOverlayView -> google.addTileOverlayView(child)
       }
     }
+  }
+
+  // Shown while the map loads, until the map covers it
+  private fun applyStaticPlaceholder() {
+    // A user-provided background acts as the placeholder
+    if (background != null) return
+
+    val isDark = when (theme) {
+      "dark" -> true
+
+      "light" -> false
+
+      else ->
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+          Configuration.UI_MODE_NIGHT_YES
+    }
+    mapWrapperView?.setBackgroundColor(if (isDark) COLOR_PLACEHOLDER_DARK else COLOR_PLACEHOLDER_LIGHT)
   }
 
   // endregion
@@ -350,4 +372,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   }
 
   // endregion
+
+  companion object {
+    private const val COLOR_PLACEHOLDER_LIGHT = 0xFFF2F2F7.toInt()
+    private const val COLOR_PLACEHOLDER_DARK = 0xFF2C2C2E.toInt()
+  }
 }

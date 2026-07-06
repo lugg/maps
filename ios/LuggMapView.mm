@@ -26,6 +26,19 @@
 using namespace facebook::react;
 using namespace luggmaps::events;
 
+// Static snapshots cached across view recycling, keyed by the user-provided
+// staticKey plus the map settings that affect appearance. Evicted on memory
+// pressure.
+static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
+  static NSCache<NSString *, UIImage *> *cache;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    cache = [[NSCache alloc] init];
+    cache.countLimit = 100;
+  });
+  return cache;
+}
+
 @interface LuggMapView () <RCTLuggMapViewViewProtocol, MapProviderDelegate>
 @end
 
@@ -42,6 +55,8 @@ using namespace luggmaps::events;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
   BOOL _staticMode;
+  NSString *_staticKey;
+  UIImageView *_staticCachedImageView;
   BOOL _waitingForWarmupSlot;
   BOOL _holdingWarmupSlot;
   BOOL _userLocationEnabled;
@@ -75,6 +90,7 @@ using namespace luggmaps::events;
     _pitchEnabled = YES;
     _compassEnabled = YES;
     _staticMode = NO;
+    _staticKey = @"";
     _userLocationEnabled = NO;
     _poiEnabled = NO;
     _poiFilterMode = LuggMapViewPoiFilterMode::Including;
@@ -176,7 +192,10 @@ using namespace luggmaps::events;
   if (self.window) {
     if (!_provider && _mapWrapperView) {
       if (_staticMode) {
-        [self requestStaticWarmup];
+        [self applyStaticPlaceholderBackground];
+        if (![self showCachedStaticSnapshot]) {
+          [self requestStaticWarmup];
+        }
       } else {
         [self initializeProvider];
       }
@@ -189,6 +208,72 @@ using namespace luggmaps::events;
     }
     [_provider pauseAnimations];
   }
+}
+
+// Shown while the map warms up, until the live map or snapshot covers it
+- (void)applyStaticPlaceholderBackground {
+  const auto &viewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
+  if (viewProps.backgroundColor) {
+    // A user-provided background acts as the placeholder
+    return;
+  }
+
+  switch (_theme) {
+  case LuggMapViewTheme::Dark:
+    _mapWrapperView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+    break;
+  case LuggMapViewTheme::Light:
+    _mapWrapperView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+    break;
+  default:
+    _mapWrapperView.overrideUserInterfaceStyle =
+        UIUserInterfaceStyleUnspecified;
+    break;
+  }
+  _mapWrapperView.backgroundColor = UIColor.secondarySystemBackgroundColor;
+}
+
+- (nullable NSString *)staticSnapshotCacheKey {
+  if (_staticKey.length == 0 || !_mapWrapperView)
+    return nil;
+
+  CGSize size = _mapWrapperView.bounds.size;
+  if (size.width <= 0 || size.height <= 0)
+    return nil;
+
+  // 'system' theme snapshots depend on the current appearance
+  NSInteger style = _theme == LuggMapViewTheme::System
+                        ? (NSInteger)self.traitCollection.userInterfaceStyle
+                        : -(NSInteger)_theme;
+
+  return [NSString stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f", _staticKey,
+                                    (int)_providerType, _mapId, (int)_mapType,
+                                    (long)style, size.width, size.height];
+}
+
+- (BOOL)showCachedStaticSnapshot {
+  if (_staticCachedImageView)
+    return YES;
+
+  NSString *key = [self staticSnapshotCacheKey];
+  if (!key)
+    return NO;
+
+  UIImage *image = [StaticSnapshotCache() objectForKey:key];
+  if (!image)
+    return NO;
+
+  UIImageView *imageView =
+      [[UIImageView alloc] initWithFrame:_mapWrapperView.bounds];
+  imageView.autoresizingMask =
+      UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  imageView.image = image;
+  [_mapWrapperView addSubview:imageView];
+  _staticCachedImageView = imageView;
+
+  ReadyEvent::emit<LuggMapViewEventEmitter>(_eventEmitter);
+  return YES;
 }
 
 - (void)requestStaticWarmup {
@@ -222,6 +307,9 @@ using namespace luggmaps::events;
   [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
   _waitingForWarmupSlot = NO;
   [self releaseWarmupSlot];
+
+  [_staticCachedImageView removeFromSuperview];
+  _staticCachedImageView = nil;
 
   [_provider destroy];
   _provider = nil;
@@ -291,6 +379,13 @@ using namespace luggmaps::events;
   [self releaseWarmupSlot];
 }
 
+- (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
+  NSString *key = [self staticSnapshotCacheKey];
+  if (key) {
+    [StaticSnapshotCache() setObject:image forKey:key];
+  }
+}
+
 - (void)mapProviderDidMoveCamera:(double)latitude
                        longitude:(double)longitude
                             zoom:(double)zoom
@@ -351,6 +446,7 @@ using namespace luggmaps::events;
 
   _providerType = newViewProps.provider;
   _staticMode = newViewProps.staticMode;
+  _staticKey = [NSString stringWithUTF8String:newViewProps.staticKey.c_str()];
 
   NSString *newMapId =
       [NSString stringWithUTF8String:newViewProps.mapId.c_str()];

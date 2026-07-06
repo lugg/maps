@@ -14,7 +14,7 @@
       [[UIGraphicsImageRenderer alloc] initWithBounds:bounds format:format];
   UIImage *image = [renderer
       imageWithActions:^(UIGraphicsImageRendererContext *context) {
-        [self drawViewHierarchyInRect:bounds afterScreenUpdates:YES];
+        [self drawViewHierarchyInRect:bounds afterScreenUpdates:NO];
       }];
 
   UIImageView *imageView = [[UIImageView alloc] initWithFrame:self.frame];

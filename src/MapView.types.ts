@@ -220,6 +220,15 @@ export interface MapViewProps extends ViewProps {
    */
   staticMode?: boolean;
   /**
+   * Stable identity for the static snapshot cache (iOS). When set, a map
+   * remounted with the same key (and same size, provider, and map settings)
+   * reuses its cached snapshot instead of rendering a live map again -
+   * e.g. set it to your list item's id. The key must uniquely identify the
+   * map's content, including markers and other children.
+   * Only used with staticMode.
+   */
+  staticKey?: string;
+  /**
    * Map content edge insets
    */
   edgeInsets?: EdgeInsets;

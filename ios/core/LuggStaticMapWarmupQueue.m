@@ -1,6 +1,8 @@
 #import "LuggStaticMapWarmupQueue.h"
 
-static const NSUInteger kMaxConcurrentWarmups = 2;
+// No concurrency cap - warmups are paced by the runloop instead (one grant
+// per pass, outside scroll tracking)
+static const NSUInteger kMaxConcurrentWarmups = NSUIntegerMax;
 // Slot is force-released if a map never finishes rendering (e.g. offline)
 // so it can't starve the queue. The live map is left in place.
 static const int64_t kWarmupTimeoutSeconds = 10;
@@ -16,6 +18,7 @@ static const int64_t kWarmupTimeoutSeconds = 10;
 @implementation LuggStaticMapWarmupQueue {
   NSMutableArray<LuggWarmupRequest *> *_pending;
   NSHashTable<id> *_active;
+  BOOL _drainScheduled;
 }
 
 + (instancetype)sharedQueue {
@@ -60,7 +63,29 @@ static const int64_t kWarmupTimeoutSeconds = 10;
   [self drain];
 }
 
+// Grants run in NSDefaultRunLoopMode - not serviced while the user is
+// actively dragging - and one per runloop pass, so map creation never
+// competes with scroll gestures for the main thread.
 - (void)drain {
+  if (_drainScheduled || _pending.count == 0 ||
+      _active.count >= kMaxConcurrentWarmups)
+    return;
+
+  _drainScheduled = YES;
+  __weak LuggStaticMapWarmupQueue *weakSelf = self;
+  [[NSRunLoop mainRunLoop]
+      performInModes:@[ NSDefaultRunLoopMode ]
+               block:^{
+                 LuggStaticMapWarmupQueue *strongSelf = weakSelf;
+                 if (!strongSelf)
+                   return;
+                 strongSelf->_drainScheduled = NO;
+                 [strongSelf grantNext];
+                 [strongSelf drain];
+               }];
+}
+
+- (void)grantNext {
   while (_active.count < kMaxConcurrentWarmups && _pending.count > 0) {
     LuggWarmupRequest *request = _pending.firstObject;
     [_pending removeObjectAtIndex:0];
@@ -70,6 +95,7 @@ static const int64_t kWarmupTimeoutSeconds = 10;
     [_active addObject:owner];
     [self scheduleTimeoutForOwner:owner];
     request.completion();
+    return;
   }
 }
 

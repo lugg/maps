@@ -161,6 +161,7 @@ const PlaceCard = ({
         <MapView
           key={provider}
           staticMode
+          staticKey={place.id}
           style={StyleSheet.absoluteFill}
           provider={provider}
           initialCoordinate={place.coordinate}

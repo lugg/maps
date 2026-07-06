@@ -29,8 +29,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
-  UIImageView *_staticImageView;
+  UIImageView *_staticSnapshotView;
   BOOL _needsStaticSnapshot;
+  BOOL _staticSwapScheduled;
   LuggMapViewTheme _theme;
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
@@ -139,8 +140,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)destroy {
-  [_staticImageView removeFromSuperview];
-  _staticImageView = nil;
+  [_staticSnapshotView removeFromSuperview];
+  _staticSnapshotView = nil;
   _needsStaticSnapshot = NO;
   [self stopEdgeInsetsAnimation];
   [_pendingMarkerViews removeAllObjects];
@@ -166,9 +167,11 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 // Static mode: once the map is fully rendered, swap the live map with a
-// snapshot image and release the map view.
+// snapshot image and release the map view. The snapshot render and map
+// teardown are expensive, so they run outside scroll tracking; the live
+// map keeps displaying until then.
 - (void)swapMapWithStaticImage {
-  if (_staticImageView || !_mapView)
+  if (_staticSnapshotView || _staticSwapScheduled || !_mapView)
     return;
 
   if (!_mapView.window) {
@@ -177,16 +180,34 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   }
   _needsStaticSnapshot = NO;
 
+  _staticSwapScheduled = YES;
+  [[NSRunLoop mainRunLoop] performInModes:@[ NSDefaultRunLoopMode ]
+                                    block:^{
+                                      self->_staticSwapScheduled = NO;
+                                      [self performStaticSwap];
+                                    }];
+}
+
+- (void)performStaticSwap {
+  if (_staticSnapshotView || !_mapView)
+    return;
+
+  if (!_mapView.window) {
+    _needsStaticSnapshot = YES;
+    return;
+  }
+
   UIImageView *imageView = [_mapView lugg_snapshotImageView];
   if (!imageView)
     return;
 
-  _staticImageView = imageView;
+  _staticSnapshotView = imageView;
   [_wrapperView insertSubview:imageView aboveSubview:_mapView];
 
   [self pauseAnimations];
   [self destroyMapView];
 
+  [_delegate mapProviderDidCaptureStaticImage:imageView.image];
   [_delegate mapProviderDidFinishStaticSnapshot];
 }
 

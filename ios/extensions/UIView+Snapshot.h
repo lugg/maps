@@ -5,9 +5,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface UIView (LuggSnapshot)
 
 /**
- * Renders the view hierarchy into an image view matching this view's
- * frame and autoresizing behavior. Returns nil if the view has no size
- * or the snapshot could not be rendered.
+ * Renders the currently presented content into an image view matching
+ * this view's frame and autoresizing behavior. Returns nil if the view
+ * has no size or the snapshot could not be rendered.
  */
 - (nullable UIImageView *)lugg_snapshotImageView;
 
