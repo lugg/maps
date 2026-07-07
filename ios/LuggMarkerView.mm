@@ -287,6 +287,8 @@ using namespace luggmaps::events;
   _iconView.layer.anchorPoint = CGPointMake(0.5, 0.5);
   _iconView.frame = CGRectMake(0, 0, _iconView.bounds.size.width,
                                _iconView.bounds.size.height);
+  // Static providers hide the icon view until positioned
+  _iconView.hidden = NO;
 }
 
 - (void)showCallout {

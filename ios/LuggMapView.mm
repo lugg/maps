@@ -264,9 +264,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 - (void)startStaticContent {
   [self applyStaticPlaceholderBackground];
 
-  // Both static providers render fully async: markers and shapes show up
-  // as overlay views immediately, and the base map arrives when the
-  // snapshotter (Apple) or a paced warmup (Google) finishes - so static
+  // Both static providers render fully async: the placeholder shows until
+  // the snapshotter (Apple) or a paced warmup (Google) delivers the base
+  // map, which reveals together with the marker/shape overlays - so static
   // maps keep loading while the user scrolls
   [self initializeProvider];
 }

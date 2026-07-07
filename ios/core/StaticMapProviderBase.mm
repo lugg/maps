@@ -270,6 +270,8 @@ static NSInteger shapeZIndex(UIView *shape) {
       [[LuggStaticShapeOverlayView alloc] initWithFrame:wrapperView.bounds];
   _shapeOverlayView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  // Overlays stay hidden over the placeholder and reveal with the base map
+  _shapeOverlayView.hidden = YES;
   [wrapperView addSubview:_shapeOverlayView];
 
   [self updateProjection];
@@ -396,6 +398,12 @@ static NSInteger shapeZIndex(UIView *shape) {
   _baseImageView.image = image;
   _baseRenderDone = YES;
 
+  // Reveal markers and shapes now that the base map is displayed
+  _shapeOverlayView.hidden = NO;
+  for (LuggMarkerView *markerView in _markerViews) {
+    [self positionMarkerOverlay:markerView];
+  }
+
   if (!fromCache) {
     [_delegate mapProviderDidCaptureStaticImage:image];
   }
@@ -507,6 +515,8 @@ static NSInteger shapeZIndex(UIView *shape) {
     if (iconView.superview != _wrapperView) {
       [iconView removeFromSuperview];
       iconView.userInteractionEnabled = NO;
+      // Hidden until the base map displays; positionMarkerOverlay shows it
+      iconView.hidden = YES;
       [_wrapperView addSubview:iconView];
     }
   } else {
@@ -518,6 +528,7 @@ static NSInteger shapeZIndex(UIView *shape) {
     if (!pin) {
       pin = [self newDefaultMarkerOverlayView];
       pin.userInteractionEnabled = NO;
+      pin.hidden = YES;
       [_wrapperView addSubview:pin];
       [_defaultMarkerOverlays setObject:pin forKey:markerView];
     }
@@ -550,11 +561,13 @@ static NSInteger shapeZIndex(UIView *shape) {
     // lands exactly on the projected coordinate
     iconView.center = point;
     iconView.layer.zPosition = markerView.zIndex;
+    iconView.hidden = !_baseRenderDone;
   } else {
     UIView *pin = [_defaultMarkerOverlays objectForKey:markerView];
     pin.layer.anchorPoint = CGPointMake(0.5, 1.0);
     pin.center = point;
     pin.layer.zPosition = markerView.zIndex;
+    pin.hidden = !_baseRenderDone;
   }
 }
 

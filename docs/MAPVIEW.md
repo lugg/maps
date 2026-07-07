@@ -61,13 +61,12 @@ mounting many live maps is expensive:
   static maps keep loading while scrolling. Markers stay live views
   positioned over the base map; polylines, polygons, circles, and ground
   overlays are drawn onto it. Tile overlays are not supported.
-- **iOS (Google)** - markers and shapes render as live overlay views
-  immediately, exactly like Apple static maps. Only the base map needs the
-  SDK (which has no async snapshotter): a live, tiles-only map warms up
-  briefly under the overlays and is replaced with a rendered image once
-  tiles finish loading, releasing the map's rendering resources. Warmups
-  are paced to never compete with scroll gestures, so base maps fill in
-  between scrolls while markers show right away.
+- **iOS (Google)** - markers and shapes render as live overlay views,
+  exactly like Apple static maps. Only the base map needs the SDK (which
+  has no async snapshotter): a live, tiles-only map warms up briefly under
+  the overlays and is replaced with a rendered image once tiles finish
+  loading, releasing the map's rendering resources. Warmups are paced to
+  never compete with scroll gestures, so rows fill in between scrolls.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
   events are disabled; the map itself stays live.
 
@@ -96,9 +95,9 @@ Notes:
   map container (as above) instead of relying on `onPress`.
 - `animated` polylines render as complete static polylines, so the snapshot
   never freezes a mid-animation frame.
-- On iOS, markers are live views over the base map - marker content that
-  loads asynchronously (e.g. remote images) appears when ready, and marker
-  prop updates still apply.
+- On iOS, markers are live views over the base map, revealed together with
+  it - marker content that loads asynchronously (e.g. remote images)
+  appears when ready, and marker prop updates still apply.
 - While a static map loads, a theme-aware placeholder background is shown.
   Set a `backgroundColor` style on the `MapView` to use your own.
 - Set `staticKey` (e.g. your list item's id) to cache base map images

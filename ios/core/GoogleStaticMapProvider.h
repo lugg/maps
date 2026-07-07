@@ -9,8 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
  * the overlays, then is swapped with a rendered image and the map view is
  * pooled for reuse. Warmups are paced by LuggStaticMapWarmupQueue so they
  * never compete with scroll gestures; markers and shapes are overlay views
- * (shared with Apple static maps) that appear immediately, without waiting
- * for a warmup slot.
+ * (shared with Apple static maps) that reveal with the base map, so the
+ * warmup map never renders its own markers.
  */
 @interface GoogleStaticMapProvider : StaticMapProviderBase <GMSMapViewDelegate>
 

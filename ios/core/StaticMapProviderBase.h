@@ -15,10 +15,11 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
  *
  * Markers are live views positioned over the base map via a mercator
  * projection (mirroring Android's live markers on lite maps), so async
- * marker content (e.g. remote images) appears when it loads - immediately,
- * without waiting for the base map. Polylines, polygons, circles and
- * ground overlays are drawn into a single CoreGraphics overlay view.
- * Tile overlays are not supported.
+ * marker content (e.g. remote images) still updates when it loads.
+ * Polylines, polygons, circles and ground overlays are drawn into a
+ * single CoreGraphics overlay view. All overlays stay hidden over the
+ * placeholder and reveal together with the base map. Tile overlays are
+ * not supported.
  */
 @interface StaticMapProviderBase : NSObject <MapProvider>
 
