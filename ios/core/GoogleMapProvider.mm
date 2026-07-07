@@ -32,6 +32,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   UIImageView *_staticSnapshotView;
   BOOL _needsStaticSnapshot;
   BOOL _staticSwapScheduled;
+  BOOL _tilesRendered;
   LuggMapViewTheme _theme;
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
@@ -111,6 +112,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   options.camera = camera;
   options.mapID = gmsMapId;
 
+  _tilesRendered = NO;
   _mapView = [[GMSMapView alloc] initWithOptions:options];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -174,7 +176,9 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (_staticSnapshotView || _staticSwapScheduled || !_mapView)
     return;
 
-  if (!_mapView.window) {
+  // Re-arm instead of capturing a half-loaded map; the next
+  // didFinishTileRendering re-triggers the swap
+  if (!_mapView.window || !_tilesRendered) {
     _needsStaticSnapshot = YES;
     return;
   }
@@ -192,7 +196,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (_staticSnapshotView || !_mapView)
     return;
 
-  if (!_mapView.window) {
+  // Tiles can invalidate between scheduling and this runloop pass
+  if (!_mapView.window || !_tilesRendered) {
     _needsStaticSnapshot = YES;
     return;
   }
@@ -374,7 +379,20 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
 #pragma mark - GMSMapViewDelegate
 
+- (void)mapViewDidStartTileRendering:(GMSMapView *)mapView {
+  _tilesRendered = NO;
+}
+
+- (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
+  _tilesRendered = YES;
+  if (_staticMode && _needsStaticSnapshot) {
+    [self swapMapWithStaticImage];
+  }
+}
+
 - (void)mapViewSnapshotReady:(GMSMapView *)mapView {
+  // Stable per the SDK: tiles loaded, labels and overlays rendered
+  _tilesRendered = YES;
   if (_staticMode) {
     [self swapMapWithStaticImage];
   }

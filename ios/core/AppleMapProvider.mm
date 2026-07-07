@@ -123,6 +123,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   UIImageView *_staticSnapshotView;
   BOOL _needsStaticSnapshot;
   BOOL _staticSwapScheduled;
+  BOOL _tilesRendered;
   double _minZoom;
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
@@ -181,6 +182,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (_mapView)
     return;
 
+  _tilesRendered = NO;
   _mapView = [[LuggAppleMapViewContent alloc] initWithFrame:wrapperView.bounds];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -252,7 +254,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (_staticSnapshotView || _staticSwapScheduled || !_mapView)
     return;
 
-  if (!_mapView.window) {
+  // Re-arm instead of capturing a half-loaded map; the next
+  // didFinishRenderingMap re-triggers the swap
+  if (!_mapView.window || !_tilesRendered) {
     _needsStaticSnapshot = YES;
     return;
   }
@@ -270,7 +274,8 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (_staticSnapshotView || !_mapView)
     return;
 
-  if (!_mapView.window) {
+  // Tiles can invalidate between scheduling and this runloop pass
+  if (!_mapView.window || !_tilesRendered) {
     _needsStaticSnapshot = YES;
     return;
   }
@@ -832,8 +837,17 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
                               gesture:wasDragging];
 }
 
+- (void)mapViewWillStartLoadingMap:(MKMapView *)mapView {
+  _tilesRendered = NO;
+}
+
+- (void)mapViewWillStartRenderingMap:(MKMapView *)mapView {
+  _tilesRendered = NO;
+}
+
 - (void)mapViewDidFinishRenderingMap:(MKMapView *)mapView
                        fullyRendered:(BOOL)fullyRendered {
+  _tilesRendered = fullyRendered;
   if (_staticMode && fullyRendered) {
     [self swapMapWithStaticImage];
   }
