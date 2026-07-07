@@ -99,6 +99,7 @@ class GoogleMapProvider(private val context: Context) :
   private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
+  private var liteProjectionReady = false
   private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
 
@@ -207,7 +208,10 @@ class GoogleMapProvider(private val context: Context) :
       map.uiSettings.isMapToolbarEnabled = false
       // The projection is only valid once the lite map has rendered, and no
       // camera events fire afterwards to correct live marker positions
-      map.setOnMapLoadedCallback { positionLiveMarkers() }
+      map.setOnMapLoadedCallback {
+        liteProjectionReady = true
+        positionLiveMarkers()
+      }
     }
 
     val position = LatLng(initialLatitude, initialLongitude)
@@ -752,6 +756,10 @@ class GoogleMapProvider(private val context: Context) :
 
     val contentView = markerView.contentView
     contentView.pointerEvents = com.facebook.react.uimanager.PointerEvents.NONE
+    // Until the lite map's projection is valid, hide the marker instead of
+    // flashing it at a wrong position; onMapLoaded positions and shows it
+    contentView.visibility =
+      if (staticMode && !liteProjectionReady) View.INVISIBLE else View.VISIBLE
     (contentView.parent as? android.view.ViewGroup)?.removeView(contentView)
     wrapper.addView(contentView)
     liveMarkerViews.add(markerView)
@@ -783,10 +791,12 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun positionLiveMarker(markerView: LuggMarkerView) {
     val map = googleMap ?: return
+    if (staticMode && !liteProjectionReady) return
     val contentView = markerView.contentView
     val point = map.projection.toScreenLocation(LatLng(markerView.latitude, markerView.longitude))
     contentView.translationX = point.x - contentView.width * markerView.anchorX
     contentView.translationY = point.y - contentView.height * markerView.anchorY
+    contentView.visibility = View.VISIBLE
   }
 
   // endregion
