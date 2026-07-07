@@ -65,8 +65,9 @@ mounting many live maps is expensive:
   exactly like Apple static maps. Only the base map needs the SDK (which
   has no async snapshotter): a live, tiles-only map warms up briefly under
   the overlays and is replaced with a rendered image once tiles finish
-  loading, releasing the map's rendering resources. Warmups are paced to
-  never compete with scroll gestures, so rows fill in between scrolls.
+  loading, releasing the map's rendering resources. Warmup work scales
+  with how many rows mount at once - bound it with your list's
+  `windowSize` / `initialNumToRender` / `maxToRenderPerBatch`.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
   events are disabled; the map itself stays live.
 

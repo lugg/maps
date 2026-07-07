@@ -2,14 +2,13 @@
 
 #import "../extensions/UIView+Snapshot.h"
 #import "GoogleMapProvider.h"
-#import "LuggStaticMapWarmupQueue.h"
 
 // Static maps churn through GMSMapViews as list rows warm up, and both
 // creating one and tearing one down are expensive main-thread operations
 // (renderer setup/teardown). Detached map views are pooled and reused so a
 // warmup usually only costs a camera move plus tile load. Keyed by map ID,
 // which is fixed at GMSMapView creation.
-static const NSUInteger kStaticMapViewPoolCapacity = 3;
+static const NSUInteger kStaticMapViewPoolCapacity = 6;
 
 static NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *
 StaticMapViewPool(void) {
@@ -50,8 +49,6 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 @implementation GoogleStaticMapProvider {
   GMSMapView *_warmupMapView;
-  BOOL _waitingForWarmupSlot;
-  BOOL _holdingWarmupSlot;
   BOOL _tilesRendered;
   BOOL _swapScheduled;
 }
@@ -83,28 +80,10 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
     [self scheduleSwap];
     return;
   }
-  if (_waitingForWarmupSlot)
-    return;
-
-  _waitingForWarmupSlot = YES;
-  __weak GoogleStaticMapProvider *weakSelf = self;
-  [[LuggStaticMapWarmupQueue sharedQueue]
-      requestSlotForOwner:self
-               completion:^{
-                 GoogleStaticMapProvider *strongSelf = weakSelf;
-                 if (!strongSelf)
-                   return;
-                 strongSelf->_waitingForWarmupSlot = NO;
-                 strongSelf->_holdingWarmupSlot = YES;
-                 [strongSelf startWarmup];
-               }];
+  [self startWarmup];
 }
 
 - (void)cancelBaseRender {
-  if (_waitingForWarmupSlot) {
-    [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
-    _waitingForWarmupSlot = NO;
-  }
   [self destroyWarmupMapView];
 }
 
@@ -118,10 +97,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 - (void)startWarmup {
   UIView *wrapperView = self.wrapperView;
-  if (!wrapperView) {
-    [self releaseWarmupSlot];
+  if (!wrapperView)
     return;
-  }
 
   _tilesRendered = NO;
 
@@ -159,20 +136,12 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (void)destroyWarmupMapView {
-  if (_warmupMapView) {
-    _warmupMapView.delegate = nil;
-    [_warmupMapView removeFromSuperview];
-    EnqueueStaticMapView([self poolKey], _warmupMapView);
-    _warmupMapView = nil;
-  }
-  [self releaseWarmupSlot];
-}
-
-- (void)releaseWarmupSlot {
-  if (_holdingWarmupSlot) {
-    _holdingWarmupSlot = NO;
-    [[LuggStaticMapWarmupQueue sharedQueue] releaseSlotForOwner:self];
-  }
+  if (!_warmupMapView)
+    return;
+  _warmupMapView.delegate = nil;
+  [_warmupMapView removeFromSuperview];
+  EnqueueStaticMapView([self poolKey], _warmupMapView);
+  _warmupMapView = nil;
 }
 
 // Once tiles are fully rendered, swap the live map with its image and
