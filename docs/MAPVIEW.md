@@ -83,6 +83,8 @@ Notes:
   and prop updates after the snapshot are ignored on iOS.
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.
+- `animated` polylines render as complete static polylines, so the snapshot
+  never freezes a mid-animation frame.
 - On iOS, static map rendering is paced to never compete with scroll
   gestures, so rows fill in progressively while scrolling stays smooth.
 - While a static map loads, a theme-aware placeholder background is shown.

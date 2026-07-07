@@ -835,7 +835,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
     animator.coordinates = polylineView.coordinates;
     animator.strokeColors = polylineView.strokeColors;
     animator.animatedOptions = polylineView.animatedOptions;
-    animator.animated = polylineView.animated;
+    animator.animated = polylineView.animated && !_staticMode;
     [animator update];
   }
 }
@@ -865,7 +865,8 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   animator.coordinates = polylineView.coordinates;
   animator.strokeColors = polylineView.strokeColors;
   animator.animatedOptions = polylineView.animatedOptions;
-  animator.animated = polylineView.animated;
+  // Static maps snapshot an arbitrary frame; render the full polyline
+  animator.animated = polylineView.animated && !_staticMode;
   [animator update];
 
   [_polylineAnimators setObject:animator forKey:polylineView];

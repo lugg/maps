@@ -923,7 +923,8 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
         renderer.strokeColors = colors;
       }
       renderer.animatedOptions = polylineView.animatedOptions;
-      renderer.animated = polylineView.animated;
+      // Static maps snapshot an arbitrary frame; render the full polyline
+      renderer.animated = polylineView.animated && !_staticMode;
       polylineView.renderer = renderer;
       return renderer;
     }
@@ -1452,7 +1453,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
     renderer.strokeColors =
         polylineView.strokeColors.count > 1 ? polylineView.strokeColors : nil;
     renderer.animatedOptions = polylineView.animatedOptions;
-    renderer.animated = polylineView.animated;
+    renderer.animated = polylineView.animated && !_staticMode;
     return;
   }
 

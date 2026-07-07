@@ -821,7 +821,7 @@ class GoogleMapProvider(private val context: Context) :
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
       animatedOptions = polylineView.animatedOptions
-      animated = polylineView.animated
+      animated = polylineView.animated && !staticMode
       update()
     }
   }
@@ -850,7 +850,8 @@ class GoogleMapProvider(private val context: Context) :
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
       animatedOptions = polylineView.animatedOptions
-      animated = polylineView.animated
+      // Static maps render once; show the full polyline instead of animating
+      animated = polylineView.animated && !staticMode
       update()
     }
 
