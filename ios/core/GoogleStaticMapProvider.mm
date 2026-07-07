@@ -189,12 +189,16 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 - (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
   _tilesRendered = YES;
+  // The visible warmup map is fully rendered; show the overlays now
+  // instead of waiting for the swap, which is deferred while scrolling
+  [self revealOverlays];
   [self scheduleSwap];
 }
 
 - (void)mapViewSnapshotReady:(GMSMapView *)mapView {
   // Stable per the SDK: tiles loaded, labels and overlays rendered
   _tilesRendered = YES;
+  [self revealOverlays];
   [self scheduleSwap];
 }
 

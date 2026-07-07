@@ -230,6 +230,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 @implementation StaticMapProviderBase {
   BOOL _isMapReady;
   BOOL _baseRenderDone;
+  BOOL _overlaysRevealed;
 
   UIImageView *_baseImageView;
   LuggStaticShapeOverlayView *_shapeOverlayView;
@@ -332,6 +333,7 @@ static NSInteger shapeZIndex(UIView *shape) {
   _baseImageView = nil;
 
   _baseRenderDone = NO;
+  _overlaysRevealed = NO;
   _projectionReady = NO;
   _wrapperView = nil;
   _isMapReady = NO;
@@ -397,18 +399,23 @@ static NSInteger shapeZIndex(UIView *shape) {
   }
   _baseImageView.image = image;
   _baseRenderDone = YES;
-
-  // Reveal markers and shapes now that the base map is displayed
-  _shapeOverlayView.hidden = NO;
-  for (LuggMarkerView *markerView in _markerViews) {
-    [self positionMarkerOverlay:markerView];
-  }
+  [self revealOverlays];
 
   if (!fromCache) {
     [_delegate mapProviderDidCaptureStaticImage:image];
   }
   [_delegate mapProviderDidFinishStaticSnapshot];
   [_delegate mapProviderDidReady];
+}
+
+- (void)revealOverlays {
+  if (_overlaysRevealed)
+    return;
+  _overlaysRevealed = YES;
+  _shapeOverlayView.hidden = NO;
+  for (LuggMarkerView *markerView in _markerViews) {
+    [self positionMarkerOverlay:markerView];
+  }
 }
 
 #pragma mark - Subclass hooks
@@ -561,13 +568,13 @@ static NSInteger shapeZIndex(UIView *shape) {
     // lands exactly on the projected coordinate
     iconView.center = point;
     iconView.layer.zPosition = markerView.zIndex;
-    iconView.hidden = !_baseRenderDone;
+    iconView.hidden = !_overlaysRevealed;
   } else {
     UIView *pin = [_defaultMarkerOverlays objectForKey:markerView];
     pin.layer.anchorPoint = CGPointMake(0.5, 1.0);
     pin.center = point;
     pin.layer.zPosition = markerView.zIndex;
-    pin.hidden = !_baseRenderDone;
+    pin.hidden = !_overlaysRevealed;
   }
 }
 

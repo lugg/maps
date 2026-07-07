@@ -41,6 +41,11 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 /// delegate callbacks and marks the base render done.
 - (void)displayBaseImage:(UIImage *)image fromCache:(BOOL)fromCache;
 
+/// Shows the marker and shape overlays (idempotent). Called automatically
+/// when the base image displays; subclasses whose base map is already
+/// visible earlier (e.g. a live warmup map) can call it sooner.
+- (void)revealOverlays;
+
 #pragma mark - Subclass hooks
 
 /// The map rect the base render covers for the given view size; must match
