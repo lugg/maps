@@ -54,7 +54,8 @@ Set `staticMode` to render a non-interactive map optimized for list views, where
 mounting many live maps is expensive:
 
 - **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
-  which renders a static bitmap instead of a live GL surface.
+  which renders a static bitmap instead of a live GL surface. Lite mode does
+  not support cloud-based styling, so `mapId` is ignored on static maps.
 - **iOS (Apple/Google)** - the live map is replaced with a rendered snapshot
   image once tiles finish loading, releasing the map's rendering resources.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press

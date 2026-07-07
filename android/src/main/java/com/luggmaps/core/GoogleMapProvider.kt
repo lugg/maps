@@ -140,11 +140,15 @@ class GoogleMapProvider(private val context: Context) :
     initialZoom = zoom
 
     val wrapper = wrapperView as LuggMapWrapperView
+    wrapper.relayoutChildOnRequest = staticMode
     this.wrapperView = wrapper
 
     context.applicationContext.registerComponentCallbacks(this)
 
-    val options = GoogleMapOptions().mapId(mapId).liteMode(staticMode)
+    // Lite mode doesn't support map IDs (cloud-based styling); setting one
+    // makes the static map render blank
+    val options = GoogleMapOptions().liteMode(staticMode)
+    if (!staticMode) options.mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
@@ -201,6 +205,9 @@ class GoogleMapProvider(private val context: Context) :
     if (staticMode) {
       // Lite mode shows an "open in Google Maps" toolbar on tap by default
       map.uiSettings.isMapToolbarEnabled = false
+      // The projection is only valid once the lite map has rendered, and no
+      // camera events fire afterwards to correct live marker positions
+      map.setOnMapLoadedCallback { positionLiveMarkers() }
     }
 
     val position = LatLng(initialLatitude, initialLongitude)
