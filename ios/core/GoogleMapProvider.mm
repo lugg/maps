@@ -18,6 +18,58 @@ using facebook::react::LuggMapViewTheme;
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
+// Static maps churn through GMSMapViews as list rows warm up, and both
+// creating one and tearing one down are expensive main-thread operations
+// (renderer setup/teardown). Detached map views are pooled and reused so a
+// warmup usually only costs a camera move plus tile load. Keyed by map ID,
+// which is fixed at GMSMapView creation.
+static const NSUInteger kStaticMapViewPoolCapacity = 3;
+
+static NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *
+StaticMapViewPool(void) {
+  static NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *pool;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    pool = [NSMutableDictionary dictionary];
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:UIApplicationDidReceiveMemoryWarningNotification
+                    object:nil
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(NSNotification *notification) {
+                  [pool removeAllObjects];
+                }];
+  });
+  return pool;
+}
+
+static GMSMapView *_Nullable DequeueStaticMapView(NSString *mapId) {
+  NSMutableArray<GMSMapView *> *views = StaticMapViewPool()[mapId];
+  GMSMapView *mapView = views.lastObject;
+  [views removeLastObject];
+  return mapView;
+}
+
+static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
+  NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *pool =
+      StaticMapViewPool();
+  NSMutableArray<GMSMapView *> *views = pool[mapId];
+  if (!views) {
+    views = [NSMutableArray array];
+    pool[mapId] = views;
+  }
+  if (views.count >= kStaticMapViewPoolCapacity)
+    return;
+
+  // Reset state that a fresh provider won't reapply (its prop setters
+  // no-op on default values)
+  [mapView clear];
+  mapView.selectedMarker = nil;
+  mapView.myLocationEnabled = NO;
+  mapView.padding = UIEdgeInsetsZero;
+  [mapView setMinZoom:kGMSMinZoomLevel maxZoom:kGMSMaxZoomLevel];
+  [views addObject:mapView];
+}
+
 @interface GoogleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
     LuggPolygonViewDelegate, LuggCircleViewDelegate,
@@ -95,25 +147,36 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (_mapView)
     return;
 
-  GMSMapID *gmsMapId;
-  if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
-    gmsMapId = [GMSMapID demoMapID];
+  _tilesRendered = NO;
+
+  GMSMapView *pooledMapView =
+      _staticMode ? DequeueStaticMapView(_mapId) : nil;
+  if (pooledMapView) {
+    _mapView = pooledMapView;
+    _mapView.frame = wrapperView.bounds;
+    [_mapView moveCamera:[GMSCameraUpdate setTarget:coordinate
+                                               zoom:(float)zoom]];
   } else {
-    gmsMapId = [GMSMapID mapIDWithIdentifier:_mapId];
+    GMSMapID *gmsMapId;
+    if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
+      gmsMapId = [GMSMapID demoMapID];
+    } else {
+      gmsMapId = [GMSMapID mapIDWithIdentifier:_mapId];
+    }
+
+    GMSCameraPosition *camera =
+        [GMSCameraPosition cameraWithLatitude:coordinate.latitude
+                                    longitude:coordinate.longitude
+                                         zoom:zoom];
+
+    GMSMapViewOptions *options = [[GMSMapViewOptions alloc] init];
+    options.frame = wrapperView.bounds;
+    options.camera = camera;
+    options.mapID = gmsMapId;
+
+    _mapView = [[GMSMapView alloc] initWithOptions:options];
   }
 
-  GMSCameraPosition *camera =
-      [GMSCameraPosition cameraWithLatitude:coordinate.latitude
-                                  longitude:coordinate.longitude
-                                       zoom:zoom];
-
-  GMSMapViewOptions *options = [[GMSMapViewOptions alloc] init];
-  options.frame = wrapperView.bounds;
-  options.camera = camera;
-  options.mapID = gmsMapId;
-
-  _tilesRendered = NO;
-  _mapView = [[GMSMapView alloc] initWithOptions:options];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   _mapView.delegate = self;
@@ -162,9 +225,16 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)destroyMapView {
+  if (!_mapView)
+    return;
+
   _mapView.delegate = nil;
-  [_mapView clear];
   [_mapView removeFromSuperview];
+  if (_staticMode) {
+    EnqueueStaticMapView(_mapId, _mapView);
+  } else {
+    [_mapView clear];
+  }
   _mapView = nil;
 }
 
