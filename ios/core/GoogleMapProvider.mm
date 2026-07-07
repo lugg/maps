@@ -12,62 +12,42 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
 #import "../LuggTileOverlayView.h"
-#import "../extensions/UIView+Snapshot.h"
 #import "GMSPolylineAnimator.h"
 #import "PolylineAnimatorBase.h"
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
-// Static maps churn through GMSMapViews as list rows warm up, and both
-// creating one and tearing one down are expensive main-thread operations
-// (renderer setup/teardown). Detached map views are pooled and reused so a
-// warmup usually only costs a camera move plus tile load. Keyed by map ID,
-// which is fixed at GMSMapView creation.
-static const NSUInteger kStaticMapViewPoolCapacity = 3;
-
-static NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *
-StaticMapViewPool(void) {
-  static NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *pool;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    pool = [NSMutableDictionary dictionary];
-    [[NSNotificationCenter defaultCenter]
-        addObserverForName:UIApplicationDidReceiveMemoryWarningNotification
-                    object:nil
-                     queue:[NSOperationQueue mainQueue]
-                usingBlock:^(NSNotification *notification) {
-                  [pool removeAllObjects];
-                }];
-  });
-  return pool;
-}
-
-static GMSMapView *_Nullable DequeueStaticMapView(NSString *mapId) {
-  NSMutableArray<GMSMapView *> *views = StaticMapViewPool()[mapId];
-  GMSMapView *mapView = views.lastObject;
-  [views removeLastObject];
-  return mapView;
-}
-
-static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
-  NSMutableDictionary<NSString *, NSMutableArray<GMSMapView *> *> *pool =
-      StaticMapViewPool();
-  NSMutableArray<GMSMapView *> *views = pool[mapId];
-  if (!views) {
-    views = [NSMutableArray array];
-    pool[mapId] = views;
+GMSMapID *LuggGMSMapIDFromString(NSString *_Nullable mapId) {
+  if (mapId.length == 0 || [mapId isEqualToString:kDemoMapId]) {
+    return [GMSMapID demoMapID];
   }
-  if (views.count >= kStaticMapViewPoolCapacity)
-    return;
+  return [GMSMapID mapIDWithIdentifier:mapId];
+}
 
-  // Reset state that a fresh provider won't reapply (its prop setters
-  // no-op on default values)
-  [mapView clear];
-  mapView.selectedMarker = nil;
-  mapView.myLocationEnabled = NO;
-  mapView.padding = UIEdgeInsetsZero;
-  [mapView setMinZoom:kGMSMinZoomLevel maxZoom:kGMSMaxZoomLevel];
-  [views addObject:mapView];
+GMSMapViewType LuggGMSMapTypeFromMapType(
+    facebook::react::LuggMapViewMapType mapType) {
+  switch (mapType) {
+  case LuggMapViewMapType::Satellite:
+    return kGMSTypeSatellite;
+  case LuggMapViewMapType::Terrain:
+    return kGMSTypeTerrain;
+  case LuggMapViewMapType::Hybrid:
+    return kGMSTypeHybrid;
+  default:
+    return kGMSTypeNormal;
+  }
+}
+
+UIUserInterfaceStyle LuggInterfaceStyleFromTheme(
+    facebook::react::LuggMapViewTheme theme) {
+  switch (theme) {
+  case LuggMapViewTheme::Dark:
+    return UIUserInterfaceStyleDark;
+  case LuggMapViewTheme::Light:
+    return UIUserInterfaceStyleLight;
+  default:
+    return UIUserInterfaceStyleUnspecified;
+  }
 }
 
 @interface GoogleMapProvider () <
@@ -81,10 +61,6 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
-  UIImageView *_staticSnapshotView;
-  BOOL _needsStaticSnapshot;
-  BOOL _staticSwapScheduled;
-  BOOL _tilesRendered;
   LuggMapViewTheme _theme;
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
@@ -147,46 +123,22 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   if (_mapView)
     return;
 
-  _tilesRendered = NO;
+  GMSCameraPosition *camera =
+      [GMSCameraPosition cameraWithLatitude:coordinate.latitude
+                                  longitude:coordinate.longitude
+                                       zoom:zoom];
 
-  GMSMapView *pooledMapView =
-      _staticMode ? DequeueStaticMapView(_mapId) : nil;
-  if (pooledMapView) {
-    _mapView = pooledMapView;
-    _mapView.frame = wrapperView.bounds;
-    [_mapView moveCamera:[GMSCameraUpdate setTarget:coordinate
-                                               zoom:(float)zoom]];
-  } else {
-    GMSMapID *gmsMapId;
-    if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
-      gmsMapId = [GMSMapID demoMapID];
-    } else {
-      gmsMapId = [GMSMapID mapIDWithIdentifier:_mapId];
-    }
+  GMSMapViewOptions *options = [[GMSMapViewOptions alloc] init];
+  options.frame = wrapperView.bounds;
+  options.camera = camera;
+  options.mapID = LuggGMSMapIDFromString(_mapId);
 
-    GMSCameraPosition *camera =
-        [GMSCameraPosition cameraWithLatitude:coordinate.latitude
-                                    longitude:coordinate.longitude
-                                         zoom:zoom];
-
-    GMSMapViewOptions *options = [[GMSMapViewOptions alloc] init];
-    options.frame = wrapperView.bounds;
-    options.camera = camera;
-    options.mapID = gmsMapId;
-
-    _mapView = [[GMSMapView alloc] initWithOptions:options];
-  }
-
+  _mapView = [[GMSMapView alloc] initWithOptions:options];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   _mapView.delegate = self;
   _mapView.paddingAdjustmentBehavior =
       kGMSMapViewPaddingAdjustmentBehaviorNever;
-
-  if (_staticMode) {
-    _mapView.userInteractionEnabled = NO;
-    _mapView.preferredFrameRate = kGMSFrameRateConservative;
-  }
 
   _wrapperView = wrapperView;
   [wrapperView addSubview:_mapView];
@@ -205,9 +157,6 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (void)destroy {
-  [_staticSnapshotView removeFromSuperview];
-  _staticSnapshotView = nil;
-  _needsStaticSnapshot = NO;
   [self stopEdgeInsetsAnimation];
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
@@ -230,64 +179,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
   _mapView.delegate = nil;
   [_mapView removeFromSuperview];
-  if (_staticMode) {
-    EnqueueStaticMapView(_mapId, _mapView);
-  } else {
-    [_mapView clear];
-  }
+  [_mapView clear];
   _mapView = nil;
-}
-
-// Static mode: once the map is fully rendered, swap the live map with a
-// snapshot image and release the map view. The snapshot render and map
-// teardown are expensive, so they run outside scroll tracking; the live
-// map keeps displaying until then.
-- (void)swapMapWithStaticImage {
-  if (_staticSnapshotView || _staticSwapScheduled || !_mapView)
-    return;
-
-  // Re-arm instead of capturing a half-loaded map; the next
-  // didFinishTileRendering re-triggers the swap
-  if (!_mapView.window || !_tilesRendered) {
-    _needsStaticSnapshot = YES;
-    return;
-  }
-  _needsStaticSnapshot = NO;
-
-  _staticSwapScheduled = YES;
-  [[NSRunLoop mainRunLoop] performInModes:@[ NSDefaultRunLoopMode ]
-                                    block:^{
-                                      self->_staticSwapScheduled = NO;
-                                      [self performStaticSwap];
-                                    }];
-}
-
-- (void)performStaticSwap {
-  if (_staticSnapshotView || !_mapView)
-    return;
-
-  // Tiles can invalidate between scheduling and this runloop pass
-  if (!_mapView.window || !_tilesRendered) {
-    _needsStaticSnapshot = YES;
-    return;
-  }
-
-  UIImageView *imageView = [_mapView lugg_snapshotImageView];
-  if (!imageView) {
-    // Zero-size bounds; re-arm so resumeAnimations retries instead of
-    // silently keeping the live map forever
-    _needsStaticSnapshot = YES;
-    return;
-  }
-
-  _staticSnapshotView = imageView;
-  [_wrapperView insertSubview:imageView aboveSubview:_mapView];
-
-  [self pauseAnimations];
-  [self destroyMapView];
-
-  [_delegate mapProviderDidCaptureStaticImage:imageView.image];
-  [_delegate mapProviderDidFinishStaticSnapshot];
 }
 
 #pragma mark - Props
@@ -333,23 +226,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
-  if (!_mapView)
-    return;
-
-  switch (mapType) {
-  case LuggMapViewMapType::Satellite:
-    _mapView.mapType = kGMSTypeSatellite;
-    break;
-  case LuggMapViewMapType::Terrain:
-    _mapView.mapType = kGMSTypeTerrain;
-    break;
-  case LuggMapViewMapType::Hybrid:
-    _mapView.mapType = kGMSTypeHybrid;
-    break;
-  default:
-    _mapView.mapType = kGMSTypeNormal;
-    break;
-  }
+  _mapView.mapType = LuggGMSMapTypeFromMapType(mapType);
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
@@ -358,20 +235,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (void)applyTheme {
-  if (!_mapView)
-    return;
-
-  switch (_theme) {
-  case LuggMapViewTheme::Dark:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-    break;
-  case LuggMapViewTheme::Light:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    break;
-  default:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
-    break;
-  }
+  _mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(_theme);
 }
 
 - (void)setMinZoom:(double)minZoom {
@@ -448,25 +312,6 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 #pragma mark - GMSMapViewDelegate
-
-- (void)mapViewDidStartTileRendering:(GMSMapView *)mapView {
-  _tilesRendered = NO;
-}
-
-- (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
-  _tilesRendered = YES;
-  if (_staticMode && _needsStaticSnapshot) {
-    [self swapMapWithStaticImage];
-  }
-}
-
-- (void)mapViewSnapshotReady:(GMSMapView *)mapView {
-  // Stable per the SDK: tiles loaded, labels and overlays rendered
-  _tilesRendered = YES;
-  if (_staticMode) {
-    [self swapMapWithStaticImage];
-  }
-}
 
 - (void)mapView:(GMSMapView *)mapView willMove:(BOOL)gesture {
   _isDragging = gesture;
@@ -905,7 +750,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
     animator.coordinates = polylineView.coordinates;
     animator.strokeColors = polylineView.strokeColors;
     animator.animatedOptions = polylineView.animatedOptions;
-    animator.animated = polylineView.animated && !_staticMode;
+    animator.animated = polylineView.animated;
     [animator update];
   }
 }
@@ -935,8 +780,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   animator.coordinates = polylineView.coordinates;
   animator.strokeColors = polylineView.strokeColors;
   animator.animatedOptions = polylineView.animatedOptions;
-  // Static maps snapshot an arbitrary frame; render the full polyline
-  animator.animated = polylineView.animated && !_staticMode;
+  animator.animated = polylineView.animated;
   [animator update];
 
   [_polylineAnimators setObject:animator forKey:polylineView];
@@ -1276,10 +1120,6 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (void)resumeAnimations {
-  if (_needsStaticSnapshot) {
-    [self swapMapWithStaticImage];
-    return;
-  }
   for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
     [animator resume];
   }

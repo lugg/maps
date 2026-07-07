@@ -3,11 +3,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Serializes static map warmup so only a few live maps exist at a time.
- * Google static maps briefly need a live map view to render their snapshot
- * (the SDK has no async snapshotter); without throttling, a list mounting
- * many rows creates them all at once and stalls the main thread. Apple
- * static maps render through MKMapSnapshotter and don't use this queue.
+ * Serializes static map base warmup so only a few live maps exist at a
+ * time. Google static maps briefly need a live map view to render their
+ * base image (the SDK has no async snapshotter); without throttling, a
+ * list mounting many rows creates them all at once and stalls the main
+ * thread. Apple static maps render through MKMapSnapshotter and don't use
+ * this queue.
  */
 @interface LuggStaticMapWarmupQueue : NSObject
 

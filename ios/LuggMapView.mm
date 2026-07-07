@@ -9,7 +9,7 @@
 #import "core/AppleMapProvider.h"
 #import "core/AppleStaticMapProvider.h"
 #import "core/GoogleMapProvider.h"
-#import "core/LuggStaticMapWarmupQueue.h"
+#import "core/GoogleStaticMapProvider.h"
 #import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
@@ -57,10 +57,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _compassEnabled;
   BOOL _staticMode;
   NSString *_staticKey;
-  UIImageView *_staticCachedImageView;
   BOOL _staticSnapshotDone;
-  BOOL _waitingForWarmupSlot;
-  BOOL _holdingWarmupSlot;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -201,15 +198,10 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     }
     [_provider resumeAnimations];
   } else {
-    if (_waitingForWarmupSlot) {
-      [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
-      _waitingForWarmupSlot = NO;
-    }
-    // A static map mid-warmup holds an expensive live map view. Destroy it
-    // off-window and re-warm on return instead of letting paused maps pile
-    // up across screen switches and all resume at once
+    // A static map mid-warmup may hold an expensive live map view. Destroy
+    // it off-window and re-render on return instead of letting paused maps
+    // pile up across screen switches and all resume at once
     if (_staticMode && _provider && !_staticSnapshotDone) {
-      [self releaseWarmupSlot];
       [_provider destroy];
       _provider = nil;
       _initialized = NO;
@@ -269,71 +261,14 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
                                     viewProps.initialZoom];
 }
 
-- (BOOL)showCachedStaticSnapshot {
-  if (_staticCachedImageView)
-    return YES;
-
-  NSString *key = [self staticSnapshotCacheKey];
-  if (!key)
-    return NO;
-
-  UIImage *image = [StaticSnapshotCache() objectForKey:key];
-  if (!image)
-    return NO;
-
-  UIImageView *imageView =
-      [[UIImageView alloc] initWithFrame:_mapWrapperView.bounds];
-  imageView.autoresizingMask =
-      UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-  imageView.image = image;
-  [_mapWrapperView addSubview:imageView];
-  _staticCachedImageView = imageView;
-
-  ReadyEvent::emit<LuggMapViewEventEmitter>(_eventEmitter);
-  return YES;
-}
-
 - (void)startStaticContent {
   [self applyStaticPlaceholderBackground];
 
-  // Apple static maps render through MKMapSnapshotter - fully async like
-  // Android's lite mode - so they start immediately (even mid-scroll) with
-  // no warmup pacing. The provider reuses a cached base image itself.
-  if (_providerType == LuggMapViewProvider::Apple) {
-    [self initializeProvider];
-    return;
-  }
-
-  // Google has no snapshotter API; a live map warms up briefly, paced by
-  // the warmup queue so it never competes with scroll gestures
-  if (![self showCachedStaticSnapshot]) {
-    [self requestStaticWarmup];
-  }
-}
-
-- (void)requestStaticWarmup {
-  if (_waitingForWarmupSlot || _holdingWarmupSlot)
-    return;
-
-  _waitingForWarmupSlot = YES;
-  __weak LuggMapView *weakSelf = self;
-  [[LuggStaticMapWarmupQueue sharedQueue]
-      requestSlotForOwner:self
-               completion:^{
-                 LuggMapView *strongSelf = weakSelf;
-                 if (!strongSelf)
-                   return;
-                 strongSelf->_waitingForWarmupSlot = NO;
-                 strongSelf->_holdingWarmupSlot = YES;
-                 [strongSelf initializeProvider];
-               }];
-}
-
-- (void)releaseWarmupSlot {
-  if (_holdingWarmupSlot) {
-    _holdingWarmupSlot = NO;
-    [[LuggStaticMapWarmupQueue sharedQueue] releaseSlotForOwner:self];
-  }
+  // Both static providers render fully async: markers and shapes show up
+  // as overlay views immediately, and the base map arrives when the
+  // snapshotter (Apple) or a paced warmup (Google) finishes - so static
+  // maps keep loading while the user scrolls
+  [self initializeProvider];
 }
 
 // staticKey identifies the map's content; when it changes (e.g. a recycled
@@ -341,12 +276,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 // stale and the static lifecycle restarts. Without this, an in-flight
 // warmup caches the old item's map under the new key.
 - (void)resetStaticContent {
-  [_staticCachedImageView removeFromSuperview];
-  _staticCachedImageView = nil;
   _staticSnapshotDone = NO;
 
   if (_provider) {
-    [self releaseWarmupSlot];
     [_provider destroy];
     _provider = nil;
     _initialized = NO;
@@ -360,12 +292,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 - (void)prepareForRecycle {
   [super prepareForRecycle];
 
-  [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
-  _waitingForWarmupSlot = NO;
-  [self releaseWarmupSlot];
-
-  [_staticCachedImageView removeFromSuperview];
-  _staticCachedImageView = nil;
   _staticSnapshotDone = NO;
 
   [_provider destroy];
@@ -384,20 +310,24 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   if (_providerType == LuggMapViewProvider::Apple) {
-    if (_staticMode) {
-      AppleStaticMapProvider *apple = [[AppleStaticMapProvider alloc] init];
-      NSString *cacheKey = [self staticSnapshotCacheKey];
-      if (cacheKey) {
-        apple.cachedBaseImage = [StaticSnapshotCache() objectForKey:cacheKey];
-      }
-      _provider = apple;
-    } else {
-      _provider = [[AppleMapProvider alloc] init];
-    }
+    _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
+                            : [[AppleMapProvider alloc] init];
+  } else if (_staticMode) {
+    GoogleStaticMapProvider *google = [[GoogleStaticMapProvider alloc] init];
+    google.mapId = _mapId;
+    _provider = google;
   } else {
     GoogleMapProvider *google = [[GoogleMapProvider alloc] init];
     google.mapId = _mapId;
     _provider = google;
+  }
+
+  if (_staticMode) {
+    NSString *cacheKey = [self staticSnapshotCacheKey];
+    if (cacheKey) {
+      ((StaticMapProviderBase *)_provider).cachedBaseImage =
+          [StaticSnapshotCache() objectForKey:cacheKey];
+    }
   }
 
   _provider.delegate = self;
@@ -443,7 +373,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 
 - (void)mapProviderDidFinishStaticSnapshot {
   _staticSnapshotDone = YES;
-  [self releaseWarmupSlot];
 }
 
 - (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
