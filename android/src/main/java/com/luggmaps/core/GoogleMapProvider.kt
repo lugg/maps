@@ -48,7 +48,9 @@ import com.luggmaps.LuggTileOverlayViewDelegate
 import com.luggmaps.extensions.findViewByTag
 import java.net.URL
 import kotlin.math.atan
+import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sinh
 
 class GoogleMapProvider(private val context: Context) :
@@ -214,7 +216,7 @@ class GoogleMapProvider(private val context: Context) :
       }
     }
 
-    val position = LatLng(initialLatitude, initialLongitude)
+    val position = if (staticMode) staticCameraTarget() else LatLng(initialLatitude, initialLongitude)
     map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))
 
     map.setOnCameraMoveStartedListener(this)
@@ -530,6 +532,11 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets) {
+    if (staticMode) {
+      setStaticEdgeInsets(edgeInsets)
+      return
+    }
+
     val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
     applyEdgeInsets()
@@ -543,6 +550,11 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int) {
+    if (staticMode) {
+      setStaticEdgeInsets(edgeInsets)
+      return
+    }
+
     val map = googleMap
     val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
@@ -1272,6 +1284,34 @@ class GoogleMapProvider(private val context: Context) :
     val combined = combinedEdgeInsets()
     googleMap?.setPadding(combined.left, combined.top, combined.right, combined.bottom)
     applyWatermarkTranslation(combined, duration)
+  }
+
+  // Lite mode ignores GoogleMap.setPadding, so insets are applied by
+  // shifting the camera target so the coordinate centers in the inset
+  // viewport like a live map would
+  private fun setStaticEdgeInsets(edgeInsets: EdgeInsets) {
+    val oldInsets = this.edgeInsets
+    this.edgeInsets = edgeInsets
+    applyEdgeInsets()
+
+    val map = googleMap
+    if (map != null && oldInsets != edgeInsets) {
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+      positionLiveMarkers()
+    }
+  }
+
+  private fun staticCameraTarget(): LatLng {
+    val offsetX = (edgeInsets.left - edgeInsets.right) / 2.0
+    val offsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0
+    if (offsetX == 0.0 && offsetY == 0.0) return LatLng(initialLatitude, initialLongitude)
+
+    // Web mercator world size in px at the initial zoom
+    val worldSize = 256f.dpToPx().toDouble() * 2.0.pow(initialZoom.toDouble())
+    val sinLat = sin(Math.toRadians(initialLatitude))
+    val x = (initialLongitude + 180.0) / 360.0 - offsetX / worldSize
+    val y = 0.5 - ln((1.0 + sinLat) / (1.0 - sinLat)) / (4.0 * Math.PI) - offsetY / worldSize
+    return LatLng(Math.toDegrees(atan(sinh(Math.PI * (1.0 - 2.0 * y)))), x * 360.0 - 180.0)
   }
 
   private fun applyWatermarkTranslation(insets: EdgeInsets, duration: Int = 0) {

@@ -252,13 +252,14 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   const auto &viewProps =
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
-  return [NSString stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f",
-                                    _staticKey, (int)_providerType, _mapId,
-                                    (int)_mapType, (long)style, size.width,
-                                    size.height,
-                                    viewProps.initialCoordinate.latitude,
-                                    viewProps.initialCoordinate.longitude,
-                                    viewProps.initialZoom];
+  return [NSString
+      stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
+                       _staticKey, (int)_providerType, _mapId, (int)_mapType,
+                       (long)style, size.width, size.height,
+                       viewProps.initialCoordinate.latitude,
+                       viewProps.initialCoordinate.longitude,
+                       viewProps.initialZoom,
+                       NSStringFromUIEdgeInsets(_edgeInsets)];
 }
 
 - (void)startStaticContent {

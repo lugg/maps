@@ -92,6 +92,9 @@ Notes:
 - `staticMode` is creation-time only and cannot be toggled after the map is created.
 - The map renders once with its initial camera and children. Camera commands
   and prop updates after the snapshot are ignored on iOS.
+- `edgeInsets` shift the visible center like on a live map, so the
+  coordinate centers in the inset viewport. Changing insets after the
+  render re-renders the base map (iOS) or re-centers the camera (Android).
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.
 - `animated` polylines render as complete static polylines, so the snapshot
