@@ -1,8 +1,9 @@
 #import "LuggStaticMapWarmupQueue.h"
 
-// No concurrency cap - warmups are paced by the runloop instead (one grant
-// per pass, outside scroll tracking)
-static const NSUInteger kMaxConcurrentWarmups = NSUIntegerMax;
+// Bounds how many live warmup maps exist at once - peak memory scales with
+// this. Grants are additionally paced by the runloop (one per pass, outside
+// scroll tracking)
+static const NSUInteger kMaxConcurrentWarmups = 3;
 // Slot is force-released if a map never finishes rendering (e.g. offline)
 // so it can't starve the queue. The live map is left in place.
 static const int64_t kWarmupTimeoutSeconds = 10;

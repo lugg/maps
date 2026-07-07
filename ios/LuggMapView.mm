@@ -57,6 +57,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _staticMode;
   NSString *_staticKey;
   UIImageView *_staticCachedImageView;
+  BOOL _staticSnapshotDone;
   BOOL _waitingForWarmupSlot;
   BOOL _holdingWarmupSlot;
   BOOL _userLocationEnabled;
@@ -206,6 +207,15 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
       [[LuggStaticMapWarmupQueue sharedQueue] cancelOwner:self];
       _waitingForWarmupSlot = NO;
     }
+    // A static map mid-warmup holds an expensive live map view. Destroy it
+    // off-window and re-warm on return instead of letting paused maps pile
+    // up across screen switches and all resume at once
+    if (_staticMode && _provider && !_staticSnapshotDone) {
+      [self releaseWarmupSlot];
+      [_provider destroy];
+      _provider = nil;
+      _initialized = NO;
+    }
     [_provider pauseAnimations];
   }
 }
@@ -317,6 +327,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 - (void)resetStaticContent {
   [_staticCachedImageView removeFromSuperview];
   _staticCachedImageView = nil;
+  _staticSnapshotDone = NO;
 
   if (_provider) {
     [self releaseWarmupSlot];
@@ -342,6 +353,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 
   [_staticCachedImageView removeFromSuperview];
   _staticCachedImageView = nil;
+  _staticSnapshotDone = NO;
 
   [_provider destroy];
   _provider = nil;
@@ -408,6 +420,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 }
 
 - (void)mapProviderDidFinishStaticSnapshot {
+  _staticSnapshotDone = YES;
   [self releaseWarmupSlot];
 }
 
