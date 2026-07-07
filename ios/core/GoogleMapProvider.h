@@ -7,11 +7,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// shared by the live and static Google providers.
 GMSMapID *LuggGMSMapIDFromString(NSString *_Nullable mapId);
 
-GMSMapViewType LuggGMSMapTypeFromMapType(
-    facebook::react::LuggMapViewMapType mapType);
+GMSMapViewType
+LuggGMSMapTypeFromMapType(facebook::react::LuggMapViewMapType mapType);
 
-UIUserInterfaceStyle LuggInterfaceStyleFromTheme(
-    facebook::react::LuggMapViewTheme theme);
+UIUserInterfaceStyle
+LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme);
 
 @interface GoogleMapProvider : NSObject <MapProvider, GMSMapViewDelegate>
 

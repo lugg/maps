@@ -59,8 +59,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   // GMSMapView shows the world 256 * 2^zoom points wide, centered on the
   // camera target - the same web mercator MKMapPoint uses, so overlays
   // project onto the warmed-up tiles exactly
-  double zoom = MAX(MIN(self.zoom, (double)kGMSMaxZoomLevel),
-                    (double)kGMSMinZoomLevel);
+  double zoom =
+      MAX(MIN(self.zoom, (double)kGMSMaxZoomLevel), (double)kGMSMinZoomLevel);
   double mapPointsPerPoint = MKMapSizeWorld.width / (256.0 * pow(2.0, zoom));
   double width = size.width * mapPointsPerPoint;
   double height = size.height * mapPointsPerPoint;
@@ -70,8 +70,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 }
 
 - (UIView *)newDefaultMarkerOverlayView {
-  return [[UIImageView alloc]
-      initWithImage:[GMSMarker markerImageWithColor:nil]];
+  return
+      [[UIImageView alloc] initWithImage:[GMSMarker markerImageWithColor:nil]];
 }
 
 - (void)renderBaseMap {
@@ -126,8 +126,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   mapView.delegate = self;
   mapView.userInteractionEnabled = NO;
   mapView.preferredFrameRate = kGMSFrameRateConservative;
-  mapView.paddingAdjustmentBehavior =
-      kGMSMapViewPaddingAdjustmentBehaviorNever;
+  mapView.paddingAdjustmentBehavior = kGMSMapViewPaddingAdjustmentBehaviorNever;
   mapView.mapType = LuggGMSMapTypeFromMapType(self.mapType);
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 

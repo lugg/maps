@@ -8,8 +8,9 @@ extern "C" {
 
 /// Coordinate span for a Google-style zoom level, shared by the live map
 /// (MKMapView region) and the static snapshotter (no map view)
-MKCoordinateSpan LuggCoordinateSpanForZoomLevel(
-    double zoomLevel, CLLocationCoordinate2D centerCoordinate);
+MKCoordinateSpan
+LuggCoordinateSpanForZoomLevel(double zoomLevel,
+                               CLLocationCoordinate2D centerCoordinate);
 
 #ifdef __cplusplus
 }

@@ -68,7 +68,7 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
 - (UIView *)newDefaultMarkerOverlayView {
   MKAnnotationView *pin =
       [[LuggMarkerAnnotationView alloc] initWithAnnotation:nil
-                                            reuseIdentifier:nil];
+                                           reuseIdentifier:nil];
   pin.bounds =
       CGRectMake(0, 0, kDefaultMarkerSize.width, kDefaultMarkerSize.height);
   return pin;

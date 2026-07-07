@@ -24,8 +24,8 @@ GMSMapID *LuggGMSMapIDFromString(NSString *_Nullable mapId) {
   return [GMSMapID mapIDWithIdentifier:mapId];
 }
 
-GMSMapViewType LuggGMSMapTypeFromMapType(
-    facebook::react::LuggMapViewMapType mapType) {
+GMSMapViewType
+LuggGMSMapTypeFromMapType(facebook::react::LuggMapViewMapType mapType) {
   switch (mapType) {
   case LuggMapViewMapType::Satellite:
     return kGMSTypeSatellite;
@@ -38,8 +38,8 @@ GMSMapViewType LuggGMSMapTypeFromMapType(
   }
 }
 
-UIUserInterfaceStyle LuggInterfaceStyleFromTheme(
-    facebook::react::LuggMapViewTheme theme) {
+UIUserInterfaceStyle
+LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   switch (theme) {
   case LuggMapViewTheme::Dark:
     return UIUserInterfaceStyleDark;
