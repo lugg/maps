@@ -56,11 +56,15 @@ export default function App() {
           component={Home}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="Detail" component={DetailScreen} />
+        <Stack.Screen
+          name="Detail"
+          component={DetailScreen}
+          options={{ headerTransparent: true, title: '' }}
+        />
         <Stack.Screen
           name="StaticMaps"
           component={StaticMapsScreen}
-          options={{ title: 'Static Maps' }}
+          options={{ title: 'Static Maps', headerTransparent: true }}
         />
       </Stack.Navigator>
     </NavigationContainer>
