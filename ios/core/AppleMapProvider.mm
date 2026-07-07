@@ -145,6 +145,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 @synthesize delegate = _delegate;
+@synthesize staticMode = _staticMode;
 
 - (instancetype)init {
   if (self = [super init]) {
@@ -182,6 +183,10 @@ static double tileToLng(NSInteger x, NSInteger z) {
   _mapView.delegate = self;
   _mapView.insetsLayoutMarginsFromSafeArea = NO;
 
+  if (_staticMode) {
+    _mapView.userInteractionEnabled = NO;
+  }
+
   [self applyZoomRange];
 
   _tapGesture =
@@ -212,6 +217,11 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 - (void)destroy {
+  [self destroyMapView];
+  _isMapReady = NO;
+}
+
+- (void)destroyMapView {
   [self dismissNonBubbledCallout];
   [self stopEdgeInsetsAnimation];
   if (_tapGesture) {
@@ -222,9 +232,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
     [_mapView removeGestureRecognizer:_longPressGesture];
     _longPressGesture = nil;
   }
+  _mapView.delegate = nil;
   [_mapView removeFromSuperview];
   _mapView = nil;
-  _isMapReady = NO;
 }
 
 #pragma mark - Props
@@ -342,33 +352,36 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   return map[string];
 }
 
-- (void)applyPoiFilter {
-  if (!_poiEnabled) {
-    _mapView.pointOfInterestFilter =
-        MKPointOfInterestFilter.filterExcludingAllCategories;
-    return;
+MKPointOfInterestFilter *_Nullable LuggPointOfInterestFilter(
+    BOOL poiEnabled, LuggMapViewPoiFilterMode filterMode,
+    NSArray<NSString *> *filterCategories) {
+  if (!poiEnabled) {
+    return MKPointOfInterestFilter.filterExcludingAllCategories;
   }
-  if (_poiFilterCategories.count > 0) {
+  if (filterCategories.count > 0) {
     NSMutableArray<MKPointOfInterestCategory> *categories =
         [NSMutableArray array];
-    for (NSString *name in _poiFilterCategories) {
+    for (NSString *name in filterCategories) {
       MKPointOfInterestCategory category = poiCategoryFromString(name);
       if (category) {
         [categories addObject:category];
       }
     }
     if (categories.count > 0) {
-      if (_poiFilterMode == LuggMapViewPoiFilterMode::Excluding) {
-        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
+      if (filterMode == LuggMapViewPoiFilterMode::Excluding) {
+        return [[MKPointOfInterestFilter alloc]
             initExcludingCategories:categories];
-      } else {
-        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
-            initIncludingCategories:categories];
       }
-      return;
+      return
+          [[MKPointOfInterestFilter alloc] initIncludingCategories:categories];
     }
   }
-  _mapView.pointOfInterestFilter = nil;
+  return nil;
+}
+
+- (void)applyPoiFilter {
+  _mapView.pointOfInterestFilter = LuggPointOfInterestFilter(
+      _poiEnabled, _poiFilterMode, _poiFilterCategories);
 }
 
 - (void)setInsetAdjustment:(LuggMapViewInsetAdjustment)insetAdjustment {
@@ -399,24 +412,23 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   [self applyPoiFilter];
 }
 
-- (void)setMapType:(LuggMapViewMapType)mapType {
+MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   switch (mapType) {
   case LuggMapViewMapType::Satellite:
-    _mapView.mapType = MKMapTypeSatellite;
-    break;
+    return MKMapTypeSatellite;
   case LuggMapViewMapType::Terrain:
-    _mapView.mapType = MKMapTypeStandard;
-    break;
+    return MKMapTypeStandard;
   case LuggMapViewMapType::Hybrid:
-    _mapView.mapType = MKMapTypeHybrid;
-    break;
+    return MKMapTypeHybrid;
   case LuggMapViewMapType::MutedStandard:
-    _mapView.mapType = MKMapTypeMutedStandard;
-    break;
+    return MKMapTypeMutedStandard;
   default:
-    _mapView.mapType = MKMapTypeStandard;
-    break;
+    return MKMapTypeStandard;
   }
+}
+
+- (void)setMapType:(LuggMapViewMapType)mapType {
+  _mapView.mapType = LuggMKMapTypeFromMapType(mapType);
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
@@ -836,7 +848,8 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
         renderer.strokeColors = colors;
       }
       renderer.animatedOptions = polylineView.animatedOptions;
-      renderer.animated = polylineView.animated;
+      // Static maps snapshot an arbitrary frame; render the full polyline
+      renderer.animated = polylineView.animated && !_staticMode;
       polylineView.renderer = renderer;
       return renderer;
     }
@@ -1365,7 +1378,7 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
     renderer.strokeColors =
         polylineView.strokeColors.count > 1 ? polylineView.strokeColors : nil;
     renderer.animatedOptions = polylineView.animatedOptions;
-    renderer.animated = polylineView.animated;
+    renderer.animated = polylineView.animated && !_staticMode;
     return;
   }
 

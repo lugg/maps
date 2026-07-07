@@ -33,6 +33,8 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
+| `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
+| `staticKey` | `string` | - | Stable identity for the static snapshot cache (iOS). See [Static Maps](#static-maps) |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
 | `userLocationEnabled` | `boolean` | `false` | Show current user location on the map |
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
@@ -45,6 +47,72 @@ import { MapView } from '@lugg/maps';
 | `onCameraMove` | `(event: MapCameraEvent) => void` | - | Called when camera moves |
 | `onCameraIdle` | `(event: MapCameraEvent) => void` | - | Called when camera stops moving |
 | `onReady` | `() => void` | - | Called when map is loaded and ready |
+
+## Static Maps
+
+Set `staticMode` to render a non-interactive map optimized for list views, where
+mounting many live maps is expensive:
+
+- **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
+  which renders a static bitmap instead of a live GL surface. Lite mode does
+  not support cloud-based styling, so `mapId` is ignored on static maps.
+- **iOS (Apple)** - the base map is rendered with `MKMapSnapshotter`, which
+  loads entirely off the main thread (no live map view is ever created), so
+  static maps keep loading while scrolling. Markers stay live views
+  positioned over the base map; polylines, polygons, circles, and ground
+  overlays are drawn onto it. Tile overlays are not supported.
+- **iOS (Google)** - markers and shapes render as live overlay views,
+  exactly like Apple static maps. Only the base map needs the SDK (which
+  has no async snapshotter): a live, tiles-only map warms up briefly under
+  the overlays and is replaced with a rendered image once tiles finish
+  loading, releasing the map's rendering resources. Warmup work scales
+  with how many rows mount at once - bound it with your list's
+  `windowSize` / `initialNumToRender` / `maxToRenderPerBatch`.
+- **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
+  events are disabled; the map itself stays live.
+
+```tsx
+<Pressable onPress={() => openPlace(place)}>
+  <View style={{ height: 140 }} pointerEvents="none">
+    <MapView
+      staticMode
+      staticKey={place.id}
+      style={StyleSheet.absoluteFill}
+      initialCoordinate={place.coordinate}
+      initialZoom={14}
+    >
+      <Marker coordinate={place.coordinate} />
+    </MapView>
+  </View>
+</Pressable>
+```
+
+Notes:
+
+- `staticMode` is creation-time only and cannot be toggled after the map is created.
+- The map renders once with its initial camera and children. Camera commands
+  and prop updates after the snapshot are ignored on iOS.
+- For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
+  map container (as above) instead of relying on `onPress`.
+- `animated` polylines render as complete static polylines, so the snapshot
+  never freezes a mid-animation frame.
+- On iOS, markers are live views over the base map, revealed together with
+  it - marker content that loads asynchronously (e.g. remote images)
+  appears when ready, and marker prop updates still apply.
+- While a static map loads, a theme-aware placeholder background is shown.
+  Set a `backgroundColor` style on the `MapView` to use your own.
+- Set `staticKey` (e.g. your list item's id) to cache base map images
+  across list recycling on iOS - scrolling back to a row reuses its image
+  instead of rendering the map again (markers and shapes stay live and
+  re-render from props). The camera and map settings are part of the
+  cache key automatically. Changing `staticKey` discards the current
+  image and re-renders. The cache is bounded by count and total memory.
+- Alternatively, keeping rows mounted (larger `windowSize` with
+  `removeClippedSubviews`) avoids re-rendering entirely at the cost of
+  holding every row's snapshot in memory.
+- In long lists, limit how many rows mount at once (e.g. `windowSize`,
+  `initialNumToRender`, `maxToRenderPerBatch` on `FlatList`) - every mounted
+  static map holds its snapshot image in memory.
 
 ## Types
 

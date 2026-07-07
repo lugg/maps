@@ -94,6 +94,8 @@ export class MapView
       rotateEnabled,
       pitchEnabled,
       compassEnabled,
+      staticMode,
+      staticKey,
       edgeInsets,
       userLocationEnabled,
       userLocationButtonEnabled,
@@ -126,6 +128,8 @@ export class MapView
         rotateEnabled={rotateEnabled}
         pitchEnabled={pitchEnabled}
         compassEnabled={compassEnabled}
+        staticMode={staticMode}
+        staticKey={staticKey}
         edgeInsets={edgeInsets}
         userLocationEnabled={userLocationEnabled}
         userLocationButtonEnabled={userLocationButtonEnabled}

@@ -2,6 +2,19 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/// Coordinate span for a Google-style zoom level, shared by the live map
+/// (MKMapView region) and the static snapshotter (no map view)
+MKCoordinateSpan LuggCoordinateSpanForZoomLevel(
+    double zoomLevel, CLLocationCoordinate2D centerCoordinate);
+
+#ifdef __cplusplus
+}
+#endif
+
 @interface MKMapView (Zoom)
 
 - (void)setCenterCoordinate:(CLLocationCoordinate2D)centerCoordinate

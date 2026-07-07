@@ -78,6 +78,9 @@ class GoogleMapProvider(private val context: Context) :
 
   var mapId: String = DEMO_MAP_ID
 
+  // Renders the map in lite mode (static bitmap). Creation-time only.
+  var staticMode: Boolean = false
+
   private var wrapperView: LuggMapWrapperView? = null
   private var currentNightMode: Int = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
   private var mapView: MapView? = null
@@ -96,6 +99,7 @@ class GoogleMapProvider(private val context: Context) :
   private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
+  private var liteProjectionReady = false
   private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
 
@@ -137,11 +141,15 @@ class GoogleMapProvider(private val context: Context) :
     initialZoom = zoom
 
     val wrapper = wrapperView as LuggMapWrapperView
+    wrapper.relayoutChildOnRequest = staticMode
     this.wrapperView = wrapper
 
     context.applicationContext.registerComponentCallbacks(this)
 
-    val options = GoogleMapOptions().mapId(mapId)
+    // Lite mode doesn't support map IDs (cloud-based styling); setting one
+    // makes the static map render blank
+    val options = GoogleMapOptions().liteMode(staticMode)
+    if (!staticMode) options.mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
@@ -194,6 +202,17 @@ class GoogleMapProvider(private val context: Context) :
   override fun onMapReady(map: GoogleMap) {
     googleMap = map
     _isMapReady = true
+
+    if (staticMode) {
+      // Lite mode shows an "open in Google Maps" toolbar on tap by default
+      map.uiSettings.isMapToolbarEnabled = false
+      // The projection is only valid once the lite map has rendered, and no
+      // camera events fire afterwards to correct live marker positions
+      map.setOnMapLoadedCallback {
+        liteProjectionReady = true
+        positionLiveMarkers()
+      }
+    }
 
     val position = LatLng(initialLatitude, initialLongitude)
     map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))
@@ -737,6 +756,10 @@ class GoogleMapProvider(private val context: Context) :
 
     val contentView = markerView.contentView
     contentView.pointerEvents = com.facebook.react.uimanager.PointerEvents.NONE
+    // Until the lite map's projection is valid, hide the marker instead of
+    // flashing it at a wrong position; onMapLoaded positions and shows it
+    contentView.visibility =
+      if (staticMode && !liteProjectionReady) View.INVISIBLE else View.VISIBLE
     (contentView.parent as? android.view.ViewGroup)?.removeView(contentView)
     wrapper.addView(contentView)
     liveMarkerViews.add(markerView)
@@ -768,10 +791,12 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun positionLiveMarker(markerView: LuggMarkerView) {
     val map = googleMap ?: return
+    if (staticMode && !liteProjectionReady) return
     val contentView = markerView.contentView
     val point = map.projection.toScreenLocation(LatLng(markerView.latitude, markerView.longitude))
     contentView.translationX = point.x - contentView.width * markerView.anchorX
     contentView.translationY = point.y - contentView.height * markerView.anchorY
+    contentView.visibility = View.VISIBLE
   }
 
   // endregion
@@ -813,7 +838,7 @@ class GoogleMapProvider(private val context: Context) :
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
       animatedOptions = polylineView.animatedOptions
-      animated = polylineView.animated
+      animated = polylineView.animated && !staticMode
       update()
     }
   }
@@ -842,7 +867,8 @@ class GoogleMapProvider(private val context: Context) :
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
       animatedOptions = polylineView.animatedOptions
-      animated = polylineView.animated
+      // Static maps render once; show the full polyline instead of animating
+      animated = polylineView.animated && !staticMode
       update()
     }
 

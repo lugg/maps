@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.view.View
 import android.view.View.VISIBLE
 import com.facebook.react.uimanager.ThemedReactContext
@@ -65,6 +66,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var compassEnabled: Boolean = true
+  private var staticMode: Boolean = false
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
   private var poiEnabled: Boolean = true
@@ -132,8 +134,13 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private fun initializeProvider() {
     if (provider != null || mapWrapperView == null) return
 
+    if (staticMode) {
+      applyStaticPlaceholder()
+    }
+
     val google = GoogleMapProvider(context)
     google.mapId = mapId
+    google.staticMode = staticMode
     google.delegate = this
     provider = google
 
@@ -152,6 +159,23 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
         is LuggTileOverlayView -> google.addTileOverlayView(child)
       }
     }
+  }
+
+  // Shown while the map loads, until the map covers it
+  private fun applyStaticPlaceholder() {
+    // A user-provided background acts as the placeholder
+    if (background != null) return
+
+    val isDark = when (theme) {
+      "dark" -> true
+
+      "light" -> false
+
+      else ->
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+          Configuration.UI_MODE_NIGHT_YES
+    }
+    mapWrapperView?.setBackgroundColor(if (isDark) COLOR_PLACEHOLDER_DARK else COLOR_PLACEHOLDER_LIGHT)
   }
 
   // endregion
@@ -251,6 +275,10 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setCompassEnabled(enabled)
   }
 
+  fun setStaticMode(enabled: Boolean) {
+    staticMode = enabled
+  }
+
   fun setUserLocationEnabled(enabled: Boolean) {
     if (userLocationEnabled == enabled) return
     userLocationEnabled = enabled
@@ -344,4 +372,9 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   }
 
   // endregion
+
+  companion object {
+    private const val COLOR_PLACEHOLDER_LIGHT = 0xFFF2F2F7.toInt()
+    private const val COLOR_PLACEHOLDER_DARK = 0xFF2C2C2E.toInt()
+  }
 }

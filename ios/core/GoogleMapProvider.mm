@@ -17,6 +17,39 @@ using facebook::react::LuggMapViewTheme;
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 
+GMSMapID *LuggGMSMapIDFromString(NSString *_Nullable mapId) {
+  if (mapId.length == 0 || [mapId isEqualToString:kDemoMapId]) {
+    return [GMSMapID demoMapID];
+  }
+  return [GMSMapID mapIDWithIdentifier:mapId];
+}
+
+GMSMapViewType LuggGMSMapTypeFromMapType(
+    facebook::react::LuggMapViewMapType mapType) {
+  switch (mapType) {
+  case LuggMapViewMapType::Satellite:
+    return kGMSTypeSatellite;
+  case LuggMapViewMapType::Terrain:
+    return kGMSTypeTerrain;
+  case LuggMapViewMapType::Hybrid:
+    return kGMSTypeHybrid;
+  default:
+    return kGMSTypeNormal;
+  }
+}
+
+UIUserInterfaceStyle LuggInterfaceStyleFromTheme(
+    facebook::react::LuggMapViewTheme theme) {
+  switch (theme) {
+  case LuggMapViewTheme::Dark:
+    return UIUserInterfaceStyleDark;
+  case LuggMapViewTheme::Light:
+    return UIUserInterfaceStyleLight;
+  default:
+    return UIUserInterfaceStyleUnspecified;
+  }
+}
+
 @interface GoogleMapProvider () <
     LuggMarkerViewDelegate, LuggCalloutViewDelegate, LuggPolylineViewDelegate,
     LuggPolygonViewDelegate, LuggCircleViewDelegate,
@@ -53,6 +86,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 @synthesize delegate = _delegate;
+@synthesize staticMode = _staticMode;
 
 - (instancetype)init {
   if (self = [super init]) {
@@ -89,13 +123,6 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   if (_mapView)
     return;
 
-  GMSMapID *gmsMapId;
-  if ([_mapId isEqualToString:kDemoMapId] || _mapId.length == 0) {
-    gmsMapId = [GMSMapID demoMapID];
-  } else {
-    gmsMapId = [GMSMapID mapIDWithIdentifier:_mapId];
-  }
-
   GMSCameraPosition *camera =
       [GMSCameraPosition cameraWithLatitude:coordinate.latitude
                                   longitude:coordinate.longitude
@@ -104,7 +131,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   GMSMapViewOptions *options = [[GMSMapViewOptions alloc] init];
   options.frame = wrapperView.bounds;
   options.camera = camera;
-  options.mapID = gmsMapId;
+  options.mapID = LuggGMSMapIDFromString(_mapId);
 
   _mapView = [[GMSMapView alloc] initWithOptions:options];
   _mapView.autoresizingMask =
@@ -142,10 +169,18 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
   [_circleToViewMap removeAllObjects];
   [_markerToViewMap removeAllObjects];
   [_groundOverlayToViewMap removeAllObjects];
-  [_mapView clear];
-  [_mapView removeFromSuperview];
-  _mapView = nil;
+  [self destroyMapView];
   _isMapReady = NO;
+}
+
+- (void)destroyMapView {
+  if (!_mapView)
+    return;
+
+  _mapView.delegate = nil;
+  [_mapView removeFromSuperview];
+  [_mapView clear];
+  _mapView = nil;
 }
 
 #pragma mark - Props
@@ -191,23 +226,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
-  if (!_mapView)
-    return;
-
-  switch (mapType) {
-  case LuggMapViewMapType::Satellite:
-    _mapView.mapType = kGMSTypeSatellite;
-    break;
-  case LuggMapViewMapType::Terrain:
-    _mapView.mapType = kGMSTypeTerrain;
-    break;
-  case LuggMapViewMapType::Hybrid:
-    _mapView.mapType = kGMSTypeHybrid;
-    break;
-  default:
-    _mapView.mapType = kGMSTypeNormal;
-    break;
-  }
+  _mapView.mapType = LuggGMSMapTypeFromMapType(mapType);
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
@@ -216,20 +235,7 @@ static NSString *const kDemoMapId = @"DEMO_MAP_ID";
 }
 
 - (void)applyTheme {
-  if (!_mapView)
-    return;
-
-  switch (_theme) {
-  case LuggMapViewTheme::Dark:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-    break;
-  case LuggMapViewTheme::Light:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-    break;
-  default:
-    _mapView.overrideUserInterfaceStyle = UIUserInterfaceStyleUnspecified;
-    break;
-  }
+  _mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(_theme);
 }
 
 - (void)setMinZoom:(double)minZoom {

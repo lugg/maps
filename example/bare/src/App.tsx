@@ -13,10 +13,12 @@ import type { MarkerPressEvent } from '@lugg/maps';
 import { HomeScreen, type MarkerData } from '@lugg/shared-example';
 
 import { DetailScreen } from './screens/DetailScreen';
+import { StaticMapsScreen } from './screens/StaticMapsScreen';
 
 export type RootStackParamList = {
   Home: undefined;
   Detail: { name: string };
+  StaticMaps: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,7 +33,16 @@ function Home({ navigation }: HomeProps) {
     [navigation]
   );
 
-  return <HomeScreen onMarkerPress={handleMarkerPress} />;
+  const handleShowStaticMaps = useCallback(() => {
+    navigation.navigate('StaticMaps');
+  }, [navigation]);
+
+  return (
+    <HomeScreen
+      onMarkerPress={handleMarkerPress}
+      onShowStaticMaps={handleShowStaticMaps}
+    />
+  );
 }
 
 export default function App() {
@@ -46,6 +57,11 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen name="Detail" component={DetailScreen} />
+        <Stack.Screen
+          name="StaticMaps"
+          component={StaticMapsScreen}
+          options={{ title: 'Static Maps' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

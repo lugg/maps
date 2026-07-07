@@ -137,6 +137,15 @@ class LuggMapViewManager :
     view.setCompassEnabled(value)
   }
 
+  @ReactProp(name = "staticMode", defaultBoolean = false)
+  override fun setStaticMode(view: LuggMapView, value: Boolean) {
+    view.setStaticMode(value)
+  }
+
+  // iOS only - lite mode doesn't need snapshot caching
+  @ReactProp(name = "staticKey")
+  override fun setStaticKey(view: LuggMapView, value: String?) = Unit
+
   @ReactProp(name = "userLocationEnabled", defaultBoolean = false)
   override fun setUserLocationEnabled(view: LuggMapView, value: Boolean) {
     view.setUserLocationEnabled(value)

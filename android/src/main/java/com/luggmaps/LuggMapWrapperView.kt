@@ -10,9 +10,24 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
 
   var touchEventHandler: ((MotionEvent) -> Unit)? = null
 
+  // React Native never runs an Android layout pass on Yoga-managed views, so
+  // a child's requestLayout (e.g. a lite mode MapView displaying its bitmap
+  // once loaded) would otherwise never result in a measure/layout. Live maps
+  // don't need this - their GL surface renders continuously once sized.
+  var relayoutChildOnRequest: Boolean = false
+
+  private val measureAndLayoutChild = Runnable { layoutChild(width, height) }
+
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     touchEventHandler?.invoke(event)
     return super.dispatchTouchEvent(event)
+  }
+
+  override fun requestLayout() {
+    super.requestLayout()
+    if (relayoutChildOnRequest) {
+      post(measureAndLayoutChild)
+    }
   }
 
   override fun onLayout(
@@ -23,8 +38,11 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
     bottom: Int
   ) {
     super.onLayout(changed, left, top, right, bottom)
-    val w = right - left
-    val h = bottom - top
+    layoutChild(right - left, bottom - top)
+  }
+
+  private fun layoutChild(w: Int, h: Int) {
+    if (w <= 0 || h <= 0) return
     getChildAt(0)?.let {
       it.measure(
         MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),

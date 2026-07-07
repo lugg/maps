@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MapProviderDelegate <NSObject>
 - (void)mapProviderDidReady;
+- (void)mapProviderDidFinishStaticSnapshot;
+- (void)mapProviderDidCaptureStaticImage:(UIImage *)image;
 - (void)mapProviderDidMoveCamera:(double)latitude
                        longitude:(double)longitude
                             zoom:(double)zoom
@@ -35,6 +37,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, weak, nullable) id<MapProviderDelegate> delegate;
 @property(nonatomic, readonly) BOOL isMapReady;
+
+// Non-interactive static map. Must be set before initializeMapInView.
+// Once fully rendered, the live map is replaced with a snapshot image.
+@property(nonatomic, assign) BOOL staticMode;
 
 - (void)initializeMapInView:(UIView *)wrapperView
           initialCoordinate:(CLLocationCoordinate2D)coordinate

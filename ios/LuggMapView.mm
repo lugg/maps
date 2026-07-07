@@ -7,7 +7,9 @@
 #import "LuggPolylineView.h"
 #import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
+#import "core/AppleStaticMapProvider.h"
 #import "core/GoogleMapProvider.h"
+#import "core/GoogleStaticMapProvider.h"
 #import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
@@ -25,6 +27,19 @@
 using namespace facebook::react;
 using namespace luggmaps::events;
 
+// Static snapshots cached across view recycling, keyed by the user-provided
+// staticKey plus the map settings that affect appearance.
+static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
+  static NSCache<NSString *, UIImage *> *cache;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    cache = [[NSCache alloc] init];
+    cache.countLimit = 100;
+    cache.totalCostLimit = 64 * 1024 * 1024; // bytes
+  });
+  return cache;
+}
+
 @interface LuggMapView () <RCTLuggMapViewViewProtocol, MapProviderDelegate>
 @end
 
@@ -40,6 +55,9 @@ using namespace luggmaps::events;
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
+  BOOL _staticMode;
+  NSString *_staticKey;
+  BOOL _staticSnapshotDone;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -70,6 +88,8 @@ using namespace luggmaps::events;
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _compassEnabled = YES;
+    _staticMode = NO;
+    _staticKey = @"";
     _userLocationEnabled = NO;
     _poiEnabled = NO;
     _poiFilterMode = LuggMapViewPoiFilterMode::Including;
@@ -170,16 +190,108 @@ using namespace luggmaps::events;
   [super didMoveToWindow];
   if (self.window) {
     if (!_provider && _mapWrapperView) {
-      [self initializeProvider];
+      if (_staticMode) {
+        [self startStaticContent];
+      } else {
+        [self initializeProvider];
+      }
     }
     [_provider resumeAnimations];
   } else {
+    // A static map mid-warmup may hold an expensive live map view. Destroy
+    // it off-window and re-render on return instead of letting paused maps
+    // pile up across screen switches and all resume at once
+    if (_staticMode && _provider && !_staticSnapshotDone) {
+      [_provider destroy];
+      _provider = nil;
+      _initialized = NO;
+    }
     [_provider pauseAnimations];
+  }
+}
+
+// Shown while the map warms up, until the live map or snapshot covers it
+- (void)applyStaticPlaceholderBackground {
+  const auto &viewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
+  if (viewProps.backgroundColor) {
+    // A user-provided background acts as the placeholder
+    return;
+  }
+
+  switch (_theme) {
+  case LuggMapViewTheme::Dark:
+    _mapWrapperView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+    break;
+  case LuggMapViewTheme::Light:
+    _mapWrapperView.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+    break;
+  default:
+    _mapWrapperView.overrideUserInterfaceStyle =
+        UIUserInterfaceStyleUnspecified;
+    break;
+  }
+  _mapWrapperView.backgroundColor = UIColor.secondarySystemBackgroundColor;
+}
+
+- (nullable NSString *)staticSnapshotCacheKey {
+  if (_staticKey.length == 0 || !_mapWrapperView)
+    return nil;
+
+  CGSize size = _mapWrapperView.bounds.size;
+  if (size.width <= 0 || size.height <= 0)
+    return nil;
+
+  // 'system' theme snapshots depend on the current appearance
+  NSInteger style = _theme == LuggMapViewTheme::System
+                        ? (NSInteger)self.traitCollection.userInterfaceStyle
+                        : -(NSInteger)_theme;
+
+  // Camera is part of the key so a reused staticKey with a different
+  // location/zoom can't serve a stale snapshot
+  const auto &viewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
+
+  return [NSString stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f",
+                                    _staticKey, (int)_providerType, _mapId,
+                                    (int)_mapType, (long)style, size.width,
+                                    size.height,
+                                    viewProps.initialCoordinate.latitude,
+                                    viewProps.initialCoordinate.longitude,
+                                    viewProps.initialZoom];
+}
+
+- (void)startStaticContent {
+  [self applyStaticPlaceholderBackground];
+
+  // Both static providers render fully async: the placeholder shows until
+  // the snapshotter (Apple) or a brief live-map warmup (Google) delivers
+  // the base map, which reveals together with the marker/shape overlays
+  [self initializeProvider];
+}
+
+// staticKey identifies the map's content; when it changes (e.g. a recycled
+// list row bound to a new item), any live warmup or displayed snapshot is
+// stale and the static lifecycle restarts. Without this, an in-flight
+// warmup caches the old item's map under the new key.
+- (void)resetStaticContent {
+  _staticSnapshotDone = NO;
+
+  if (_provider) {
+    [_provider destroy];
+    _provider = nil;
+    _initialized = NO;
+  }
+
+  if (self.window) {
+    [self startStaticContent];
   }
 }
 
 - (void)prepareForRecycle {
   [super prepareForRecycle];
+
+  _staticSnapshotDone = NO;
 
   [_provider destroy];
   _provider = nil;
@@ -197,14 +309,28 @@ using namespace luggmaps::events;
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   if (_providerType == LuggMapViewProvider::Apple) {
-    _provider = [[AppleMapProvider alloc] init];
+    _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
+                            : [[AppleMapProvider alloc] init];
+  } else if (_staticMode) {
+    GoogleStaticMapProvider *google = [[GoogleStaticMapProvider alloc] init];
+    google.mapId = _mapId;
+    _provider = google;
   } else {
     GoogleMapProvider *google = [[GoogleMapProvider alloc] init];
     google.mapId = _mapId;
     _provider = google;
   }
 
+  if (_staticMode) {
+    NSString *cacheKey = [self staticSnapshotCacheKey];
+    if (cacheKey) {
+      ((StaticMapProviderBase *)_provider).cachedBaseImage =
+          [StaticSnapshotCache() objectForKey:cacheKey];
+    }
+  }
+
   _provider.delegate = self;
+  _provider.staticMode = _staticMode;
 
   CLLocationCoordinate2D coordinate =
       CLLocationCoordinate2DMake(viewProps.initialCoordinate.latitude,
@@ -242,6 +368,19 @@ using namespace luggmaps::events;
 
 - (void)mapProviderDidReady {
   ReadyEvent::emit<LuggMapViewEventEmitter>(_eventEmitter);
+}
+
+- (void)mapProviderDidFinishStaticSnapshot {
+  _staticSnapshotDone = YES;
+}
+
+- (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
+  NSString *key = [self staticSnapshotCacheKey];
+  if (key) {
+    NSUInteger cost = (NSUInteger)(image.size.width * image.scale *
+                                   image.size.height * image.scale * 4);
+    [StaticSnapshotCache() setObject:image forKey:key cost:cost];
+  }
 }
 
 - (void)mapProviderDidMoveCamera:(double)latitude
@@ -303,6 +442,12 @@ using namespace luggmaps::events;
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   _providerType = newViewProps.provider;
+  _staticMode = newViewProps.staticMode;
+
+  NSString *newStaticKey =
+      [NSString stringWithUTF8String:newViewProps.staticKey.c_str()];
+  BOOL staticKeyChanged = ![newStaticKey isEqualToString:_staticKey];
+  _staticKey = newStaticKey;
 
   NSString *newMapId =
       [NSString stringWithUTF8String:newViewProps.mapId.c_str()];
@@ -381,6 +526,11 @@ using namespace luggmaps::events;
   }
 
   [super updateProps:props oldProps:oldProps];
+
+  // After super so the snapshot cache key sees the new camera props
+  if (staticKeyChanged && _staticMode && _mapWrapperView) {
+    [self resetStaticContent];
+  }
 }
 
 #pragma mark - Commands

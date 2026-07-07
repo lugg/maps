@@ -42,23 +42,30 @@ const bottomEdgeInsets = (bottom: number) => ({
 
 interface HomeProps {
   onMarkerPress?: (e: MarkerPressEvent, marker: MarkerData) => void;
+  onShowStaticMaps?: () => void;
 }
 
-export const HomeScreen = ({ onMarkerPress }: HomeProps) => {
+export const HomeScreen = ({ onMarkerPress, onShowStaticMaps }: HomeProps) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   return (
     <TrueSheetProvider>
       <ReanimatedTrueSheetProvider>
         <MapProvider apiKey={apiKey}>
-          <HomeContent onMarkerPress={onMarkerPress} />
+          <HomeContent
+            onMarkerPress={onMarkerPress}
+            onShowStaticMaps={onShowStaticMaps}
+          />
         </MapProvider>
       </ReanimatedTrueSheetProvider>
     </TrueSheetProvider>
   );
 };
 
-const HomeContent = ({ onMarkerPress: onMarkerPressProp }: HomeProps) => {
+const HomeContent = ({
+  onMarkerPress: onMarkerPressProp,
+  onShowStaticMaps,
+}: HomeProps) => {
   const mapRef = useRef<MapRef>(null);
   const controlSheetRef = useRef<ControlSheetRef>(null);
   const mapTypeSheetRef = useRef<MapTypeSheetRef>(null);
@@ -277,6 +284,7 @@ const HomeContent = ({ onMarkerPress: onMarkerPressProp }: HomeProps) => {
           setProvider((p) => (p === 'google' ? 'apple' : 'google'))
         }
         onLoadGeojson={() => geojsonSheetRef.current?.present()}
+        onShowStaticMaps={onShowStaticMaps}
         onDidPresent={handleSheetEvent}
         onDetentChange={handleSheetEvent}
       />
