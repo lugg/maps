@@ -7,6 +7,7 @@
 #import "LuggPolylineView.h"
 #import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
+#import "core/AppleStaticMapProvider.h"
 #import "core/GoogleMapProvider.h"
 #import "core/LuggStaticMapWarmupQueue.h"
 #import "core/MapProviderDelegate.h"
@@ -193,10 +194,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (self.window) {
     if (!_provider && _mapWrapperView) {
       if (_staticMode) {
-        [self applyStaticPlaceholderBackground];
-        if (![self showCachedStaticSnapshot]) {
-          [self requestStaticWarmup];
-        }
+        [self startStaticContent];
       } else {
         [self initializeProvider];
       }
@@ -295,6 +293,24 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   return YES;
 }
 
+- (void)startStaticContent {
+  [self applyStaticPlaceholderBackground];
+
+  // Apple static maps render through MKMapSnapshotter - fully async like
+  // Android's lite mode - so they start immediately (even mid-scroll) with
+  // no warmup pacing. The provider reuses a cached base image itself.
+  if (_providerType == LuggMapViewProvider::Apple) {
+    [self initializeProvider];
+    return;
+  }
+
+  // Google has no snapshotter API; a live map warms up briefly, paced by
+  // the warmup queue so it never competes with scroll gestures
+  if (![self showCachedStaticSnapshot]) {
+    [self requestStaticWarmup];
+  }
+}
+
 - (void)requestStaticWarmup {
   if (_waitingForWarmupSlot || _holdingWarmupSlot)
     return;
@@ -337,10 +353,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   }
 
   if (self.window) {
-    [self applyStaticPlaceholderBackground];
-    if (![self showCachedStaticSnapshot]) {
-      [self requestStaticWarmup];
-    }
+    [self startStaticContent];
   }
 }
 
@@ -371,7 +384,16 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
 
   if (_providerType == LuggMapViewProvider::Apple) {
-    _provider = [[AppleMapProvider alloc] init];
+    if (_staticMode) {
+      AppleStaticMapProvider *apple = [[AppleStaticMapProvider alloc] init];
+      NSString *cacheKey = [self staticSnapshotCacheKey];
+      if (cacheKey) {
+        apple.cachedBaseImage = [StaticSnapshotCache() objectForKey:cacheKey];
+      }
+      _provider = apple;
+    } else {
+      _provider = [[AppleMapProvider alloc] init];
+    }
   } else {
     GoogleMapProvider *google = [[GoogleMapProvider alloc] init];
     google.mapId = _mapId;

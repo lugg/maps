@@ -56,8 +56,16 @@ mounting many live maps is expensive:
 - **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
   which renders a static bitmap instead of a live GL surface. Lite mode does
   not support cloud-based styling, so `mapId` is ignored on static maps.
-- **iOS (Apple/Google)** - the live map is replaced with a rendered snapshot
-  image once tiles finish loading, releasing the map's rendering resources.
+- **iOS (Apple)** - rendered with `MKMapSnapshotter`, which loads the base
+  map entirely off the main thread (no live map view is ever created), so
+  static maps keep loading while scrolling. Markers stay live views
+  positioned over the snapshot; polylines, polygons, circles, and ground
+  overlays are drawn onto it. Tile overlays are not supported.
+- **iOS (Google)** - the SDK has no async snapshotter, so a live map is
+  created briefly and replaced with a rendered snapshot image once tiles
+  finish loading, releasing the map's rendering resources. Rendering is
+  paced to never compete with scroll gestures, so rows fill in only
+  between scrolls.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
   events are disabled; the map itself stays live.
 
@@ -86,13 +94,14 @@ Notes:
   map container (as above) instead of relying on `onPress`.
 - `animated` polylines render as complete static polylines, so the snapshot
   never freezes a mid-animation frame.
-- On iOS, static map rendering is paced to never compete with scroll
-  gestures, so rows fill in progressively while scrolling stays smooth.
+- On iOS Apple Maps, markers are live views over the snapshot - marker
+  content that loads asynchronously (e.g. remote images) appears when
+  ready, and marker prop updates still apply.
 - While a static map loads, a theme-aware placeholder background is shown.
   Set a `backgroundColor` style on the `MapView` to use your own.
 - Set `staticKey` (e.g. your list item's id) to cache snapshots across
   list recycling on iOS - scrolling back to a row reuses its snapshot
-  instead of rendering a live map again. The camera and map settings are
+  instead of rendering the map again. The camera and map settings are
   part of the cache key automatically; the key must uniquely identify the
   rest of the map's content (e.g. markers). Changing `staticKey` discards
   the current snapshot and re-renders. The cache is bounded by count and

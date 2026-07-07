@@ -1,21 +1,23 @@
 #import "MKMapView+Zoom.h"
 
-@implementation MKMapView (Zoom)
+// Google Maps: zoom level defines how many 256px tiles fit the world
+// At zoom 0, 1 tile = 360 degrees
+// Each zoom level doubles the number of tiles (halves the degrees per tile)
+// Offset of ~0.5 adjusts for difference between Google Maps and MKMapView
+// rendering
+MKCoordinateSpan LuggCoordinateSpanForZoomLevel(
+    double zoomLevel, CLLocationCoordinate2D centerCoordinate) {
+  double adjustedZoom = zoomLevel - 0.5;
+  double latitudeDelta = 360.0 / pow(2, adjustedZoom);
 
-- (MKCoordinateSpan)coordinateSpanForZoomLevel:(double)zoomLevel centerCoordinate:(CLLocationCoordinate2D)centerCoordinate
-{
-    // Google Maps: zoom level defines how many 256px tiles fit the world
-    // At zoom 0, 1 tile = 360 degrees
-    // Each zoom level doubles the number of tiles (halves the degrees per tile)
-    // Offset of ~0.5 adjusts for difference between Google Maps and MKMapView rendering
-    double adjustedZoom = zoomLevel - 0.5;
-    double latitudeDelta = 360.0 / pow(2, adjustedZoom);
-    
-    // Adjust longitude delta for latitude (Mercator projection)
-    double longitudeDelta = latitudeDelta / cos(centerCoordinate.latitude * M_PI / 180.0);
-    
-    return MKCoordinateSpanMake(latitudeDelta, longitudeDelta);
+  // Adjust longitude delta for latitude (Mercator projection)
+  double longitudeDelta =
+      latitudeDelta / cos(centerCoordinate.latitude * M_PI / 180.0);
+
+  return MKCoordinateSpanMake(latitudeDelta, longitudeDelta);
 }
+
+@implementation MKMapView (Zoom)
 
 #pragma mark - Public Methods
 
@@ -48,7 +50,7 @@ static const double kAltitudeAtZoomZero = 220000000.0;
                                       zoomLevel:(double)zoomLevel
 {
     zoomLevel = MIN(zoomLevel, 28);
-    MKCoordinateSpan span = [self coordinateSpanForZoomLevel:zoomLevel centerCoordinate:centerCoordinate];
+    MKCoordinateSpan span = LuggCoordinateSpanForZoomLevel(zoomLevel, centerCoordinate);
     return MKCoordinateRegionMake(centerCoordinate, span);
 }
 

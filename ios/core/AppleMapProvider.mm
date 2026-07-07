@@ -13,7 +13,6 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggPolylineView.h"
 #import "../LuggTileOverlayView.h"
 #import "../extensions/MKMapView+Zoom.h"
-#import "../extensions/UIView+Snapshot.h"
 #import "LuggAnnotationView.h"
 #import "MKPolylineAnimator.h"
 
@@ -120,10 +119,6 @@ static double tileToLng(NSInteger x, NSInteger z) {
   LuggAppleMapViewContent *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
-  UIImageView *_staticSnapshotView;
-  BOOL _needsStaticSnapshot;
-  BOOL _staticSwapScheduled;
-  BOOL _tilesRendered;
   double _minZoom;
   double _maxZoom;
   NSMapTable<id<MKOverlay>, LuggPolylineView *> *_overlayToPolylineMap;
@@ -182,7 +177,6 @@ static double tileToLng(NSInteger x, NSInteger z) {
   if (_mapView)
     return;
 
-  _tilesRendered = NO;
   _mapView = [[LuggAppleMapViewContent alloc] initWithFrame:wrapperView.bounds];
   _mapView.autoresizingMask =
       UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -223,9 +217,6 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 - (void)destroy {
-  [_staticSnapshotView removeFromSuperview];
-  _staticSnapshotView = nil;
-  _needsStaticSnapshot = NO;
   [self destroyMapView];
   _isMapReady = NO;
 }
@@ -244,58 +235,6 @@ static double tileToLng(NSInteger x, NSInteger z) {
   _mapView.delegate = nil;
   [_mapView removeFromSuperview];
   _mapView = nil;
-}
-
-// Static mode: once tiles are fully rendered, swap the live map with a
-// snapshot image and release the map view. The snapshot render and map
-// teardown are expensive, so they run outside scroll tracking; the live
-// map keeps displaying until then.
-- (void)swapMapWithStaticImage {
-  if (_staticSnapshotView || _staticSwapScheduled || !_mapView)
-    return;
-
-  // Re-arm instead of capturing a half-loaded map; the next
-  // didFinishRenderingMap re-triggers the swap
-  if (!_mapView.window || !_tilesRendered) {
-    _needsStaticSnapshot = YES;
-    return;
-  }
-  _needsStaticSnapshot = NO;
-
-  _staticSwapScheduled = YES;
-  [[NSRunLoop mainRunLoop] performInModes:@[ NSDefaultRunLoopMode ]
-                                    block:^{
-                                      self->_staticSwapScheduled = NO;
-                                      [self performStaticSwap];
-                                    }];
-}
-
-- (void)performStaticSwap {
-  if (_staticSnapshotView || !_mapView)
-    return;
-
-  // Tiles can invalidate between scheduling and this runloop pass
-  if (!_mapView.window || !_tilesRendered) {
-    _needsStaticSnapshot = YES;
-    return;
-  }
-
-  UIImageView *imageView = [_mapView lugg_snapshotImageView];
-  if (!imageView) {
-    // Zero-size bounds; re-arm so resumeAnimations retries instead of
-    // silently keeping the live map forever
-    _needsStaticSnapshot = YES;
-    return;
-  }
-
-  _staticSnapshotView = imageView;
-  [_wrapperView insertSubview:imageView aboveSubview:_mapView];
-
-  [self pauseAnimations];
-  [self destroyMapView];
-
-  [_delegate mapProviderDidCaptureStaticImage:imageView.image];
-  [_delegate mapProviderDidFinishStaticSnapshot];
 }
 
 #pragma mark - Props
@@ -413,33 +352,36 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   return map[string];
 }
 
-- (void)applyPoiFilter {
-  if (!_poiEnabled) {
-    _mapView.pointOfInterestFilter =
-        MKPointOfInterestFilter.filterExcludingAllCategories;
-    return;
+MKPointOfInterestFilter *_Nullable LuggPointOfInterestFilter(
+    BOOL poiEnabled, LuggMapViewPoiFilterMode filterMode,
+    NSArray<NSString *> *filterCategories) {
+  if (!poiEnabled) {
+    return MKPointOfInterestFilter.filterExcludingAllCategories;
   }
-  if (_poiFilterCategories.count > 0) {
+  if (filterCategories.count > 0) {
     NSMutableArray<MKPointOfInterestCategory> *categories =
         [NSMutableArray array];
-    for (NSString *name in _poiFilterCategories) {
+    for (NSString *name in filterCategories) {
       MKPointOfInterestCategory category = poiCategoryFromString(name);
       if (category) {
         [categories addObject:category];
       }
     }
     if (categories.count > 0) {
-      if (_poiFilterMode == LuggMapViewPoiFilterMode::Excluding) {
-        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
+      if (filterMode == LuggMapViewPoiFilterMode::Excluding) {
+        return [[MKPointOfInterestFilter alloc]
             initExcludingCategories:categories];
-      } else {
-        _mapView.pointOfInterestFilter = [[MKPointOfInterestFilter alloc]
-            initIncludingCategories:categories];
       }
-      return;
+      return
+          [[MKPointOfInterestFilter alloc] initIncludingCategories:categories];
     }
   }
-  _mapView.pointOfInterestFilter = nil;
+  return nil;
+}
+
+- (void)applyPoiFilter {
+  _mapView.pointOfInterestFilter = LuggPointOfInterestFilter(
+      _poiEnabled, _poiFilterMode, _poiFilterCategories);
 }
 
 - (void)setInsetAdjustment:(LuggMapViewInsetAdjustment)insetAdjustment {
@@ -470,24 +412,23 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
   [self applyPoiFilter];
 }
 
-- (void)setMapType:(LuggMapViewMapType)mapType {
+MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   switch (mapType) {
   case LuggMapViewMapType::Satellite:
-    _mapView.mapType = MKMapTypeSatellite;
-    break;
+    return MKMapTypeSatellite;
   case LuggMapViewMapType::Terrain:
-    _mapView.mapType = MKMapTypeStandard;
-    break;
+    return MKMapTypeStandard;
   case LuggMapViewMapType::Hybrid:
-    _mapView.mapType = MKMapTypeHybrid;
-    break;
+    return MKMapTypeHybrid;
   case LuggMapViewMapType::MutedStandard:
-    _mapView.mapType = MKMapTypeMutedStandard;
-    break;
+    return MKMapTypeMutedStandard;
   default:
-    _mapView.mapType = MKMapTypeStandard;
-    break;
+    return MKMapTypeStandard;
   }
+}
+
+- (void)setMapType:(LuggMapViewMapType)mapType {
+  _mapView.mapType = LuggMKMapTypeFromMapType(mapType);
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
@@ -835,22 +776,6 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
                             longitude:mapView.centerCoordinate.longitude
                                  zoom:mapView.zoomLevel
                               gesture:wasDragging];
-}
-
-- (void)mapViewWillStartLoadingMap:(MKMapView *)mapView {
-  _tilesRendered = NO;
-}
-
-- (void)mapViewWillStartRenderingMap:(MKMapView *)mapView {
-  _tilesRendered = NO;
-}
-
-- (void)mapViewDidFinishRenderingMap:(MKMapView *)mapView
-                       fullyRendered:(BOOL)fullyRendered {
-  _tilesRendered = fullyRendered;
-  if (_staticMode && fullyRendered) {
-    [self swapMapWithStaticImage];
-  }
 }
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView
@@ -1840,10 +1765,6 @@ static MKPointOfInterestCategory poiCategoryFromString(NSString *string) {
 }
 
 - (void)resumeAnimations {
-  if (_needsStaticSnapshot) {
-    [self swapMapWithStaticImage];
-    return;
-  }
   for (LuggPolylineView *polylineView in _overlayToPolylineMap
            .objectEnumerator) {
     MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;

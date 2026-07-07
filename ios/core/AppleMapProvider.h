@@ -3,6 +3,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// POI filter for the given props, shared by the live map view and the
+/// static snapshotter. Returns nil for "show everything".
+MKPointOfInterestFilter *_Nullable LuggPointOfInterestFilter(
+    BOOL poiEnabled, facebook::react::LuggMapViewPoiFilterMode filterMode,
+    NSArray<NSString *> *filterCategories);
+
+MKMapType LuggMKMapTypeFromMapType(facebook::react::LuggMapViewMapType mapType);
+
 @interface LuggAppleMapViewContent : MKMapView
 @end
 
