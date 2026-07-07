@@ -4,6 +4,7 @@ import {
   MapProvider,
   MapView,
   Marker,
+  Polyline,
   type Coordinate,
   type MapProviderType,
 } from '@lugg/maps';
@@ -99,6 +100,45 @@ const PLACES: StaticPlace[] = Array.from({ length: 100 }, (_, i) => {
   };
 });
 
+const seedFromId = (id: string) =>
+  id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+// Deterministic pseudo-random scatter of 2-4 points, stable across
+// re-renders so static snapshots stay valid. Clustered west of the
+// coordinate so it doesn't overlap the center markers
+const constellationPoints = (
+  coordinate: Coordinate,
+  seed: number
+): Coordinate[] => {
+  const count = 2 + (seed % 3);
+  return Array.from({ length: count }, (_, i) => {
+    const angle = seed + i * 2.4;
+    const radius = 0.002 + ((seed + i) % 4) * 0.001;
+    return {
+      latitude: coordinate.latitude + Math.sin(angle) * radius * 0.8,
+      longitude: coordinate.longitude - 0.009 + Math.cos(angle) * radius * 1.2,
+    };
+  });
+};
+
+const PlaceConstellation = ({ place }: { place: StaticPlace }) => {
+  const points = constellationPoints(place.coordinate, seedFromId(place.id));
+  return (
+    <>
+      <Polyline
+        coordinates={points}
+        strokeWidth={3}
+        strokeColors={['#007aff']}
+      />
+      {points.map((point, index) => (
+        <Marker key={index} coordinate={point} anchor={{ x: 0.5, y: 0.5 }}>
+          <View style={styles.dot} />
+        </Marker>
+      ))}
+    </>
+  );
+};
+
 const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
   const { coordinate, markerType, markerText, imageUrl } = place;
 
@@ -168,6 +208,7 @@ const PlaceCard = ({
           initialZoom={14}
         >
           <PlaceMarkers place={place} />
+          <PlaceConstellation place={place} />
         </MapView>
       </View>
       <View style={styles.cardContent}>
@@ -235,5 +276,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: sizes.fontLg,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#007aff',
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
