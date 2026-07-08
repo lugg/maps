@@ -56,6 +56,11 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 /// Overlay view shown for markers without a custom child view.
 - (UIView *)newDefaultMarkerOverlayView;
 
+/// Zoom level at which the base map renders at the given scale (map points
+/// per view point) for the current coordinate and view size; the inverse of
+/// mapRectForSize. Used by fitCoordinates.
+- (double)zoomForMapPointsPerPoint:(double)mapPointsPerPoint;
+
 /// Starts rendering the base map for the current projection (guaranteed
 /// projectionReady, no cached image). Called after mount (once initial
 /// props have applied), after a resize, and from resumeAnimations to retry
