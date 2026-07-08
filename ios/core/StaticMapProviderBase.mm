@@ -386,6 +386,25 @@ static NSInteger shapeZIndex(UIView *shape) {
   [self renderBaseMapIfNeeded];
 }
 
+// Camera commands invalidate any cached, displayed or in-flight base
+// render and re-render at the new camera
+- (void)rerenderBaseMap {
+  [self cancelBaseRender];
+  _baseRenderDone = NO;
+  self.cachedBaseImage = nil;
+
+  // Without a layout yet, the first layout renders with the new camera
+  if (!_projectionReady)
+    return;
+
+  [self updateProjection];
+
+  __weak StaticMapProviderBase *weakSelf = self;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [weakSelf renderBaseMapIfNeeded];
+  });
+}
+
 - (void)renderBaseMapIfNeeded {
   if (_baseRenderDone || !_projectionReady || !_wrapperView)
     return;
@@ -434,6 +453,10 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 - (UIView *)newDefaultMarkerOverlayView {
   return [[UIView alloc] init];
+}
+
+- (double)zoomForMapPointsPerPoint:(double)mapPointsPerPoint {
+  return _zoom;
 }
 
 - (void)renderBaseMap {
@@ -758,12 +781,17 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 #pragma mark - Commands
 
-// Static maps render once with their initial camera
+// Static maps don't animate; commands re-render once at the final camera
 
 - (void)moveCamera:(double)latitude
          longitude:(double)longitude
               zoom:(double)zoom
           duration:(double)duration {
+  _coordinate = CLLocationCoordinate2DMake(latitude, longitude);
+  if (zoom > 0) {
+    _zoom = zoom;
+  }
+  [self rerenderBaseMap];
 }
 
 - (void)fitCoordinates:(NSArray *)coordinates
@@ -772,6 +800,46 @@ static NSInteger shapeZIndex(UIView *shape) {
       edgeInsetsBottom:(double)edgeInsetsBottom
        edgeInsetsRight:(double)edgeInsetsRight
               duration:(double)duration {
+  if (coordinates.count == 0 || !_projectionReady)
+    return;
+
+  MKMapRect boundsRect = MKMapRectNull;
+  for (NSDictionary *coordinate in coordinates) {
+    MKMapPoint point = MKMapPointForCoordinate(
+        CLLocationCoordinate2DMake([coordinate[@"latitude"] doubleValue],
+                                   [coordinate[@"longitude"] doubleValue]));
+    boundsRect =
+        MKMapRectUnion(boundsRect, MKMapRectMake(point.x, point.y, 0, 0));
+  }
+
+  double availWidth =
+      MAX(_projectedSize.width - _edgeInsets.left - _edgeInsets.right -
+              edgeInsetsLeft - edgeInsetsRight,
+          1.0);
+  double availHeight =
+      MAX(_projectedSize.height - _edgeInsets.top - _edgeInsets.bottom -
+              edgeInsetsTop - edgeInsetsBottom,
+          1.0);
+
+  // Map points per view point at which the bounds fit the padded viewport
+  double scale = MAX(boundsRect.size.width / availWidth,
+                     boundsRect.size.height / availHeight);
+  MKMapPoint center = MKMapPointMake(MKMapRectGetMidX(boundsRect),
+                                     MKMapRectGetMidY(boundsRect));
+  if (scale > 0) {
+    _coordinate = MKCoordinateForMapPoint(center);
+    _zoom = [self zoomForMapPointsPerPoint:scale];
+  } else {
+    // Coincident coordinates; keep the current zoom
+    scale = _mapRect.size.width / _projectedSize.width;
+  }
+
+  // Asymmetric padding shifts the visible center, like edge insets
+  center.x -= (edgeInsetsLeft - edgeInsetsRight) / 2.0 * scale;
+  center.y -= (edgeInsetsTop - edgeInsetsBottom) / 2.0 * scale;
+  _coordinate = MKCoordinateForMapPoint(center);
+
+  [self rerenderBaseMap];
 }
 
 @end

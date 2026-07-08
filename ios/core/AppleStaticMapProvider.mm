@@ -74,6 +74,19 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
   return pin;
 }
 
+// Inverse of LuggStaticFittedMapRect: the pre-fit rect is square in map
+// points with side latitudeDelta * worldHeight / (360 * cos(lat)), and the
+// aspect fit scales it to the view's short side
+- (double)zoomForMapPointsPerPoint:(double)mapPointsPerPoint {
+  CGSize size = self.projectedSize;
+  double side = mapPointsPerPoint * MIN(size.width, size.height);
+  double latitudeDelta = side * 360.0 *
+                         cos(self.coordinate.latitude * M_PI / 180.0) /
+                         MKMapSizeWorld.height;
+  double zoom = 0.5 + log2(360.0 / latitudeDelta);
+  return MAX(MIN(zoom, 28.0), 0.0);
+}
+
 - (UITraitCollection *)snapshotTraitCollection {
   UITraitCollection *base = self.wrapperView.traitCollection;
   UIUserInterfaceStyle style;

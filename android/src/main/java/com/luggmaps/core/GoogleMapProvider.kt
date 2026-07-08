@@ -49,6 +49,7 @@ import com.luggmaps.extensions.findViewByTag
 import java.net.URL
 import kotlin.math.atan
 import kotlin.math.ln
+import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sinh
@@ -1203,6 +1204,17 @@ class GoogleMapProvider(private val context: Context) :
   // region Commands
 
   override fun moveCamera(latitude: Double, longitude: Double, zoom: Double, duration: Int) {
+    if (staticMode) {
+      // Static maps don't animate; re-center at the final camera
+      initialLatitude = latitude
+      initialLongitude = longitude
+      if (zoom > 0) initialZoom = zoom.toFloat()
+      val map = googleMap ?: return
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+      positionLiveMarkers()
+      return
+    }
+
     val map = googleMap ?: return
     val position = LatLng(latitude, longitude)
     val targetZoom = if (zoom > 0) zoom.toFloat() else map.cameraPosition.zoom
@@ -1232,14 +1244,19 @@ class GoogleMapProvider(private val context: Context) :
     val latLongs = coordinates.filterIsInstance<LatLng>()
     if (latLongs.isEmpty()) return
 
-    val boundsBuilder = LatLngBounds.Builder()
-    latLongs.forEach { boundsBuilder.include(it) }
-    val bounds = boundsBuilder.build()
-
     val top = edgeInsetsTop.toFloat().dpToPx().toInt()
     val left = edgeInsetsLeft.toFloat().dpToPx().toInt()
     val bottom = edgeInsetsBottom.toFloat().dpToPx().toInt()
     val right = edgeInsetsRight.toFloat().dpToPx().toInt()
+
+    if (staticMode) {
+      fitStaticCoordinates(latLongs, top, left, bottom, right)
+      return
+    }
+
+    val boundsBuilder = LatLngBounds.Builder()
+    latLongs.forEach { boundsBuilder.include(it) }
+    val bounds = boundsBuilder.build()
 
     val combined = combinedEdgeInsets()
     map.setPadding(
@@ -1341,13 +1358,78 @@ class GoogleMapProvider(private val context: Context) :
     val offsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0
     if (offsetX == 0.0 && offsetY == 0.0) return LatLng(initialLatitude, initialLongitude)
 
-    // Web mercator world size in px at the initial zoom
-    val worldSize = 256f.dpToPx().toDouble() * 2.0.pow(initialZoom.toDouble())
-    val sinLat = sin(Math.toRadians(initialLatitude))
-    val x = (initialLongitude + 180.0) / 360.0 - offsetX / worldSize
-    val y = 0.5 - ln((1.0 + sinLat) / (1.0 - sinLat)) / (4.0 * Math.PI) - offsetY / worldSize
-    return LatLng(Math.toDegrees(atan(sinh(Math.PI * (1.0 - 2.0 * y)))), x * 360.0 - 180.0)
+    val worldSize = mercatorWorldSize(initialZoom)
+    return latLngFromMercator(
+      mercatorX(initialLongitude) - offsetX / worldSize,
+      mercatorY(initialLatitude) - offsetY / worldSize
+    )
   }
+
+  // A static camera can't fit with map padding (lite mode misrenders it);
+  // compute the fitted camera in mercator space instead, shifting the
+  // center for asymmetric padding like edge insets
+  private fun fitStaticCoordinates(
+    coordinates: List<LatLng>,
+    top: Int,
+    left: Int,
+    bottom: Int,
+    right: Int
+  ) {
+    val map = googleMap ?: return
+    val wrapper = wrapperView ?: return
+    if (wrapper.width == 0 || wrapper.height == 0) return
+
+    var minX = Double.MAX_VALUE
+    var minY = Double.MAX_VALUE
+    var maxX = -Double.MAX_VALUE
+    var maxY = -Double.MAX_VALUE
+    for (coordinate in coordinates) {
+      val x = mercatorX(coordinate.longitude)
+      val y = mercatorY(coordinate.latitude)
+      minX = minOf(minX, x)
+      maxX = maxOf(maxX, x)
+      minY = minOf(minY, y)
+      maxY = maxOf(maxY, y)
+    }
+
+    val insets = combinedEdgeInsets()
+    val availWidth = (wrapper.width - insets.left - insets.right - left - right).coerceAtLeast(1)
+    val availHeight = (wrapper.height - insets.top - insets.bottom - top - bottom).coerceAtLeast(1)
+
+    // World size in px at which the bounds fit the padded viewport;
+    // infinite for coincident coordinates - keep the current zoom then
+    val fitWorldSize = minOf(availWidth / (maxX - minX), availHeight / (maxY - minY))
+    if (fitWorldSize.isFinite()) {
+      initialZoom = log2(fitWorldSize / 256f.dpToPx())
+        .toFloat()
+        .coerceIn(map.minZoomLevel, map.maxZoomLevel)
+    }
+
+    val worldSize = mercatorWorldSize(initialZoom)
+    val center = latLngFromMercator(
+      (minX + maxX) / 2.0 - (left - right) / 2.0 / worldSize,
+      (minY + maxY) / 2.0 - (top - bottom) / 2.0 / worldSize
+    )
+    initialLatitude = center.latitude
+    initialLongitude = center.longitude
+
+    map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+    positionLiveMarkers()
+  }
+
+  // Web mercator world space in [0, 1]
+  private fun mercatorX(longitude: Double): Double = (longitude + 180.0) / 360.0
+
+  private fun mercatorY(latitude: Double): Double {
+    val sinLat = sin(Math.toRadians(latitude))
+    return 0.5 - ln((1.0 + sinLat) / (1.0 - sinLat)) / (4.0 * Math.PI)
+  }
+
+  private fun latLngFromMercator(x: Double, y: Double): LatLng =
+    LatLng(Math.toDegrees(atan(sinh(Math.PI * (1.0 - 2.0 * y)))), x * 360.0 - 180.0)
+
+  // World size in px at the given zoom
+  private fun mercatorWorldSize(zoom: Float): Double = 256f.dpToPx().toDouble() * 2.0.pow(zoom.toDouble())
 
   private fun applyWatermarkTranslation(insets: EdgeInsets, duration: Int = 0) {
     val view = mapView ?: return

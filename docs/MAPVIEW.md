@@ -92,8 +92,10 @@ mounting many live maps is expensive:
 Notes:
 
 - `staticMode` is creation-time only and cannot be toggled after the map is created.
-- The map renders once with its initial camera and children. Camera commands
-  and prop updates after the snapshot are ignored on iOS.
+- Ref methods (`moveCamera`, `fitCoordinates`, `setEdgeInsets`) work like on
+  a live map, minus animation - `duration` is ignored and the map re-renders
+  at the final camera (iOS) or re-centers (Android). Map-setting prop
+  updates (e.g. `mapType`) after the snapshot are still ignored on iOS.
 - `edgeInsets` shift the visible center like on a live map, so the
   coordinate centers in the inset viewport. Changing insets after the
   render re-renders the base map (iOS) or re-centers the camera (Android).

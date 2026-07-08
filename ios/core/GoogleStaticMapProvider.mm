@@ -74,6 +74,12 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
       [[UIImageView alloc] initWithImage:[GMSMarker markerImageWithColor:nil]];
 }
 
+// Inverse of mapRectForSize
+- (double)zoomForMapPointsPerPoint:(double)mapPointsPerPoint {
+  double zoom = log2(MKMapSizeWorld.width / (256.0 * mapPointsPerPoint));
+  return MAX(MIN(zoom, (double)kGMSMaxZoomLevel), (double)kGMSMinZoomLevel);
+}
+
 - (void)renderBaseMap {
   if (_warmupMapView) {
     // Retry a swap that couldn't run (e.g. view was off-window)

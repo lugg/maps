@@ -248,18 +248,26 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
                         : -(NSInteger)_theme;
 
   // Camera is part of the key so a reused staticKey with a different
-  // location/zoom can't serve a stale snapshot
+  // location/zoom can't serve a stale snapshot. The provider's camera (when
+  // available) reflects imperative camera changes, so a re-rendered
+  // snapshot is keyed on what it actually shows.
   const auto &viewProps =
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
+  double latitude = viewProps.initialCoordinate.latitude;
+  double longitude = viewProps.initialCoordinate.longitude;
+  double zoom = viewProps.initialZoom;
+  if ([_provider isKindOfClass:[StaticMapProviderBase class]]) {
+    StaticMapProviderBase *staticProvider = (StaticMapProviderBase *)_provider;
+    latitude = staticProvider.coordinate.latitude;
+    longitude = staticProvider.coordinate.longitude;
+    zoom = staticProvider.zoom;
+  }
 
   return [NSString
       stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
                        _staticKey, (int)_providerType, _mapId, (int)_mapType,
-                       (long)style, size.width, size.height,
-                       viewProps.initialCoordinate.latitude,
-                       viewProps.initialCoordinate.longitude,
-                       viewProps.initialZoom,
-                       NSStringFromUIEdgeInsets(_edgeInsets)];
+                       (long)style, size.width, size.height, latitude,
+                       longitude, zoom, NSStringFromUIEdgeInsets(_edgeInsets)];
 }
 
 - (void)startStaticContent {
@@ -322,14 +330,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     _provider = google;
   }
 
-  if (_staticMode) {
-    NSString *cacheKey = [self staticSnapshotCacheKey];
-    if (cacheKey) {
-      ((StaticMapProviderBase *)_provider).cachedBaseImage =
-          [StaticSnapshotCache() objectForKey:cacheKey];
-    }
-  }
-
   _provider.delegate = self;
   _provider.staticMode = _staticMode;
 
@@ -340,6 +340,16 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [_provider initializeMapInView:_mapWrapperView
                initialCoordinate:coordinate
                      initialZoom:viewProps.initialZoom];
+
+  // After initializeMapInView so the cache key reads the provider's camera;
+  // the base render is async and picks up the cached image
+  if (_staticMode) {
+    NSString *cacheKey = [self staticSnapshotCacheKey];
+    if (cacheKey) {
+      ((StaticMapProviderBase *)_provider).cachedBaseImage =
+          [StaticSnapshotCache() objectForKey:cacheKey];
+    }
+  }
 
   // Apply cached props after map view is created
   [self applyProps];
