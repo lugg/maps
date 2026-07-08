@@ -55,7 +55,9 @@ mounting many live maps is expensive:
 
 - **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
   which renders a static bitmap instead of a live GL surface. Lite mode does
-  not support cloud-based styling, so `mapId` is ignored on static maps.
+  not support cloud-based styling, so `mapId` is ignored on lite static maps.
+  Lite mode caps its bitmap at ~2048px per dimension, so larger views (e.g.
+  full-screen maps) fall back to a full map with all gestures disabled.
 - **iOS (Apple)** - the base map is rendered with `MKMapSnapshotter`, which
   loads entirely off the main thread (no live map view is ever created), so
   static maps keep loading while scrolling. Markers stay live views

@@ -16,6 +16,10 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
   // don't need this - their GL surface renders continuously once sized.
   var relayoutChildOnRequest: Boolean = false
 
+  // Invoked on layout once the view has a non-zero size, so the map
+  // provider can create a map sized to the view
+  var onLayoutReady: (() -> Unit)? = null
+
   private val measureAndLayoutChild = Runnable { layoutChild(width, height) }
 
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -39,6 +43,9 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
   ) {
     super.onLayout(changed, left, top, right, bottom)
     layoutChild(right - left, bottom - top)
+    if (right - left > 0 && bottom - top > 0) {
+      onLayoutReady?.invoke()
+    }
   }
 
   private fun layoutChild(w: Int, h: Int) {
