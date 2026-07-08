@@ -33,6 +33,7 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 @property(nonatomic, readonly) double zoom;
 @property(nonatomic, readonly) MKMapRect mapRect;
 @property(nonatomic, readonly) CGSize projectedSize;
+@property(nonatomic, readonly) UIEdgeInsets edgeInsets;
 @property(nonatomic, readonly) BOOL projectionReady;
 @property(nonatomic, readonly) facebook::react::LuggMapViewMapType mapType;
 @property(nonatomic, readonly) facebook::react::LuggMapViewTheme theme;

@@ -55,7 +55,9 @@ mounting many live maps is expensive:
 
 - **Android (Google)** - uses [lite mode](https://developers.google.com/maps/documentation/android-sdk/lite),
   which renders a static bitmap instead of a live GL surface. Lite mode does
-  not support cloud-based styling, so `mapId` is ignored on static maps.
+  not support cloud-based styling, so `mapId` is ignored on lite static maps.
+  Lite mode caps its bitmap at ~2048px per dimension, so larger views (e.g.
+  full-screen maps) fall back to a full map with all gestures disabled.
 - **iOS (Apple)** - the base map is rendered with `MKMapSnapshotter`, which
   loads entirely off the main thread (no live map view is ever created), so
   static maps keep loading while scrolling. Markers stay live views
@@ -92,6 +94,9 @@ Notes:
 - `staticMode` is creation-time only and cannot be toggled after the map is created.
 - The map renders once with its initial camera and children. Camera commands
   and prop updates after the snapshot are ignored on iOS.
+- `edgeInsets` shift the visible center like on a live map, so the
+  coordinate centers in the inset viewport. Changing insets after the
+  render re-renders the base map (iOS) or re-centers the camera (Android).
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.
 - `animated` polylines render as complete static polylines, so the snapshot

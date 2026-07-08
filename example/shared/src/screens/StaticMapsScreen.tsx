@@ -83,7 +83,7 @@ const BASE_PLACES: Omit<
 // Large list for performance testing - cycles the base places with
 // shifted coordinates so every map renders a unique region, and cycles
 // marker use-cases so snapshots cover default, custom, and live markers
-const PLACES: StaticPlace[] = Array.from({ length: 100 }, (_, i) => {
+export const PLACES: StaticPlace[] = Array.from({ length: 100 }, (_, i) => {
   const base = BASE_PLACES[i % BASE_PLACES.length]!;
   const shift = Math.floor(i / BASE_PLACES.length) * 0.015;
   return {
@@ -175,6 +175,7 @@ const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
 
 interface StaticMapsScreenProps {
   onSelect?: (place: StaticPlace) => void;
+  topInset?: number;
 }
 
 const PlaceCard = ({
@@ -222,7 +223,10 @@ const PlaceCard = ({
   );
 };
 
-export const StaticMapsScreen = ({ onSelect }: StaticMapsScreenProps) => {
+export const StaticMapsScreen = ({
+  onSelect,
+  topInset = 0,
+}: StaticMapsScreenProps) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const { colors } = useTheme();
 
@@ -234,7 +238,11 @@ export const StaticMapsScreen = ({ onSelect }: StaticMapsScreenProps) => {
     <MapProvider apiKey={apiKey}>
       <FlatList
         style={{ backgroundColor: colors.background }}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          { paddingTop: sizes.lg + topInset },
+        ]}
+        scrollIndicatorInsets={{ top: topInset }}
         data={PLACES}
         keyExtractor={(place) => place.id}
         ListHeaderComponent={

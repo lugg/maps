@@ -127,6 +127,9 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   mapView.userInteractionEnabled = NO;
   mapView.preferredFrameRate = kGMSFrameRateConservative;
   mapView.paddingAdjustmentBehavior = kGMSMapViewPaddingAdjustmentBehaviorNever;
+  // Frames the camera like the inset-shifted projection (and clears stale
+  // padding on pooled views)
+  mapView.padding = self.edgeInsets;
   mapView.mapType = LuggGMSMapTypeFromMapType(self.mapType);
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 

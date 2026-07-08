@@ -348,6 +348,14 @@ static NSInteger shapeZIndex(UIView *shape) {
 
   _projectedSize = size;
   _mapRect = [self mapRectForSize:size];
+
+  // Edge insets shift the visible center like a live map: the coordinate
+  // lands at the center of the inset viewport instead of the view center
+  CGFloat offsetX = (_edgeInsets.left - _edgeInsets.right) / 2.0;
+  CGFloat offsetY = (_edgeInsets.top - _edgeInsets.bottom) / 2.0;
+  _mapRect.origin.x -= offsetX * _mapRect.size.width / size.width;
+  _mapRect.origin.y -= offsetY * _mapRect.size.height / size.height;
+
   _projectionReady = YES;
 
   _shapeOverlayView.mapRect = _mapRect;
@@ -471,10 +479,34 @@ static NSInteger shapeZIndex(UIView *shape) {
 }
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
+  if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, edgeInsets))
+    return;
+  _edgeInsets = edgeInsets;
+
+  if (!_projectionReady)
+    return;
+
+  [self updateProjection];
+
+  // Any in-flight or completed base render targets the old projection. The
+  // initial prop set lands before the first render, so the cached image
+  // (keyed on insets) stays valid.
+  [self cancelBaseRender];
+  if (_baseRenderDone) {
+    _baseRenderDone = NO;
+    self.cachedBaseImage = nil;
+  }
+  __weak StaticMapProviderBase *weakSelf = self;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [weakSelf renderBaseMapIfNeeded];
+  });
 }
+
+// Static maps don't animate; apply the final insets directly
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
              duration:(double)duration {
+  [self setEdgeInsets:edgeInsets oldEdgeInsets:oldEdgeInsets];
 }
 
 #pragma mark - Markers

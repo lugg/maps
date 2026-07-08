@@ -48,7 +48,9 @@ import com.luggmaps.LuggTileOverlayViewDelegate
 import com.luggmaps.extensions.findViewByTag
 import java.net.URL
 import kotlin.math.atan
+import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sinh
 
 class GoogleMapProvider(private val context: Context) :
@@ -78,7 +80,8 @@ class GoogleMapProvider(private val context: Context) :
 
   var mapId: String = DEMO_MAP_ID
 
-  // Renders the map in lite mode (static bitmap). Creation-time only.
+  // Renders a non-interactive static map — lite mode when the view fits
+  // the lite bitmap cap, a gesture-less full map otherwise. Creation-time only.
   var staticMode: Boolean = false
 
   private var wrapperView: LuggMapWrapperView? = null
@@ -99,7 +102,7 @@ class GoogleMapProvider(private val context: Context) :
   private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
-  private var liteProjectionReady = false
+  private var staticProjectionReady = false
   private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
 
@@ -146,19 +149,38 @@ class GoogleMapProvider(private val context: Context) :
 
     context.applicationContext.registerComponentCallbacks(this)
 
+    // Static mode needs the view size to pick lite vs full map, so wait
+    // for the first layout if it hasn't happened yet
+    if (staticMode && (wrapper.width == 0 || wrapper.height == 0)) {
+      wrapper.onLayoutReady = { createMapView() }
+    } else {
+      createMapView()
+    }
+  }
+
+  private fun createMapView() {
+    if (mapView != null) return
+    val wrapper = wrapperView ?: return
+
+    // Lite mode renders the map as a single bitmap capped at ~2048px per
+    // dimension, centered in the view — bigger views get letterboxed. Fall
+    // back to a full map (gestures disabled) when the view exceeds the cap
+    val useLite = staticMode && maxOf(wrapper.width, wrapper.height) <= LITE_MODE_MAX_SIZE
+    val options = GoogleMapOptions().liteMode(useLite)
     // Lite mode doesn't support map IDs (cloud-based styling); setting one
     // makes the static map render blank
-    val options = GoogleMapOptions().liteMode(staticMode)
-    if (!staticMode) options.mapId(mapId)
+    if (!useLite) options.mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
       view.getMapAsync(this)
       wrapper.addView(view)
     }
+    wrapper.onLayoutReady = null
   }
 
   override fun destroy() {
+    wrapperView?.onLayoutReady = null
     detachWindowInsetsListener()
     context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
@@ -204,17 +226,17 @@ class GoogleMapProvider(private val context: Context) :
     _isMapReady = true
 
     if (staticMode) {
-      // Lite mode shows an "open in Google Maps" toolbar on tap by default
+      // Tapping the map otherwise shows an "open in Google Maps" toolbar
       map.uiSettings.isMapToolbarEnabled = false
-      // The projection is only valid once the lite map has rendered, and no
+      // The projection is only valid once the map has rendered, and no
       // camera events fire afterwards to correct live marker positions
       map.setOnMapLoadedCallback {
-        liteProjectionReady = true
+        staticProjectionReady = true
         positionLiveMarkers()
       }
     }
 
-    val position = LatLng(initialLatitude, initialLongitude)
+    val position = if (staticMode) staticCameraTarget() else LatLng(initialLatitude, initialLongitude)
     map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))
 
     map.setOnCameraMoveStartedListener(this)
@@ -461,21 +483,25 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun setZoomEnabled(enabled: Boolean) {
     zoomEnabled = enabled
+    if (staticMode) return
     googleMap?.uiSettings?.isZoomGesturesEnabled = enabled
   }
 
   override fun setScrollEnabled(enabled: Boolean) {
     scrollEnabled = enabled
+    if (staticMode) return
     googleMap?.uiSettings?.isScrollGesturesEnabled = enabled
   }
 
   override fun setRotateEnabled(enabled: Boolean) {
     rotateEnabled = enabled
+    if (staticMode) return
     googleMap?.uiSettings?.isRotateGesturesEnabled = enabled
   }
 
   override fun setPitchEnabled(enabled: Boolean) {
     pitchEnabled = enabled
+    if (staticMode) return
     googleMap?.uiSettings?.isTiltGesturesEnabled = enabled
   }
 
@@ -530,6 +556,11 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets) {
+    if (staticMode) {
+      setStaticEdgeInsets(edgeInsets)
+      return
+    }
+
     val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
     applyEdgeInsets()
@@ -543,6 +574,11 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setEdgeInsets(edgeInsets: EdgeInsets, duration: Int) {
+    if (staticMode) {
+      setStaticEdgeInsets(edgeInsets)
+      return
+    }
+
     val map = googleMap
     val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
@@ -759,7 +795,7 @@ class GoogleMapProvider(private val context: Context) :
     // Until the lite map's projection is valid, hide the marker instead of
     // flashing it at a wrong position; onMapLoaded positions and shows it
     contentView.visibility =
-      if (staticMode && !liteProjectionReady) View.INVISIBLE else View.VISIBLE
+      if (staticMode && !staticProjectionReady) View.INVISIBLE else View.VISIBLE
     (contentView.parent as? android.view.ViewGroup)?.removeView(contentView)
     wrapper.addView(contentView)
     liveMarkerViews.add(markerView)
@@ -791,7 +827,7 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun positionLiveMarker(markerView: LuggMarkerView) {
     val map = googleMap ?: return
-    if (staticMode && !liteProjectionReady) return
+    if (staticMode && !staticProjectionReady) return
     val contentView = markerView.contentView
     val point = map.projection.toScreenLocation(LatLng(markerView.latitude, markerView.longitude))
     contentView.translationX = point.x - contentView.width * markerView.anchorX
@@ -1230,6 +1266,12 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun applyUiSettings() {
     googleMap?.uiSettings?.apply {
+      if (staticMode) {
+        // The non-lite fallback is a full map; keep it behaving like a
+        // static image (lite mode ignores gestures anyway)
+        setAllGesturesEnabled(false)
+        return
+      }
       isZoomGesturesEnabled = zoomEnabled
       isScrollGesturesEnabled = scrollEnabled
       isRotateGesturesEnabled = rotateEnabled
@@ -1270,8 +1312,41 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun applyEdgeInsets(duration: Int = 0) {
     val combined = combinedEdgeInsets()
-    googleMap?.setPadding(combined.left, combined.top, combined.right, combined.bottom)
+    // Lite mode misrenders padding: the static image is drawn only within
+    // the padded viewport instead of the full view. The camera target shift
+    // (staticCameraTarget) compensates for insets instead.
+    if (!staticMode) {
+      googleMap?.setPadding(combined.left, combined.top, combined.right, combined.bottom)
+    }
     applyWatermarkTranslation(combined, duration)
+  }
+
+  // Insets are applied by shifting the camera target so the coordinate
+  // centers in the inset viewport like a live map would (see
+  // applyEdgeInsets for why padding can't be used)
+  private fun setStaticEdgeInsets(edgeInsets: EdgeInsets) {
+    val oldInsets = this.edgeInsets
+    this.edgeInsets = edgeInsets
+    applyEdgeInsets()
+
+    val map = googleMap
+    if (map != null && oldInsets != edgeInsets) {
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+      positionLiveMarkers()
+    }
+  }
+
+  private fun staticCameraTarget(): LatLng {
+    val offsetX = (edgeInsets.left - edgeInsets.right) / 2.0
+    val offsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0
+    if (offsetX == 0.0 && offsetY == 0.0) return LatLng(initialLatitude, initialLongitude)
+
+    // Web mercator world size in px at the initial zoom
+    val worldSize = 256f.dpToPx().toDouble() * 2.0.pow(initialZoom.toDouble())
+    val sinLat = sin(Math.toRadians(initialLatitude))
+    val x = (initialLongitude + 180.0) / 360.0 - offsetX / worldSize
+    val y = 0.5 - ln((1.0 + sinLat) / (1.0 - sinLat)) / (4.0 * Math.PI) - offsetY / worldSize
+    return LatLng(Math.toDegrees(atan(sinh(Math.PI * (1.0 - 2.0 * y)))), x * 360.0 - 180.0)
   }
 
   private fun applyWatermarkTranslation(insets: EdgeInsets, duration: Int = 0) {
@@ -1350,5 +1425,9 @@ class GoogleMapProvider(private val context: Context) :
 
   companion object {
     const val DEMO_MAP_ID = "DEMO_MAP_ID"
+
+    // Undocumented cap on the lite mode bitmap (2048 minus a 2px border,
+    // measured empirically)
+    private const val LITE_MODE_MAX_SIZE = 2046
   }
 }
