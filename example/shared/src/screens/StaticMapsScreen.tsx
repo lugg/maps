@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, View } from 'react-native';
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import {
   MapProvider,
   MapView,
@@ -121,6 +128,80 @@ const constellationPoints = (
   });
 };
 
+// Extra markers shown for the 'multiple' use-case, offset from the center
+const multipleMarkerCoordinates = (coordinate: Coordinate): Coordinate[] => [
+  {
+    latitude: coordinate.latitude + 0.003,
+    longitude: coordinate.longitude - 0.004,
+  },
+  {
+    latitude: coordinate.latitude - 0.002,
+    longitude: coordinate.longitude + 0.004,
+  },
+];
+
+// Every coordinate rendered on a place's map (markers + constellation),
+// used to fit the camera around the content
+const placeCoordinates = (place: StaticPlace): Coordinate[] => {
+  const coordinates = [
+    place.coordinate,
+    ...constellationPoints(place.coordinate, seedFromId(place.id)),
+  ];
+  if (place.markerType === 'multiple') {
+    coordinates.push(...multipleMarkerCoordinates(place.coordinate));
+  }
+  return coordinates;
+};
+
+const mercatorX = (longitude: number) => (longitude + 180) / 360;
+const mercatorY = (latitude: number) =>
+  (1 - Math.asinh(Math.tan((latitude * Math.PI) / 180)) / Math.PI) / 2;
+
+// Camera that fits the coordinates in the given view size, derived up
+// front so static maps center their content without imperative commands.
+// Matches the native static framing: Google shows the world 256 * 2^zoom
+// points wide; Apple fits a square span rect to the view's short side
+// (see LuggStaticFittedMapRect)
+const fittedCamera = (
+  coordinates: Coordinate[],
+  provider: MapProviderType,
+  size: { width: number; height: number },
+  padding: number
+): { coordinate: Coordinate; zoom: number } => {
+  const xs = coordinates.map((c) => mercatorX(c.longitude));
+  const ys = coordinates.map((c) => mercatorY(c.latitude));
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const centerY = (minY + maxY) / 2;
+  const coordinate = {
+    latitude:
+      (Math.atan(Math.sinh(Math.PI * (1 - 2 * centerY))) * 180) / Math.PI,
+    longitude: ((minX + maxX) / 2) * 360 - 180,
+  };
+
+  // World fraction per view point at which the bounds fit the padded view
+  const scale = Math.max(
+    (maxX - minX) / Math.max(size.width - padding * 2, 1),
+    (maxY - minY) / Math.max(size.height - padding * 2, 1)
+  );
+
+  const zoom =
+    provider === 'apple'
+      ? 0.5 +
+        Math.log2(
+          1 /
+            (scale *
+              Math.min(size.width, size.height) *
+              Math.cos((coordinate.latitude * Math.PI) / 180))
+        )
+      : Math.log2(1 / (256 * scale));
+
+  return { coordinate, zoom };
+};
+
 const PlaceConstellation = ({ place }: { place: StaticPlace }) => {
   const points = constellationPoints(place.coordinate, seedFromId(place.id));
   return (
@@ -149,25 +230,17 @@ const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
       return <MarkerText coordinate={coordinate} text={markerText} />;
     case 'image':
       return <MarkerImage coordinate={coordinate} source={{ uri: imageUrl }} />;
-    case 'multiple':
+    case 'multiple': {
+      const [textCoordinate, iconCoordinate] =
+        multipleMarkerCoordinates(coordinate);
       return (
         <>
           <Marker coordinate={coordinate} />
-          <MarkerText
-            coordinate={{
-              latitude: coordinate.latitude + 0.003,
-              longitude: coordinate.longitude - 0.004,
-            }}
-            text={markerText}
-          />
-          <MarkerIcon
-            coordinate={{
-              latitude: coordinate.latitude - 0.002,
-              longitude: coordinate.longitude + 0.004,
-            }}
-          />
+          <MarkerText coordinate={textCoordinate!} text={markerText} />
+          <MarkerIcon coordinate={iconCoordinate!} />
         </>
       );
+    }
     default:
       return <Marker coordinate={coordinate} />;
   }
@@ -188,6 +261,14 @@ const PlaceCard = ({
   onSelect?: (place: StaticPlace) => void;
 }) => {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+
+  const camera = fittedCamera(
+    placeCoordinates(place),
+    provider,
+    { width: width - sizes.lg * 2, height: MAP_HEIGHT },
+    16
+  );
 
   return (
     <Pressable
@@ -205,8 +286,8 @@ const PlaceCard = ({
           staticKey={place.id}
           style={StyleSheet.absoluteFill}
           provider={provider}
-          initialCoordinate={place.coordinate}
-          initialZoom={14}
+          initialCoordinate={camera.coordinate}
+          initialZoom={camera.zoom}
         >
           <PlaceMarkers place={place} />
           <PlaceConstellation place={place} />
@@ -262,6 +343,8 @@ export const StaticMapsScreen = ({
   );
 };
 
+const MAP_HEIGHT = 140;
+
 const styles = StyleSheet.create({
   list: {
     padding: sizes.lg,
@@ -276,7 +359,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   map: {
-    height: 140,
+    height: MAP_HEIGHT,
   },
   cardContent: {
     padding: sizes.lg,
