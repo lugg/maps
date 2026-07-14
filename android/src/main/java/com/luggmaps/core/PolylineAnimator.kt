@@ -16,12 +16,19 @@ class PolylineAnimator {
   companion object {
     private const val MAX_ANIMATION_SPANS = 16
     private const val MAX_GRADIENT_SPANS = 512
+
+    // Cap polyline updates to ~60fps; every update crosses Binder into the
+    // maps renderer, and 120Hz displays double that churn (CONSUMER-APP-44Y)
+    private const val MIN_UPDATE_INTERVAL_NANOS = 16_000_000L
   }
 
   var polyline: Polyline? = null
   var coordinates: List<LatLng> = emptyList()
     set(value) {
-      if (field === value) return
+      // Structural equality: Fabric delivers a new list instance on every
+      // commit, so identity checks never match and the full route would be
+      // re-parceled across Binder even when unchanged
+      if (field == value) return
       field = value
       dirty = true
       if (animated && animator != null) {
@@ -30,11 +37,22 @@ class PolylineAnimator {
     }
   var strokeColors: List<Int> = listOf(Color.BLACK)
     set(value) {
-      if (field === value) return
+      if (field == value) return
       field = value
       dirty = true
     }
   var strokeWidth: Float = 1f
+    set(value) {
+      if (field == value) return
+      field = value
+      polyline?.width = value
+    }
+  var zIndex: Float = 0f
+    set(value) {
+      if (field == value) return
+      field = value
+      polyline?.zIndex = value
+    }
   var animatedOptions: AnimatedOptions = AnimatedOptions()
     set(value) {
       if (field == value) return
@@ -58,6 +76,8 @@ class PolylineAnimator {
 
   private var animator: ValueAnimator? = null
   private var animationProgress: Float = 0f
+  private var lastUpdateNanos: Long = 0L
+  private var lastAppliedColor: Int? = null
   private var cumulativeDistances: FloatArray = floatArrayOf()
   private var totalLength: Float = 0f
   private var dirty: Boolean = true
@@ -91,8 +111,11 @@ class PolylineAnimator {
 
     if (strokeColors.size > 1) {
       applyGradientSpans(poly)
+      lastAppliedColor = null
     } else {
-      poly.color = strokeColors.firstOrNull() ?: Color.BLACK
+      val color = strokeColors.firstOrNull() ?: Color.BLACK
+      poly.color = color
+      lastAppliedColor = color
     }
   }
 
@@ -111,6 +134,9 @@ class PolylineAnimator {
       interpolator = LinearInterpolator()
       addUpdateListener { animation ->
         animationProgress = animation.animatedValue as Float
+        val now = System.nanoTime()
+        if (now - lastUpdateNanos < MIN_UPDATE_INTERVAL_NANOS) return@addUpdateListener
+        lastUpdateNanos = now
         updateAnimatedPolyline()
       }
       start()
@@ -182,6 +208,7 @@ class PolylineAnimator {
   private fun stopAnimation() {
     animator?.cancel()
     animator = null
+    lastUpdateNanos = 0L
   }
 
   fun pause() {
@@ -222,6 +249,7 @@ class PolylineAnimator {
     if (headDist <= tailDist) {
       val point = coordinates.firstOrNull() ?: LatLng(0.0, 0.0)
       poly.color = strokeColors.firstOrNull() ?: Color.BLACK
+      lastAppliedColor = null
       poly.points = listOf(point, point)
       return
     }
@@ -246,12 +274,13 @@ class PolylineAnimator {
 
     if (reusablePoints.size < 2) return
 
-    // Clear spans before setting points to prevent IndexOutOfBoundsException
-    // when the new points list is shorter than what existing spans reference
-    poly.color = strokeColors.firstOrNull() ?: Color.BLACK
-    poly.points = reusablePoints
-
     if (strokeColors.size > 1) {
+      // Clear spans before setting points to prevent IndexOutOfBoundsException
+      // when the new points list is shorter than what existing spans reference
+      poly.color = strokeColors.firstOrNull() ?: Color.BLACK
+      lastAppliedColor = null
+      poly.points = reusablePoints
+
       val segmentCount = reusablePoints.size - 1
       val spanCount = min(segmentCount, MAX_ANIMATION_SPANS)
       val segmentsPerSpan = segmentCount.toDouble() / spanCount
@@ -263,6 +292,13 @@ class PolylineAnimator {
         reusableSpans.add(StyleSpan(StrokeStyle.colorBuilder(color).build(), segmentsPerSpan))
       }
       poly.setSpans(reusableSpans)
+    } else {
+      val color = strokeColors.firstOrNull() ?: Color.BLACK
+      if (lastAppliedColor != color) {
+        poly.color = color
+        lastAppliedColor = color
+      }
+      poly.points = reusablePoints
     }
   }
 
