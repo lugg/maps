@@ -867,13 +867,11 @@ class GoogleMapProvider(private val context: Context) :
       return
     }
 
-    polylineView.polyline?.width = polylineView.strokeWidth.dpToPx()
-    polylineView.polyline?.zIndex = polylineView.zIndex
-
     polylineAnimators[polylineView]?.apply {
       coordinates = polylineView.coordinates
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
+      zIndex = polylineView.zIndex
       animatedOptions = polylineView.animatedOptions
       animated = polylineView.animated && !staticMode
       update()
@@ -903,6 +901,7 @@ class GoogleMapProvider(private val context: Context) :
       coordinates = polylineView.coordinates
       strokeColors = polylineView.strokeColors
       strokeWidth = polylineView.strokeWidth.dpToPx()
+      zIndex = polylineView.zIndex
       animatedOptions = polylineView.animatedOptions
       // Static maps render once; show the full polyline instead of animating
       animated = polylineView.animated && !staticMode
