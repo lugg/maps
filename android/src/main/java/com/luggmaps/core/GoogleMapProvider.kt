@@ -5,6 +5,7 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.ImageView
 import androidx.core.graphics.createBitmap
 import androidx.core.view.ViewCompat
@@ -135,6 +136,13 @@ class GoogleMapProvider(private val context: Context) :
   private var insetAdjustment: String = "never"
   private var systemInsets: EdgeInsets = EdgeInsets()
 
+  // The maps renderer adds and positions the watermark asynchronously; the
+  // layout listener re-evaluates the translation on every layout pass
+  private var watermarkLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+  private var watermarkView: View? = null
+  private var watermarkTargetX = 0f
+  private var watermarkTargetY = 0f
+
   // region MapProvider
 
   override fun initializeMap(wrapperView: View, latitude: Double, longitude: Double, zoom: Float) {
@@ -183,6 +191,7 @@ class GoogleMapProvider(private val context: Context) :
   override fun destroy() {
     wrapperView?.onLayoutReady = null
     detachWindowInsetsListener()
+    detachWatermarkLayoutListener()
     context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
     for (markerView in liveMarkerViews) {
@@ -237,6 +246,11 @@ class GoogleMapProvider(private val context: Context) :
       }
     }
 
+    // Padding must be in place before the initial camera move: setPadding
+    // never repositions the current camera, but camera updates after it are
+    // relative to the padded center
+    applyEdgeInsets()
+
     val position = if (staticMode) staticCameraTarget() else LatLng(initialLatitude, initialLongitude)
     map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))
 
@@ -260,7 +274,6 @@ class GoogleMapProvider(private val context: Context) :
 
     applyUiSettings()
     applyZoomLimits()
-    applyEdgeInsets()
     applyInsetAdjustment()
     applyTheme()
     applyUserLocation()
@@ -1430,27 +1443,74 @@ class GoogleMapProvider(private val context: Context) :
   // World size in px at the given zoom
   private fun mercatorWorldSize(zoom: Float): Double = 256f.dpToPx().toDouble() * 2.0.pow(zoom.toDouble())
 
+  // Whether the renderer repositions the watermark for setPadding varies by
+  // renderer version and by whether the watermark existed when padding was
+  // set (and lite mode never applies padding). Measure where layout actually
+  // placed it and translate only for the remainder.
   private fun applyWatermarkTranslation(insets: EdgeInsets, duration: Int = 0) {
     val view = mapView ?: return
-    view.findViewByTag("GoogleWatermark")?.let { watermark ->
-      val targetY = -insets.bottom.toFloat()
-      val targetX = insets.left.toFloat()
-      if (duration > 0) {
-        watermark.animate()
-          .translationY(targetY)
-          .translationX(targetX)
-          .setDuration(duration.toLong())
-          .start()
-      } else if (duration < 0) {
-        watermark.animate()
-          .translationY(targetY)
-          .translationX(targetX)
-          .start()
-      } else {
-        watermark.translationY = targetY
-        watermark.translationX = targetX
-      }
+    attachWatermarkLayoutListener()
+
+    if (view.height == 0) return
+    val watermark = view.findViewByTag("GoogleWatermark") ?: return
+
+    // Layout position relative to the map view, excluding translation
+    var left = 0
+    var top = 0
+    var current: View? = watermark
+    while (current != null && current !== view) {
+      left += current.left
+      top += current.top
+      current = current.parent as? View
     }
+    if (current == null) return
+
+    val bottomGap = view.height - (top + watermark.height)
+    val targetY = if (bottomGap >= insets.bottom) 0f else -insets.bottom.toFloat()
+    val targetX = if (left >= insets.left) 0f else insets.left.toFloat()
+
+    // Skip when already applied (or animating) toward this target so layout
+    // passes don't snap an in-flight animation
+    if (watermark === watermarkView && targetX == watermarkTargetX && targetY == watermarkTargetY) {
+      return
+    }
+    watermarkView = watermark
+    watermarkTargetX = targetX
+    watermarkTargetY = targetY
+
+    if (duration > 0) {
+      watermark.animate()
+        .translationY(targetY)
+        .translationX(targetX)
+        .setDuration(duration.toLong())
+        .start()
+    } else if (duration < 0) {
+      watermark.animate()
+        .translationY(targetY)
+        .translationX(targetX)
+        .start()
+    } else {
+      watermark.translationY = targetY
+      watermark.translationX = targetX
+    }
+  }
+
+  private fun attachWatermarkLayoutListener() {
+    if (watermarkLayoutListener != null) return
+    val view = mapView ?: return
+
+    val listener = ViewTreeObserver.OnGlobalLayoutListener {
+      applyWatermarkTranslation(combinedEdgeInsets())
+    }
+    watermarkLayoutListener = listener
+    view.viewTreeObserver.addOnGlobalLayoutListener(listener)
+  }
+
+  private fun detachWatermarkLayoutListener() {
+    watermarkView = null
+    val listener = watermarkLayoutListener ?: return
+    watermarkLayoutListener = null
+    mapView?.viewTreeObserver?.takeIf { it.isAlive }?.removeOnGlobalLayoutListener(listener)
   }
 
   private fun attachWindowInsetsListener() {
