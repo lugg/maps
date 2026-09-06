@@ -15,6 +15,7 @@ import { CodeSample } from '@/components/code-sample';
 import { GithubIcon } from '@/components/github-icon';
 import { InstallCommand } from '@/components/install-command';
 import { Logo } from '@/components/logo';
+import { MapIllustration } from '@/components/map-illustration';
 import { GITHUB_URL } from '@/lib/layout.shared';
 import {
   createMetadata,
@@ -24,11 +25,16 @@ import {
 } from '@/lib/metadata';
 import pkg from '../../../package.json';
 
-export const metadata = createMetadata({
-  title: `${SITE_NAME} · Universal maps for React Native`,
-  description: SITE_DESCRIPTION,
-  path: '/',
-});
+const HOME_TITLE = `${SITE_NAME} · Universal maps for React Native`;
+
+export const metadata = {
+  ...createMetadata({
+    title: HOME_TITLE,
+    description: SITE_DESCRIPTION,
+    path: '/',
+  }),
+  title: { absolute: HOME_TITLE },
+};
 
 const JSON_LD = [
   {
@@ -248,9 +254,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-6 py-20 md:py-28">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-          <div className="order-2 lg:order-1">
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden
+          className="map-bg pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] lg:block"
+        >
+          <MapIllustration className="h-full w-full" />
+        </div>
+        <div className="relative mx-auto w-full max-w-6xl px-6 py-20 md:py-28">
+          <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-wider text-fd-primary">
               Declarative
             </p>
@@ -264,20 +276,6 @@ export default function HomePage() {
             </p>
             <div className="mt-8 text-sm">
               <CodeSample code={USAGE} title="Map.tsx" />
-            </div>
-          </div>
-          <div className="order-1 lg:order-2">
-            <div className="relative">
-              <div className="overflow-hidden rounded-3xl border border-fd-border bg-fd-card shadow-xl">
-                <img
-                  src="/preview.gif"
-                  alt="@lugg/maps demo showing markers, polylines, and callouts on a live map"
-                  width={720}
-                  height={600}
-                  className="block h-auto w-full"
-                  loading="lazy"
-                />
-              </div>
             </div>
           </div>
         </div>

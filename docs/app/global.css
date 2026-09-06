@@ -21,6 +21,44 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
+.map-bg {
+  mask-image: linear-gradient(to right, transparent 0%, black 45%),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 18%,
+      black 82%,
+      transparent 100%
+    );
+  mask-composite: intersect;
+}
+
+.map-route {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: map-route-draw 6s ease-in-out infinite;
+}
+
+@keyframes map-route-draw {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  45%,
+  70% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-route {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 .hero-bg::before {
   content: '';
   position: absolute;
