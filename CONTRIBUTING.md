@@ -137,6 +137,11 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn expo start`: start the Metro server for the Expo example app.
 - `yarn expo android`: run the Expo example app on Android.
 - `yarn expo ios`: run the Expo example app on iOS.
+- `yarn docs dev`: start the documentation site locally.
+
+### Documentation
+
+The documentation site lives in `docs/` and is built with [Next.js](https://nextjs.org/) and [Fumadocs](https://fumadocs.dev/). Pages are MDX files in `docs/content/docs/`. When you change a component or API, update the matching page there. The site deploys to [maps.lodev09.com](https://maps.lodev09.com).
 
 ### Sending a pull request
 

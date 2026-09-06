@@ -1,0 +1,46 @@
+---
+title: Introduction
+description: Universal maps for your React Native apps.
+---
+
+`@lugg/maps` brings native **Apple Maps** and **Google Maps** to React Native. It is built for the New Architecture (Fabric) and ships with first-class web support, so one `MapView` runs on iOS, Android, and the browser.
+
+<Callout type="warn">
+  This library is currently under heavy development. APIs may change without notice.
+</Callout>
+
+## Features
+
+- **Native providers** - Apple Maps (MapKit) and Google Maps SDK on iOS, Google Maps SDK on Android, Google Maps JavaScript API on web.
+- **Fabric first** - Built on the New Architecture with Codegen specs. No bridge.
+- **Markers** - Native pins or any React view, with callouts, drag gestures, rotation, and scaling.
+- **Shapes** - Polylines with gradient strokes and snake animation, polygons with holes, and circles.
+- **Overlays** - Ground image overlays and custom tile layers.
+- **GeoJSON** - Render FeatureCollections directly with simplestyle-spec styling.
+- **Static maps** - Non-interactive snapshots optimized for long lists.
+- **Camera control** - Imperative `moveCamera`, `fitCoordinates`, and `setEdgeInsets` with animation.
+
+## Platform support
+
+| Platform | Providers                              |
+| -------- | -------------------------------------- |
+| iOS      | Apple Maps (default), Google Maps      |
+| Android  | Google Maps                            |
+| Web      | Google Maps via `@vis.gl/react-google-maps` |
+
+## Next steps
+
+<Cards>
+  <Card href="/docs/installation" title="Installation">
+    Install the package and configure API keys for Expo, bare React Native, and web.
+  </Card>
+  <Card href="/docs/usage" title="Usage">
+    Render your first map with markers and shapes.
+  </Card>
+  <Card href="/docs/components/map-view" title="MapView">
+    Props, camera methods, events, and static maps.
+  </Card>
+  <Card href="/docs/components/marker" title="Marker">
+    Custom marker views, callouts, and dragging.
+  </Card>
+</Cards>

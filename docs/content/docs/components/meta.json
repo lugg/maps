@@ -1,0 +1,13 @@
+{
+  "title": "Components",
+  "pages": [
+    "map-view",
+    "marker",
+    "polyline",
+    "polygon",
+    "circle",
+    "geojson",
+    "ground-overlay",
+    "tile-overlay"
+  ]
+}

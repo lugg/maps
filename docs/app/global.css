@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/ocean.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --color-fd-primary: hsl(217, 76%, 54%);
+  --color-fd-primary-foreground: hsl(0, 0%, 100%);
+}
+
+.dark {
+  --color-fd-primary: hsl(217, 100%, 68%);
+  --color-fd-primary-foreground: hsl(220, 40%, 10%);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-fd-foreground) 14%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}

@@ -1,0 +1,97 @@
+---
+title: Installation
+description: Install @lugg/maps and configure your Google Maps API keys.
+---
+
+## Install the package
+
+```package-install
+@lugg/maps
+```
+
+Apple Maps works out of the box on iOS. Google Maps requires an API key on every platform. Create keys in the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis) with the Maps SDK for iOS, Maps SDK for Android, and Maps JavaScript API enabled.
+
+## Configure API keys
+
+<Tabs items={['Expo', 'Bare React Native', 'Web']}>
+  <Tab value="Expo">
+    Add the config plugin to your `app.json`:
+
+    ```json title="app.json"
+    {
+      "expo": {
+        "plugins": [
+          [
+            "@lugg/maps",
+            {
+              "iosGoogleMapsApiKey": "YOUR_IOS_API_KEY",
+              "androidGoogleMapsApiKey": "YOUR_ANDROID_API_KEY"
+            }
+          ]
+        ]
+      }
+    }
+    ```
+
+    Then rebuild your native project:
+
+    ```sh
+    npx expo prebuild --clean
+    ```
+  </Tab>
+  <Tab value="Bare React Native">
+    ### iOS
+
+    Add your Google Maps API key to `AppDelegate.swift`:
+
+    ```swift title="AppDelegate.swift"
+    import GoogleMaps
+
+    // In application(_:didFinishLaunchingWithOptions:)
+    GMSServices.provideAPIKey("YOUR_API_KEY")
+    ```
+
+    Then install pods:
+
+    ```sh
+    cd ios && pod install
+    ```
+
+    ### Android
+
+    Add your Google Maps API key to `AndroidManifest.xml`:
+
+    ```xml title="AndroidManifest.xml"
+    <application>
+      <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="YOUR_API_KEY" />
+    </application>
+    ```
+  </Tab>
+  <Tab value="Web">
+    Web rendering uses [`@vis.gl/react-google-maps`](https://visgl.github.io/react-google-maps/). Install it as a peer dependency:
+
+    ```package-install
+    @vis.gl/react-google-maps
+    ```
+
+    Wrap your app with `MapProvider` and pass your Google Maps API key:
+
+    ```tsx title="App.tsx"
+    import { MapProvider } from '@lugg/maps';
+
+    function App() {
+      return (
+        <MapProvider apiKey="YOUR_WEB_API_KEY">
+          {/* Your app */}
+        </MapProvider>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  This library uses the New Architecture (Fabric). Make sure it is enabled in your project. It is on by default in React Native 0.76+ and Expo SDK 52+.
+</Callout>
