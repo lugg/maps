@@ -6,7 +6,7 @@
 2. YOU MUST NOT commit changes yourself until I explicitly tell you to.
 3. YOU MUST NOT create summary documents unless you are told to.
 4. YOU MUST NOT add code comments that are obvious.
-5. Always update relevant docs in `docs/` when making changes to components or APIs.
+5. Always update relevant docs in `docs/content/docs/` (MDX) when making changes to components or APIs.
 
 ## Project Overview
 
@@ -24,6 +24,8 @@ ios/                 # iOS native (Objective-C)
 android/             # Android native (Kotlin)
 plugin/              # Expo config plugin
 example/bare/        # Bare React Native example app
+docs/                # Documentation site (Next.js + Fumadocs), deployed to maps.lodev09.com
+docs/content/docs/   # MDX documentation pages
 ```
 
 ### Creating a Pull Request

@@ -42,6 +42,7 @@
   "scripts": {
     "bare": "yarn workspace @lugg/bare-example",
     "expo": "yarn workspace @lugg/expo-example",
+    "docs": "yarn workspace @lugg/docs",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint --fix \"**/*.{ts,tsx}\"",
@@ -118,7 +119,8 @@
   "workspaces": [
     "example/bare",
     "example/expo",
-    "example/shared"
+    "example/shared",
+    "docs"
   ],
   "packageManager": "yarn@4.11.0",
   "react-native-builder-bob": {
@@ -164,6 +166,7 @@
     "preset": "@react-native/jest-preset",
     "modulePathIgnorePatterns": [
       "<rootDir>/example/bare/node_modules",
+      "<rootDir>/docs/",
       "<rootDir>/lib/"
     ]
   },

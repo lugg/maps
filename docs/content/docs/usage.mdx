@@ -1,0 +1,125 @@
+---
+title: Usage
+description: Render your first map with markers and shapes.
+---
+
+## Basic map
+
+Render a `MapView` and give it a size. Children are drawn on the map.
+
+```tsx
+import { MapView, Marker, Polyline, Polygon } from '@lugg/maps';
+
+export function Map() {
+  return (
+    <MapView
+      style={{ flex: 1 }}
+      provider="google"
+      initialCoordinate={{ latitude: 37.7749, longitude: -122.4194 }}
+      initialZoom={12}
+    >
+      <Marker
+        coordinate={{ latitude: 37.7749, longitude: -122.4194 }}
+        title="San Francisco"
+      />
+      <Polyline
+        coordinates={[
+          { latitude: 37.7749, longitude: -122.4194 },
+          { latitude: 37.8049, longitude: -122.4094 },
+        ]}
+        strokeWidth={3}
+      />
+      <Polygon
+        coordinates={[
+          { latitude: 37.784, longitude: -122.428 },
+          { latitude: 37.784, longitude: -122.422 },
+          { latitude: 37.779, longitude: -122.422 },
+          { latitude: 37.779, longitude: -122.428 },
+        ]}
+        fillColor="rgba(66, 133, 244, 0.3)"
+        strokeColor="#4285F4"
+        strokeWidth={2}
+      />
+    </MapView>
+  );
+}
+```
+
+## Choosing a provider
+
+The `provider` prop defaults to `'apple'` on iOS and `'google'` on Android. Set it explicitly to use Google Maps on iOS:
+
+```tsx
+<MapView provider="google" />
+```
+
+Apple Maps is iOS only. On Android and web the provider is always Google Maps.
+
+## Controlling the camera
+
+Use a ref to move the camera imperatively:
+
+```tsx
+import { useRef } from 'react';
+import { MapView, type MapViewRef } from '@lugg/maps';
+
+export function Map() {
+  const mapRef = useRef<MapViewRef>(null);
+
+  const goToSF = () => {
+    mapRef.current?.moveCamera(
+      { latitude: 37.7749, longitude: -122.4194 },
+      { zoom: 15, duration: 500 }
+    );
+  };
+
+  return <MapView ref={mapRef} style={{ flex: 1 }} onReady={goToSF} />;
+}
+```
+
+See [MapView](./components/map-view.mdx#ref-methods) for `fitCoordinates` and `setEdgeInsets`.
+
+## Responding to events
+
+```tsx
+<MapView
+  style={{ flex: 1 }}
+  onPress={(e) => console.log('pressed', e.nativeEvent.coordinate)}
+  onCameraIdle={(e) => console.log('zoom', e.nativeEvent.zoom)}
+/>
+```
+
+## Maps in lists
+
+Mounting many live maps is expensive. Use `staticMode` to render lightweight, non-interactive snapshots inside `FlatList` rows:
+
+```tsx
+<MapView
+  staticMode
+  staticKey={place.id}
+  style={{ height: 140 }}
+  initialCoordinate={place.coordinate}
+  initialZoom={14}
+>
+  <Marker coordinate={place.coordinate} />
+</MapView>
+```
+
+Read more in [Static Maps](./components/map-view.mdx#static-maps).
+
+## Next steps
+
+<Cards>
+  <Card href="/docs/components/map-view" title="MapView">
+    All props, ref methods, and events.
+  </Card>
+  <Card href="/docs/components/marker" title="Marker">
+    Custom views, callouts, and dragging.
+  </Card>
+  <Card href="/docs/components/polyline" title="Polyline">
+    Gradient strokes and snake animation.
+  </Card>
+  <Card href="/docs/components/geojson" title="GeoJson">
+    Render GeoJSON feature collections.
+  </Card>
+</Cards>
