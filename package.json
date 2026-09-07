@@ -51,7 +51,8 @@
     "clean": "scripts/clean.sh",
     "prepare": "bob build && yarn build:plugin",
     "build:plugin": "tsc --project plugin",
-    "release": "release-it --preRelease=beta"
+    "release": "release-it",
+    "release:beta": "yarn release --preRelease=beta --no-github.release"
   },
   "keywords": [
     "react-native",
