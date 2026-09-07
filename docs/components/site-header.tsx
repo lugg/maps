@@ -10,7 +10,7 @@ import {
   type BaseSlots,
   type LinkItemType,
 } from 'fumadocs-ui/layouts/shared';
-import type { ComponentProps, ReactNode } from 'react';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 
 interface SiteHeaderProps extends ComponentProps<'header'> {
   navItems: LinkItemType[];
@@ -19,6 +19,22 @@ interface SiteHeaderProps extends ComponentProps<'header'> {
   activeUrl?: string;
   /** Rendered on small screens in place of the inline links. */
   menu?: ReactNode;
+  /** Start transparent, fade in the background once the page is scrolled. */
+  transparent?: boolean;
+}
+
+function useScrolled(enabled: boolean) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [enabled]);
+
+  return scrolled;
 }
 
 export const hasUrl = (
@@ -31,10 +47,13 @@ export function SiteHeader({
   slots,
   activeUrl,
   menu,
+  transparent = false,
   className,
   ...props
 }: SiteHeaderProps) {
   const pathname = usePathname();
+  const scrolled = useScrolled(transparent);
+  const solid = !transparent || scrolled;
   const links = navItems.filter(
     (item) => hasUrl(item) && item.type !== 'icon'
   );
@@ -46,7 +65,8 @@ export function SiteHeader({
     <header
       {...props}
       className={clsx(
-        'sticky z-40 h-14 bg-fd-background/80 backdrop-blur-lg',
+        'sticky z-40 h-14 transition-colors duration-300',
+        solid ? 'bg-fd-background/80 backdrop-blur-lg' : 'bg-transparent',
         className
       )}
     >

@@ -21,6 +21,7 @@ export function HomeHeader(props: ComponentProps<'header'>) {
       navItems={navItems}
       slots={slots}
       className="top-0"
+      transparent
       menu={
         <Popover>
           <PopoverTrigger

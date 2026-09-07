@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -190,57 +191,88 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
-      <section className="relative overflow-hidden border-b border-fd-border">
+      <section className="relative -mt-14 overflow-hidden border-b border-fd-border pt-14">
+        <div aria-hidden className="hero-grid absolute inset-0" />
+        <div aria-hidden className="hero-glow absolute inset-0" />
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-20 pt-24 text-center md:pb-28 md:pt-32">
           <Link
             href={`${GITHUB_URL}/releases`}
-            className="mb-8 inline-flex items-center gap-2 rounded-full border border-fd-primary/30 bg-fd-primary/10 px-3 py-1 text-xs font-medium text-fd-primary transition-colors hover:bg-fd-primary/15"
+            className="hero-in mb-8 inline-flex items-center gap-2 rounded-full border border-fd-primary/30 bg-fd-primary/10 px-3 py-1 text-xs font-medium text-fd-primary backdrop-blur transition-colors hover:bg-fd-primary/15"
           >
-            <span className="size-1.5 rounded-full bg-fd-primary" />
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-fd-primary opacity-75 motion-reduce:hidden" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-fd-primary" />
+            </span>
             {`v${pkg.version}`}
             <span className="text-fd-primary/60">·</span>
             New Architecture ready
           </Link>
 
-          <Logo className="mb-6 size-16" />
+          <div
+            className="hero-in relative mb-6"
+            style={{ '--hero-delay': '80ms' } as CSSProperties}
+          >
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 scale-150 rounded-full bg-fd-primary/30 blur-2xl"
+            />
+            <Logo className="size-16 drop-shadow-lg" />
+          </div>
 
-          <h1 className="max-w-3xl text-balance text-4xl font-bold tracking-tight text-fd-foreground sm:text-5xl md:text-6xl">
+          <h1
+            className="hero-in max-w-3xl text-balance text-4xl font-bold tracking-tight text-fd-foreground sm:text-5xl md:text-6xl"
+            style={{ '--hero-delay': '160ms' } as CSSProperties}
+          >
             Universal maps for{' '}
-            <span className="text-fd-primary">React Native</span>
+            <span className="hero-accent bg-clip-text text-transparent">
+              React Native
+            </span>
           </h1>
 
-          <p className="mt-6 max-w-2xl text-balance text-lg text-fd-muted-foreground md:text-xl">
+          <p
+            className="hero-in mt-6 max-w-2xl text-balance text-lg text-fd-muted-foreground md:text-xl"
+            style={{ '--hero-delay': '240ms' } as CSSProperties}
+          >
             One <code className="font-mono text-fd-foreground">MapView</code>{' '}
             for Apple Maps and Google Maps on iOS, Android, and Web. Markers,
             shapes, overlays, GeoJSON, and static maps, all native.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+          <div
+            className="hero-in mt-10 flex flex-col items-center gap-4 sm:flex-row"
+            style={{ '--hero-delay': '320ms' } as CSSProperties}
+          >
             <Link
               href="/intro"
-              className="inline-flex h-11 items-center gap-2 rounded-full bg-fd-primary px-6 text-sm font-semibold text-fd-primary-foreground transition-opacity hover:opacity-90"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-fd-primary px-6 text-sm font-semibold text-fd-primary-foreground shadow-lg shadow-fd-primary/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-fd-primary/40"
             >
               Get started
               <ArrowRight className="size-4" />
             </Link>
             <Link
               href={GITHUB_URL}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-fd-border bg-fd-card/70 px-6 text-sm font-semibold text-fd-foreground backdrop-blur transition-colors hover:bg-fd-accent"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-fd-border bg-fd-card/70 px-6 text-sm font-semibold text-fd-foreground backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-fd-accent"
             >
               <GithubIcon className="size-4" />
               GitHub
             </Link>
           </div>
 
-          <div className="mt-6">
+          <div
+            className="hero-in mt-6"
+            style={{ '--hero-delay': '400ms' } as CSSProperties}
+          >
             <InstallCommand command="npm install @lugg/maps" />
           </div>
 
-          <dl className="mt-14 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+          <dl
+            className="hero-in mt-14 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3"
+            style={{ '--hero-delay': '480ms' } as CSSProperties}
+          >
             {PLATFORMS.map((platform) => (
               <div
                 key={platform.name}
-                className="rounded-2xl border border-fd-border bg-fd-card/60 px-4 py-3 text-left backdrop-blur"
+                className="rounded-2xl border border-fd-border bg-fd-card/60 px-4 py-3 text-left backdrop-blur transition-colors hover:border-fd-primary/40"
               >
                 <dt className="text-sm font-semibold text-fd-foreground">
                   {platform.name}
