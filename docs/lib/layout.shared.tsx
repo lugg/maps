@@ -2,24 +2,25 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { Logo } from '@/components/logo';
 
 export const GITHUB_URL = 'https://github.com/lugg/maps';
+export const DOCS_URL = '/docs';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: (
-        <span className="inline-flex items-center gap-2 font-semibold">
-          <Logo className="size-5" />
-          @lugg/maps
-        </span>
+        <>
+          <Logo className="size-6" />
+          <span className="font-semibold tracking-tight">@lugg/maps</span>
+        </>
       ),
-      transparentMode: 'top',
     },
     githubUrl: GITHUB_URL,
     links: [
+      { text: 'Docs', url: DOCS_URL, active: 'none' },
       {
-        text: 'Docs',
-        url: '/docs',
-        active: 'nested-url',
+        text: 'Example',
+        url: `${GITHUB_URL}/tree/main/example`,
+        external: true,
       },
     ],
   };

@@ -3877,6 +3877,7 @@ __metadata:
     "@types/mdx": "npm:^2.0.14"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.5"
+    clsx: "npm:^2.1.1"
     fumadocs-core: "npm:^16.15.7"
     fumadocs-mdx: "npm:^15.4.0"
     fumadocs-ui: "npm:^16.15.7"

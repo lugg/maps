@@ -9,6 +9,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "fumadocs-core": "^16.15.7",
     "fumadocs-mdx": "^15.4.0",
     "fumadocs-ui": "^16.15.7",

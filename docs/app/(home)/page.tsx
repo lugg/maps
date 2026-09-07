@@ -190,7 +190,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
       />
-      <section className="hero-bg relative overflow-hidden border-b border-fd-border">
+      <section className="relative overflow-hidden border-b border-fd-border">
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-20 pt-24 text-center md:pb-28 md:pt-32">
           <Link
             href={`${GITHUB_URL}/releases`}
