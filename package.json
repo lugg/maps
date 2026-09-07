@@ -68,7 +68,7 @@
   "bugs": {
     "url": "https://github.com/lugg/maps/issues"
   },
-  "homepage": "https://github.com/lugg/maps#readme",
+  "homepage": "https://maps.lodev09.com",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
