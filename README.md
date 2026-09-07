@@ -8,13 +8,13 @@ Universal maps for your React Native apps 📍
 
 Full documentation lives at **[maps.lodev09.com](https://maps.lodev09.com)**.
 
-- [Installation](https://maps.lodev09.com/docs/installation) - Expo, bare React Native, and web setup
-- [Usage](https://maps.lodev09.com/docs/usage) - Render your first map
-- [MapView](https://maps.lodev09.com/docs/components/map-view) - Props, camera methods, events, static maps
-- [Marker](https://maps.lodev09.com/docs/components/marker) - Custom views, callouts, dragging
-- [Polyline](https://maps.lodev09.com/docs/components/polyline), [Polygon](https://maps.lodev09.com/docs/components/polygon), [Circle](https://maps.lodev09.com/docs/components/circle) - Shapes
-- [GeoJson](https://maps.lodev09.com/docs/components/geojson), [GroundOverlay](https://maps.lodev09.com/docs/components/ground-overlay), [TileOverlay](https://maps.lodev09.com/docs/components/tile-overlay) - Data and overlays
-- [Types](https://maps.lodev09.com/docs/types) - `Coordinate`, `Point`, `EdgeInsets`
+- [Installation](https://maps.lodev09.com/installation) - Expo, bare React Native, and web setup
+- [Usage](https://maps.lodev09.com/usage) - Render your first map
+- [MapView](https://maps.lodev09.com/components/map-view) - Props, camera methods, events, static maps
+- [Marker](https://maps.lodev09.com/components/marker) - Custom views, callouts, dragging
+- [Polyline](https://maps.lodev09.com/components/polyline), [Polygon](https://maps.lodev09.com/components/polygon), [Circle](https://maps.lodev09.com/components/circle) - Shapes
+- [GeoJson](https://maps.lodev09.com/components/geojson), [GroundOverlay](https://maps.lodev09.com/components/ground-overlay), [TileOverlay](https://maps.lodev09.com/components/tile-overlay) - Data and overlays
+- [Types](https://maps.lodev09.com/types) - `Coordinate`, `Point`, `EdgeInsets`
 
 ## Quick start
 
@@ -38,7 +38,7 @@ import { MapView, Marker } from '@lugg/maps';
 </MapView>
 ```
 
-Google Maps needs an API key on every platform. See [Installation](https://maps.lodev09.com/docs/installation) for Expo, iOS, Android, and web setup.
+Google Maps needs an API key on every platform. See [Installation](https://maps.lodev09.com/installation) for Expo, iOS, Android, and web setup.
 
 ## Contributing
 

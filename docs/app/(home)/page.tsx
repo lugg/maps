@@ -137,42 +137,42 @@ const FEATURES = [
 const COMPONENTS = [
   {
     name: 'MapView',
-    href: '/docs/components/map-view',
+    href: '/components/map-view',
     description: 'The map itself. Providers, camera, gestures, static mode.',
   },
   {
     name: 'Marker',
-    href: '/docs/components/marker',
+    href: '/components/marker',
     description: 'Pins with custom views, callouts, and dragging.',
   },
   {
     name: 'Polyline',
-    href: '/docs/components/polyline',
+    href: '/components/polyline',
     description: 'Lines with gradient strokes and animation.',
   },
   {
     name: 'Polygon',
-    href: '/docs/components/polygon',
+    href: '/components/polygon',
     description: 'Filled shapes with optional holes.',
   },
   {
     name: 'Circle',
-    href: '/docs/components/circle',
+    href: '/components/circle',
     description: 'Radius-based circular overlays.',
   },
   {
     name: 'GeoJson',
-    href: '/docs/components/geojson',
+    href: '/components/geojson',
     description: 'Render GeoJSON features directly.',
   },
   {
     name: 'GroundOverlay',
-    href: '/docs/components/ground-overlay',
+    href: '/components/ground-overlay',
     description: 'Images stretched over geographic bounds.',
   },
   {
     name: 'TileOverlay',
-    href: '/docs/components/tile-overlay',
+    href: '/components/tile-overlay',
     description: 'Custom raster tile layers.',
   },
 ];
@@ -217,7 +217,7 @@ export default function HomePage() {
 
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
             <Link
-              href="/docs"
+              href="/intro"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-fd-primary px-6 text-sm font-semibold text-fd-primary-foreground transition-opacity hover:opacity-90"
             >
               Get started
@@ -323,7 +323,7 @@ export default function HomePage() {
             </h2>
           </div>
           <Link
-            href="/docs"
+            href="/intro"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-fd-primary hover:underline"
           >
             Browse the docs
@@ -363,14 +363,14 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <Link
-              href="/docs/installation"
+              href="/installation"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-fd-primary px-6 text-sm font-semibold text-fd-primary-foreground transition-opacity hover:opacity-90"
             >
               Installation
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/docs/usage"
+              href="/usage"
               className="inline-flex h-11 items-center rounded-full border border-fd-border px-6 text-sm font-semibold text-fd-foreground transition-colors hover:bg-fd-accent"
             >
               Usage guide
@@ -388,7 +388,7 @@ export default function HomePage() {
             <span>MIT License</span>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/docs" className="hover:text-fd-foreground">
+            <Link href="/intro" className="hover:text-fd-foreground">
               Docs
             </Link>
             <Link href={GITHUB_URL} className="hover:text-fd-foreground">

@@ -11,11 +11,14 @@ import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { createMetadata, SITE_NAME, SITE_URL } from '@/lib/metadata';
 
+// Unknown paths fall through to the root not-found instead of rendering inside the docs layout.
+export const dynamicParams = false;
+
 function ogImagePath(slugs: string[]) {
-  return `/og/docs/${[...slugs, 'image.png'].join('/')}`;
+  return `/og/${[...slugs, 'image.png'].join('/')}`;
 }
 
-export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
+export default async function Page(props: PageProps<'/[...slug]'>) {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -63,7 +66,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<'/docs/[[...slug]]'>
+  props: PageProps<'/[...slug]'>
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);

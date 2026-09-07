@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const pages = source.getPages().map((page) => ({
     url: new URL(page.url, SITE_URL).toString(),
     changeFrequency: 'weekly' as const,
-    priority: page.slugs.length === 0 ? 0.9 : 0.7,
+    priority: page.slugs[0] === 'intro' ? 0.9 : 0.7,
   }));
 
   return [

@@ -19,7 +19,12 @@ export async function CodeSample({
     defaultColor: false,
     components: {
       pre: (props) => (
-        <CodeBlock {...props} title={title} className="my-0">
+        <CodeBlock
+          {...props}
+          title={title}
+          className="my-0"
+          viewportProps={{ className: 'max-h-none' }}
+        >
           <Pre>{props.children}</Pre>
         </CodeBlock>
       ),

@@ -5,10 +5,11 @@ import {
   CalloutTitle,
   type CalloutContainerProps,
 } from 'fumadocs-ui/components/callout';
+import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import type { MDXComponents } from 'mdx/types';
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 function Callout({
   children,
@@ -30,6 +31,11 @@ export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     Callout,
+    pre: (props: HTMLAttributes<HTMLPreElement>) => (
+      <CodeBlock {...props} viewportProps={{ className: 'max-h-none' }}>
+        <Pre>{props.children}</Pre>
+      </CodeBlock>
+    ),
     Tab,
     Tabs,
     Step,
