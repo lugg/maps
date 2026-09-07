@@ -10,7 +10,12 @@ import {
   type BaseSlots,
   type LinkItemType,
 } from 'fumadocs-ui/layouts/shared';
-import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 
 interface SiteHeaderProps extends ComponentProps<'header'> {
   navItems: LinkItemType[];
@@ -54,12 +59,8 @@ export function SiteHeader({
   const pathname = usePathname();
   const scrolled = useScrolled(transparent);
   const solid = !transparent || scrolled;
-  const links = navItems.filter(
-    (item) => hasUrl(item) && item.type !== 'icon'
-  );
-  const icons = navItems.filter(
-    (item) => hasUrl(item) && item.type === 'icon'
-  );
+  const links = navItems.filter((item) => hasUrl(item) && item.type !== 'icon');
+  const icons = navItems.filter((item) => hasUrl(item) && item.type === 'icon');
 
   return (
     <header
