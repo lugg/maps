@@ -371,27 +371,12 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.fitCoordinates(coordinates, edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight, duration)
   }
 
-  // Loads the map again, e.g. to recover from missing tiles. The SDK can't
-  // reload tiles in place, so the map is recreated at the current camera
-  // (coordinate and zoom; bearing and tilt reset) with children re-added
   fun reload() {
     val current = provider ?: return
     val latitude = current.cameraLatitude
     val longitude = current.cameraLongitude
     val zoom = current.cameraZoom
 
-    // Children keep their native marker/overlay objects from the old map;
-    // detach them so the new provider creates fresh ones on the flush
-    for (i in 0 until childCount) {
-      when (val child = getChildAt(i)) {
-        is LuggMarkerView -> current.removeMarkerView(child)
-        is LuggPolylineView -> current.removePolylineView(child)
-        is LuggPolygonView -> current.removePolygonView(child)
-        is LuggCircleView -> current.removeCircleView(child)
-        is LuggGroundOverlayView -> current.removeGroundOverlayView(child)
-        is LuggTileOverlayView -> current.removeTileOverlayView(child)
-      }
-    }
     current.destroy()
     provider = null
     if (isAttachedToWindow) {

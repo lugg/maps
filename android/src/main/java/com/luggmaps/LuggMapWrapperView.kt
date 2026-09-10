@@ -2,6 +2,7 @@ package com.luggmaps
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
+import android.view.View
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.views.view.ReactViewGroup
 
@@ -31,6 +32,14 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
     super.requestLayout()
     if (relayoutChildOnRequest) {
       post(measureAndLayoutChild)
+    }
+  }
+
+  override fun onViewAdded(child: View) {
+    super.onViewAdded(child)
+    // A replacement map needs sizing even when Yoga's layout is unchanged.
+    if (indexOfChild(child) == 0) {
+      layoutChild(width, height)
     }
   }
 

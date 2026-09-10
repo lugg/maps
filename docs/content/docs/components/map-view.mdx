@@ -329,8 +329,9 @@ outage. None of the map SDKs can reload tiles in place, so:
 - A static map re-renders its base map. On iOS the cached snapshot for its
   `staticKey` is discarded and the new render replaces the current image
   when ready; on Android the lite map is recreated.
-- A live map is recreated at its current coordinate and zoom (heading and
-  pitch reset) with all children re-added, and `onReady` fires again.
+- A live map is recreated at its current coordinate and zoom. Heading and
+  pitch reset, and `onReady` fires again. Markers and overlays remain on
+  the map after reload.
 
 ```ts
 reload(): void

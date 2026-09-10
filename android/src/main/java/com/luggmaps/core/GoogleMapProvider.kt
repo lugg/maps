@@ -183,7 +183,7 @@ class GoogleMapProvider(private val context: Context) :
       view.onCreate(null)
       view.onResume()
       view.getMapAsync(this)
-      wrapper.addView(view)
+      wrapper.addView(view, 0)
     }
     wrapper.onLayoutReady = null
   }
