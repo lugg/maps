@@ -135,6 +135,13 @@ export interface MapViewRef {
     options?: FitCoordinatesOptions
   ): void;
   setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions): void;
+  /**
+   * Loads the map again, e.g. to recover from missing tiles. A static map
+   * re-renders its base map, discarding the cached snapshot. A live map is
+   * recreated at its current coordinate and zoom (heading and pitch reset)
+   * and fires onReady again.
+   */
+  reload(): void;
 }
 
 /**

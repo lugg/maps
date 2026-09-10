@@ -183,6 +183,14 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   _mapView = nil;
 }
 
+- (CLLocationCoordinate2D)coordinate {
+  return _mapView.camera.target;
+}
+
+- (double)zoom {
+  return _mapView.camera.zoom;
+}
+
 #pragma mark - Props
 
 - (void)setZoomEnabled:(BOOL)enabled {

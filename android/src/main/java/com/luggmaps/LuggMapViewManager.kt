@@ -273,6 +273,10 @@ class LuggMapViewManager :
     )
   }
 
+  override fun reload(view: LuggMapView) {
+    view.reload()
+  }
+
   companion object {
     const val NAME = "LuggMapView"
   }
