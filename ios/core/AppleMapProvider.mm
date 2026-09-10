@@ -14,8 +14,8 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggTileOverlayView.h"
 #import "../extensions/MKMapView+Zoom.h"
 #import "LuggAnnotationView.h"
-#import "MapEdgeInsets.h"
 #import "MKPolylineAnimator.h"
+#import "MapEdgeInsets.h"
 
 @interface AppleMarkerAnnotation : NSObject <MKAnnotation>
 @property(nonatomic, assign) CLLocationCoordinate2D coordinate;
