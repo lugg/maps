@@ -279,6 +279,7 @@ const HomeContent = ({
         onClearMarkers={clear}
         onMoveCamera={moveToRandomMarker}
         onFitMarkers={fitAllMarkers}
+        onReload={() => mapRef.current?.reload()}
         onToggleMap={() => setShowMap((prev) => !prev)}
         onToggleProvider={() =>
           setProvider((p) => (p === 'google' ? 'apple' : 'google'))

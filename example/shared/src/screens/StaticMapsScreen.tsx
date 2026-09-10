@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -262,6 +262,7 @@ const PlaceCard = ({
 }) => {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
+  const mapRef = useRef<MapView>(null);
 
   const camera = fittedCamera(
     placeCoordinates(place),
@@ -281,6 +282,7 @@ const PlaceCard = ({
     >
       <View style={styles.map} pointerEvents="none">
         <MapView
+          ref={mapRef}
           key={provider}
           staticMode
           staticKey={place.id}
@@ -293,6 +295,18 @@ const PlaceCard = ({
           <PlaceConstellation place={place} />
         </MapView>
       </View>
+      {/* Re-renders the base map, dropping its cached snapshot - e.g. to
+          recover a map that rendered with missing tiles */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.reload,
+          { backgroundColor: colors.backgroundElevated },
+          pressed && styles.cardPressed,
+        ]}
+        onPress={() => mapRef.current?.reload()}
+      >
+        <ThemedText variant="caption">Reload</ThemedText>
+      </Pressable>
       <View style={styles.cardContent}>
         <ThemedText variant="title" style={styles.cardTitle}>
           {place.name}
@@ -360,6 +374,14 @@ const styles = StyleSheet.create({
   },
   map: {
     height: MAP_HEIGHT,
+  },
+  reload: {
+    position: 'absolute',
+    top: sizes.sm,
+    right: sizes.sm,
+    paddingHorizontal: sizes.md,
+    paddingVertical: sizes.xs,
+    borderRadius: sizes.radiusFull,
   },
   cardContent: {
     padding: sizes.lg,

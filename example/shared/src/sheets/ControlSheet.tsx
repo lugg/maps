@@ -29,6 +29,7 @@ interface ControlSheetProps {
   onClearMarkers: () => void;
   onMoveCamera: () => void;
   onFitMarkers: () => void;
+  onReload: () => void;
   onToggleMap: () => void;
   onToggleProvider: () => void;
   onLoadGeojson: () => void;
@@ -56,6 +57,7 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
       onClearMarkers,
       onMoveCamera,
       onFitMarkers,
+      onReload,
       onToggleMap,
       onToggleProvider,
       onLoadGeojson,
@@ -121,6 +123,12 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
             title="Fit Markers"
             onPress={onFitMarkers}
             disabled={markerCount === 0}
+          />
+          <Button
+            style={styles.sheetButton}
+            title="Reload Map"
+            onPress={onReload}
+            disabled={!showMap}
           />
           <Button
             style={styles.sheetButton}
