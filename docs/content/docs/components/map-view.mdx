@@ -100,8 +100,8 @@ Notes:
   at the final camera (iOS) or re-centers (Android). Map-setting prop
   updates (e.g. `mapType`) after the snapshot are still ignored on iOS.
 - `edgeInsets` shift the visible center like on a live map, so the
-  coordinate centers in the inset viewport. On iOS, attribution also respects
-  these insets. Changing insets after the
+  coordinate centers in the inset viewport without changing the zoom.
+  On iOS, attribution also respects these insets. Changing insets after the
   render re-renders the base map (iOS) or re-centers the camera (Android).
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.

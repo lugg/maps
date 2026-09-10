@@ -14,6 +14,7 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggTileOverlayView.h"
 #import "../extensions/MKMapView+Zoom.h"
 #import "LuggAnnotationView.h"
+#import "MapEdgeInsets.h"
 #import "MKPolylineAnimator.h"
 
 @interface AppleMarkerAnnotation : NSObject <MKAnnotation>
@@ -465,13 +466,11 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets {
-  CGFloat oldOffsetX = (oldEdgeInsets.left - oldEdgeInsets.right) / 2.0;
-  CGFloat oldOffsetY = (oldEdgeInsets.top - oldEdgeInsets.bottom) / 2.0;
-  CGFloat newOffsetX = (edgeInsets.left - edgeInsets.right) / 2.0;
-  CGFloat newOffsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0;
+  CGPoint oldOffset = LuggMapInsetOffset(oldEdgeInsets);
+  CGPoint newOffset = LuggMapInsetOffset(edgeInsets);
 
-  CGFloat deltaX = newOffsetX - oldOffsetX;
-  CGFloat deltaY = newOffsetY - oldOffsetY;
+  CGFloat deltaX = newOffset.x - oldOffset.x;
+  CGFloat deltaY = newOffset.y - oldOffset.y;
 
   _mapView.layoutMargins = edgeInsets;
   _edgeInsetsCurrent = edgeInsets;
@@ -514,16 +513,8 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   CFTimeInterval elapsed = CACurrentMediaTime() - _edgeInsetsAnimationStart;
   CGFloat progress = MIN(elapsed / _edgeInsetsAnimationDuration, 1.0);
 
-  // Ease out cubic
-  CGFloat t = 1.0 - (1.0 - progress) * (1.0 - progress) * (1.0 - progress);
-
-  UIEdgeInsets current = UIEdgeInsetsMake(
-      _edgeInsetsFrom.top + (_edgeInsetsTo.top - _edgeInsetsFrom.top) * t,
-      _edgeInsetsFrom.left + (_edgeInsetsTo.left - _edgeInsetsFrom.left) * t,
-      _edgeInsetsFrom.bottom +
-          (_edgeInsetsTo.bottom - _edgeInsetsFrom.bottom) * t,
-      _edgeInsetsFrom.right +
-          (_edgeInsetsTo.right - _edgeInsetsFrom.right) * t);
+  UIEdgeInsets current =
+      LuggMapInsetsAtProgress(_edgeInsetsFrom, _edgeInsetsTo, progress);
 
   [self setEdgeInsets:current oldEdgeInsets:_edgeInsetsCurrent];
 
