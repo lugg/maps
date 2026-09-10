@@ -1,11 +1,17 @@
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { MapProvider, MapView, Marker } from '@lugg/maps';
 
 import { ThemedText } from '../components';
 import { INITIAL_MARKERS } from '../markers';
 import { CIRCLE_CENTER } from '../mapData';
 import { sizes, useTheme } from '../theme';
-import { PLACES } from './StaticMapsScreen';
+import {
+  PLACES,
+  PlaceConstellation,
+  PlaceMarkers,
+  fittedCamera,
+  placeCoordinates,
+} from './StaticMapsScreen';
 
 interface MarkerDetailScreenProps {
   name: string;
@@ -18,6 +24,7 @@ const formatCoordinate = (value: number) => value.toFixed(4);
 
 export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
   const { colors } = useTheme();
+  const { width, height } = useWindowDimensions();
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
   const marker = INITIAL_MARKERS.find((m) => m.name === name);
@@ -27,6 +34,14 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
   const title = marker?.title ?? place?.name ?? name;
   const description =
     marker?.description ?? place?.description ?? 'Marker detail screen';
+  const camera = place
+    ? fittedCamera(
+        placeCoordinates(place),
+        Platform.OS === 'ios' ? 'apple' : 'google',
+        { width, height: height - CARD_BOTTOM - CARD_HEIGHT },
+        sizes.xl
+      )
+    : { coordinate, zoom: 15 };
 
   return (
     <View style={styles.container}>
@@ -35,8 +50,8 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
           style={StyleSheet.absoluteFill}
           staticMode
           staticKey={name}
-          initialCoordinate={coordinate}
-          initialZoom={15}
+          initialCoordinate={camera.coordinate}
+          initialZoom={camera.zoom}
           edgeInsets={{
             top: 0,
             left: 0,
@@ -44,7 +59,14 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
             bottom: CARD_BOTTOM + CARD_HEIGHT,
           }}
         >
-          <Marker coordinate={coordinate} />
+          {place ? (
+            <>
+              <PlaceMarkers place={place} />
+              <PlaceConstellation place={place} />
+            </>
+          ) : (
+            <Marker coordinate={coordinate} />
+          )}
         </MapView>
       </MapProvider>
       <View

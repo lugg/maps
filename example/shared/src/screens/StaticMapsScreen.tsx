@@ -142,7 +142,7 @@ const multipleMarkerCoordinates = (coordinate: Coordinate): Coordinate[] => [
 
 // Every coordinate rendered on a place's map (markers + constellation),
 // used to fit the camera around the content
-const placeCoordinates = (place: StaticPlace): Coordinate[] => {
+export const placeCoordinates = (place: StaticPlace): Coordinate[] => {
   const coordinates = [
     place.coordinate,
     ...constellationPoints(place.coordinate, seedFromId(place.id)),
@@ -162,7 +162,7 @@ const mercatorY = (latitude: number) =>
 // Matches the native static framing: Google shows the world 256 * 2^zoom
 // points wide; Apple fits a square span rect to the view's short side
 // (see LuggStaticFittedMapRect)
-const fittedCamera = (
+export const fittedCamera = (
   coordinates: Coordinate[],
   provider: MapProviderType,
   size: { width: number; height: number },
@@ -202,7 +202,7 @@ const fittedCamera = (
   return { coordinate, zoom };
 };
 
-const PlaceConstellation = ({ place }: { place: StaticPlace }) => {
+export const PlaceConstellation = ({ place }: { place: StaticPlace }) => {
   const points = constellationPoints(place.coordinate, seedFromId(place.id));
   return (
     <>
@@ -220,7 +220,7 @@ const PlaceConstellation = ({ place }: { place: StaticPlace }) => {
   );
 };
 
-const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
+export const PlaceMarkers = ({ place }: { place: StaticPlace }) => {
   const { coordinate, markerType, markerText, imageUrl } = place;
 
   switch (markerType) {
