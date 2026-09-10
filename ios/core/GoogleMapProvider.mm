@@ -13,6 +13,7 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggPolylineView.h"
 #import "../LuggTileOverlayView.h"
 #import "GMSPolylineAnimator.h"
+#import "MapEdgeInsets.h"
 #import "PolylineAnimatorBase.h"
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
@@ -296,16 +297,8 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   CFTimeInterval elapsed = CACurrentMediaTime() - _edgeInsetsAnimationStart;
   CGFloat progress = MIN(elapsed / _edgeInsetsAnimationDuration, 1.0);
 
-  // Ease out cubic
-  CGFloat t = 1.0 - (1.0 - progress) * (1.0 - progress) * (1.0 - progress);
-
-  UIEdgeInsets current = UIEdgeInsetsMake(
-      _edgeInsetsFrom.top + (_edgeInsetsTo.top - _edgeInsetsFrom.top) * t,
-      _edgeInsetsFrom.left + (_edgeInsetsTo.left - _edgeInsetsFrom.left) * t,
-      _edgeInsetsFrom.bottom +
-          (_edgeInsetsTo.bottom - _edgeInsetsFrom.bottom) * t,
-      _edgeInsetsFrom.right +
-          (_edgeInsetsTo.right - _edgeInsetsFrom.right) * t);
+  UIEdgeInsets current =
+      LuggMapInsetsAtProgress(_edgeInsetsFrom, _edgeInsetsTo, progress);
 
   _mapView.padding = current;
 

@@ -11,6 +11,7 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggMarkerView.h"
 #import "../LuggPolygonView.h"
 #import "../LuggPolylineView.h"
+#import "MapEdgeInsets.h"
 
 #pragma mark - Projection
 
@@ -351,10 +352,9 @@ static NSInteger shapeZIndex(UIView *shape) {
 
   // Edge insets shift the visible center like a live map: the coordinate
   // lands at the center of the inset viewport instead of the view center
-  CGFloat offsetX = (_edgeInsets.left - _edgeInsets.right) / 2.0;
-  CGFloat offsetY = (_edgeInsets.top - _edgeInsets.bottom) / 2.0;
-  _mapRect.origin.x -= offsetX * _mapRect.size.width / size.width;
-  _mapRect.origin.y -= offsetY * _mapRect.size.height / size.height;
+  CGPoint offset = LuggMapInsetOffset(_edgeInsets);
+  _mapRect.origin.x -= offset.x * _mapRect.size.width / size.width;
+  _mapRect.origin.y -= offset.y * _mapRect.size.height / size.height;
 
   _projectionReady = YES;
 
@@ -835,8 +835,10 @@ static NSInteger shapeZIndex(UIView *shape) {
   }
 
   // Asymmetric padding shifts the visible center, like edge insets
-  center.x -= (edgeInsetsLeft - edgeInsetsRight) / 2.0 * scale;
-  center.y -= (edgeInsetsTop - edgeInsetsBottom) / 2.0 * scale;
+  CGPoint offset = LuggMapInsetOffset(UIEdgeInsetsMake(
+      edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight));
+  center.x -= offset.x * scale;
+  center.y -= offset.y * scale;
   _coordinate = MKCoordinateForMapPoint(center);
 
   [self rerenderBaseMap];
