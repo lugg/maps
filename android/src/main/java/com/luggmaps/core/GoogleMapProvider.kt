@@ -128,6 +128,7 @@ class GoogleMapProvider(private val context: Context) :
 
   // Theme
   private var theme: String = "system"
+  private var mapType: String = "standard"
 
   // Edge Insets
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -279,6 +280,7 @@ class GoogleMapProvider(private val context: Context) :
     applyZoomLimits()
     applyInsetAdjustment()
     applyTheme()
+    setMapType(mapType)
     applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
@@ -545,6 +547,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setMapType(value: String) {
+    mapType = value
     googleMap?.mapType = when (value) {
       "satellite" -> GoogleMap.MAP_TYPE_SATELLITE
       "terrain" -> GoogleMap.MAP_TYPE_TERRAIN

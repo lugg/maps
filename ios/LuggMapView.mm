@@ -594,6 +594,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 // reset) with children re-added.
 - (void)reload {
   if (_staticMode) {
+    _staticSnapshotDone = NO;
     NSString *cacheKey = [self staticSnapshotCacheKey];
     if (cacheKey) {
       [StaticSnapshotCache() removeObjectForKey:cacheKey];
@@ -616,6 +617,13 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   _provider = nil;
   _initialized = NO;
   [self initializeProviderWithCoordinate:coordinate zoom:zoom];
+  if (_providerType == LuggMapViewProvider::Apple) {
+    // The captured camera already includes the previous inset offset.
+    [_provider moveCamera:coordinate.latitude
+                longitude:coordinate.longitude
+                     zoom:zoom
+                 duration:0];
+  }
 }
 
 - (void)removeChildrenFromProvider {

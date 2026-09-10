@@ -95,13 +95,15 @@ const HomeContent = ({
   );
 
   const handleMapReady = useCallback(() => {
+    lockStatus();
+    setStatus({ text: 'Map ready', error: false });
     const position = controlSheetRef.current?.animatedPosition;
     if (!position) return;
     const bottom = screenHeight - position.value;
     if (bottom > 0) {
       mapRef.current?.setEdgeInsets(bottomEdgeInsets(bottom));
     }
-  }, [screenHeight]);
+  }, [lockStatus, screenHeight]);
 
   const handleSheetEvent = useCallback(
     (event: DetentChangeEvent) => {

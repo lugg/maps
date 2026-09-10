@@ -333,6 +333,10 @@ outage. None of the map SDKs can reload tiles in place, so:
   pitch reset, and `onReady` fires again. Markers and overlays remain on
   the map after reload.
 
+Reload preserves the map type and edge insets. On web, `onReady` fires once
+for each new map instance. On iOS, an unfinished static reload restarts
+when the map leaves the window and returns.
+
 ```ts
 reload(): void
 ```

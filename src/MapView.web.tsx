@@ -127,7 +127,7 @@ export const MapView = memo(
     const id = useId();
     const map = useMap(id);
     const containerRef = useRef<View>(null);
-    const readyFired = useRef(false);
+    const readyMap = useRef<google.maps.Map | null>(null);
     const isDraggingRef = useRef(false);
     const wasGesture = useRef(false);
     const prevEdgeInsets = useRef(edgeInsets);
@@ -291,8 +291,8 @@ export const MapView = memo(
     );
 
     useEffect(() => {
-      if (map && !readyFired.current) {
-        readyFired.current = true;
+      if (map && readyMap.current !== map) {
+        readyMap.current = map;
         onReady?.();
       }
     }, [map, onReady]);
