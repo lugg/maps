@@ -59,9 +59,11 @@ mounting many live maps is expensive:
   not support cloud-based styling, so `mapId` is ignored on lite static maps.
   Lite mode caps its bitmap at ~2048px per dimension, so larger views (e.g.
   full-screen maps) fall back to a full map with all gestures disabled.
-- **iOS (Apple)** - the base map is rendered with `MKMapSnapshotter`, which
-  loads entirely off the main thread (no live map view is ever created), so
-  static maps keep loading while scrolling. Markers stay live views
+- **iOS (Apple)** - `MKMapSnapshotter` renders the base map off the main
+  thread, so static maps keep loading while scrolling. With nonzero
+  `edgeInsets`, a temporary `MKMapView` renders the image to keep Apple Maps
+  attribution inside the inset viewport. The map view is released after capture.
+  Markers stay live views
   positioned over the base map; polylines, polygons, circles, and ground
   overlays are drawn onto it. Tile overlays are not supported.
 - **iOS (Google)** - markers and shapes render as live overlay views,
@@ -98,7 +100,8 @@ Notes:
   at the final camera (iOS) or re-centers (Android). Map-setting prop
   updates (e.g. `mapType`) after the snapshot are still ignored on iOS.
 - `edgeInsets` shift the visible center like on a live map, so the
-  coordinate centers in the inset viewport. Changing insets after the
+  coordinate centers in the inset viewport. On iOS, attribution also respects
+  these insets. Changing insets after the
   render re-renders the base map (iOS) or re-centers the camera (Android).
 - For taps, wrap the map in a `Pressable` with `pointerEvents="none"` on the
   map container (as above) instead of relying on `onPress`.

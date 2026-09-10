@@ -4,6 +4,7 @@ using facebook::react::LuggMapViewPoiFilterMode;
 using facebook::react::LuggMapViewTheme;
 
 #import "../extensions/MKMapView+Zoom.h"
+#import "../extensions/UIView+Snapshot.h"
 #import "AppleMapProvider.h"
 #import "LuggAnnotationView.h"
 
@@ -42,8 +43,13 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
   return rect;
 }
 
+@interface AppleStaticMapProvider () <MKMapViewDelegate>
+@end
+
 @implementation AppleStaticMapProvider {
   MKMapSnapshotter *_snapshotter;
+  MKMapView *_warmupMapView;
+  BOOL _snapshotReady;
 
   BOOL _poiEnabled;
   LuggMapViewPoiFilterMode _poiFilterMode;
@@ -106,6 +112,12 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
 }
 
 - (void)renderBaseMap {
+  // MKMapSnapshotter bakes attribution into the image without inset control.
+  if (!UIEdgeInsetsEqualToEdgeInsets(self.edgeInsets, UIEdgeInsetsZero)) {
+    [self renderInsetBaseMap];
+    return;
+  }
+
   if (_snapshotter)
     return;
 
@@ -140,6 +152,68 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
 - (void)cancelBaseRender {
   [_snapshotter cancel];
   _snapshotter = nil;
+  _warmupMapView.delegate = nil;
+  [_warmupMapView removeFromSuperview];
+  _warmupMapView = nil;
+  _snapshotReady = NO;
+}
+
+#pragma mark - Inset snapshots
+
+- (void)renderInsetBaseMap {
+  if (_warmupMapView) {
+    if (!_snapshotReady || !_warmupMapView.window)
+      return;
+
+    UIImageView *imageView = [_warmupMapView lugg_snapshotImageView];
+    if (!imageView)
+      return;
+
+    [self displayBaseImage:imageView.image fromCache:NO];
+    [self cancelBaseRender];
+    return;
+  }
+
+  MKMapView *mapView =
+      [[MKMapView alloc] initWithFrame:self.wrapperView.bounds];
+  mapView.userInteractionEnabled = NO;
+  mapView.showsCompass = NO;
+  mapView.insetsLayoutMarginsFromSafeArea = NO;
+  mapView.layoutMargins = self.edgeInsets;
+  mapView.mapType = LuggMKMapTypeFromMapType(self.mapType);
+  mapView.pointOfInterestFilter = LuggPointOfInterestFilter(
+      _poiEnabled, _poiFilterMode, _poiFilterCategories);
+  mapView.overrideUserInterfaceStyle =
+      [self snapshotTraitCollection].userInterfaceStyle;
+  [mapView setVisibleMapRect:self.mapRect
+                 edgePadding:UIEdgeInsetsZero
+                    animated:NO];
+  _warmupMapView = mapView;
+  mapView.delegate = self;
+  [self.wrapperView insertSubview:mapView atIndex:0];
+}
+
+- (void)mapViewWillStartRenderingMap:(MKMapView *)mapView {
+  _snapshotReady = NO;
+}
+
+- (void)mapViewDidFinishRenderingMap:(MKMapView *)mapView
+                       fullyRendered:(BOOL)fullyRendered {
+  _snapshotReady = fullyRendered;
+  [self revealOverlays];
+  if (!fullyRendered)
+    return;
+
+  __weak AppleStaticMapProvider *weakSelf = self;
+  __weak MKMapView *weakMapView = mapView;
+  [[NSRunLoop mainRunLoop]
+      performInModes:@[ NSDefaultRunLoopMode ]
+               block:^{
+                 AppleStaticMapProvider *strongSelf = weakSelf;
+                 if (strongSelf && weakMapView &&
+                     strongSelf->_warmupMapView == weakMapView)
+                   [strongSelf renderInsetBaseMap];
+               }];
 }
 
 #pragma mark - Props
