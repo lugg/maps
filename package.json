@@ -194,7 +194,7 @@
     },
     "hooks": {
       "before:init": "yarn test",
-      "after:bump": "yarn tidy"
+      "after:bump": ["yarn tidy", "yarn bare pods"]
     },
     "plugins": {
       "@release-it/conventional-changelog": {
