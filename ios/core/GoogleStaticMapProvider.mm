@@ -49,7 +49,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 @implementation GoogleStaticMapProvider {
   GMSMapView *_warmupMapView;
-  BOOL _tilesRendered;
+  BOOL _snapshotReady;
   BOOL _swapScheduled;
 }
 
@@ -106,7 +106,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   if (!wrapperView)
     return;
 
-  _tilesRendered = NO;
+  _snapshotReady = NO;
 
   GMSMapView *mapView = DequeueStaticMapView([self poolKey]);
   if (mapView) {
@@ -152,12 +152,12 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   _warmupMapView = nil;
 }
 
-// Once tiles are fully rendered, swap the live map with its image and
-// release the map view. The image render and map teardown are expensive,
-// so they run outside scroll tracking; the live map keeps displaying (and
-// loading tiles) until then.
+// Once the map is stable, swap the live map with its image and release the
+// map view. The image render and map teardown are expensive, so they run
+// outside scroll tracking; the live map keeps displaying (and loading
+// tiles) until then.
 - (void)scheduleSwap {
-  if (_swapScheduled || !_warmupMapView || !_tilesRendered ||
+  if (_swapScheduled || !_warmupMapView || !_snapshotReady ||
       !_warmupMapView.window)
     return;
 
@@ -176,9 +176,9 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 - (void)performSwap {
   // Tiles can invalidate (or the view leave the window) between scheduling
-  // and this runloop pass; the next tile callback or resumeAnimations
+  // and this runloop pass; the next snapshotReady or resumeAnimations
   // retries
-  if (!_warmupMapView || !_tilesRendered || !_warmupMapView.window)
+  if (!_warmupMapView || !_snapshotReady || !_warmupMapView.window)
     return;
 
   UIImageView *imageView = [_warmupMapView lugg_snapshotImageView];
@@ -192,20 +192,24 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 #pragma mark - GMSMapViewDelegate
 
 - (void)mapViewDidStartTileRendering:(GMSMapView *)mapView {
-  _tilesRendered = NO;
+  _snapshotReady = NO;
 }
 
+// Fires for tiles that failed permanently too, so it can't gate the swap:
+// capturing here cached blank tiles under the static key with no way to
+// recover. The visible warmup map has rendered what it can; show the
+// overlays now instead of waiting for the swap, which is deferred while
+// scrolling
 - (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
-  _tilesRendered = YES;
-  // The visible warmup map is fully rendered; show the overlays now
-  // instead of waiting for the swap, which is deferred while scrolling
   [self revealOverlays];
-  [self scheduleSwap];
 }
 
+// Stable per the SDK: tiles loaded, labels and overlays rendered. The only
+// signal that the render is complete, so the only one that captures and
+// caches. Without it (e.g. offline) the live map stays until the view
+// leaves the window, and a fresh warmup runs on return.
 - (void)mapViewSnapshotReady:(GMSMapView *)mapView {
-  // Stable per the SDK: tiles loaded, labels and overlays rendered
-  _tilesRendered = YES;
+  _snapshotReady = YES;
   [self revealOverlays];
   [self scheduleSwap];
 }

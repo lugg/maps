@@ -115,6 +115,11 @@ Notes:
   re-render from props). The camera and map settings are part of the
   cache key automatically. Changing `staticKey` discards the current
   image and re-renders. The cache is bounded by count and total memory.
+- On iOS (Google), the base map is only captured and cached once the SDK
+  reports the map stable with all tiles loaded. If tiles fail (e.g.
+  offline), the live warmup map stays in place instead and renders again
+  the next time the row appears, so a bad render can't get stuck behind
+  `staticKey`.
 - Alternatively, keeping rows mounted (larger `windowSize` with
   `removeClippedSubviews`) avoids re-rendering entirely at the cost of
   holding every row's snapshot in memory.

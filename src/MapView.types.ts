@@ -224,7 +224,8 @@ export interface MapViewProps extends ViewProps {
    * remounted with the same key (and same size, provider, and map settings)
    * reuses its cached snapshot instead of rendering a live map again -
    * e.g. set it to your list item's id. The key must uniquely identify the
-   * map's content, including markers and other children.
+   * map's content, including markers and other children. Only fully loaded
+   * renders are cached.
    * Only used with staticMode.
    */
   staticKey?: string;
