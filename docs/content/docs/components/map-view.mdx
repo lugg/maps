@@ -115,6 +115,11 @@ Notes:
   re-render from props). The camera and map settings are part of the
   cache key automatically. Changing `staticKey` discards the current
   image and re-renders. The cache is bounded by count and total memory.
+- On iOS (Google), the base map is only captured and cached once the SDK
+  reports the map stable with all tiles loaded. If tiles fail (e.g.
+  offline), the live warmup map stays in place instead and renders again
+  the next time the row appears, so a bad render can't get stuck behind
+  `staticKey`. To force it, call `reload()` on the ref.
 - Alternatively, keeping rows mounted (larger `windowSize` with
   `removeClippedSubviews`) avoids re-rendering entirely at the cost of
   holding every row's snapshot in memory.
@@ -273,6 +278,9 @@ mapRef.current?.setEdgeInsets(
   { top: 0, left: 0, bottom: 200, right: 0 },
   { duration: 300 }
 );
+
+// Load the map again (e.g. after a network outage)
+mapRef.current?.reload();
 ```
 
 ### moveCamera
@@ -311,6 +319,26 @@ setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions): void
 interface SetEdgeInsetsOptions {
   duration?: number; // milliseconds, -1 for default animation, 0 for instant
 }
+```
+
+### reload
+
+Load the map again, e.g. to recover from missing tiles after a network
+outage. None of the map SDKs can reload tiles in place, so:
+
+- A static map re-renders its base map. On iOS the cached snapshot for its
+  `staticKey` is discarded and the new render replaces the current image
+  when ready; on Android the lite map is recreated.
+- A live map is recreated at its current coordinate and zoom. Heading and
+  pitch reset, and `onReady` fires again. Markers and overlays remain on
+  the map after reload.
+
+Reload preserves the map type and edge insets. On web, `onReady` fires once
+for each new map instance. On iOS, an unfinished static reload restarts
+when the map leaves the window and returns.
+
+```ts
+reload(): void
 ```
 
 ## Events

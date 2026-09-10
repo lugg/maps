@@ -89,6 +89,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeTileOverlayView:(LuggTileOverlayView *)tileOverlayView;
 - (void)syncTileOverlayView:(LuggTileOverlayView *)tileOverlayView;
 
+// Current camera (the initial camera until the map is ready)
+@property(nonatomic, readonly) CLLocationCoordinate2D coordinate;
+@property(nonatomic, readonly) double zoom;
+
 // Lifecycle
 - (void)pauseAnimations;
 - (void)resumeAnimations;

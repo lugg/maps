@@ -221,6 +221,14 @@ static double tileToLng(NSInteger x, NSInteger z) {
   _isMapReady = NO;
 }
 
+- (CLLocationCoordinate2D)coordinate {
+  return _mapView.centerCoordinate;
+}
+
+- (double)zoom {
+  return _mapView.zoomLevel;
+}
+
 - (void)destroyMapView {
   [self dismissNonBubbledCallout];
   [self stopEdgeInsetsAnimation];

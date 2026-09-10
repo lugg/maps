@@ -80,6 +80,13 @@ export class MapView
     Commands.setEdgeInsets(ref, top, left, bottom, right, duration);
   }
 
+  reload() {
+    const ref = this.nativeRef.current;
+    if (!ref) return;
+
+    Commands.reload(ref);
+  }
+
   render() {
     const {
       provider,

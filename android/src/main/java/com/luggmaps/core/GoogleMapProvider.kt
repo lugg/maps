@@ -128,6 +128,7 @@ class GoogleMapProvider(private val context: Context) :
 
   // Theme
   private var theme: String = "system"
+  private var mapType: String = "standard"
 
   // Edge Insets
   private var edgeInsets: EdgeInsets = EdgeInsets()
@@ -183,7 +184,7 @@ class GoogleMapProvider(private val context: Context) :
       view.onCreate(null)
       view.onResume()
       view.getMapAsync(this)
-      wrapper.addView(view)
+      wrapper.addView(view, 0)
     }
     wrapper.onLayoutReady = null
   }
@@ -211,6 +212,9 @@ class GoogleMapProvider(private val context: Context) :
     groundOverlayToViewMap.clear()
     markerToViewMap.clear()
     wrapperView?.touchEventHandler = null
+    // The wrapper outlives the provider on reload; don't leave the dead map
+    // view in it
+    mapView?.let { wrapperView?.removeView(it) }
     wrapperView = null
     googleMap?.setOnCameraMoveStartedListener(null)
     googleMap?.setOnCameraMoveListener(null)
@@ -276,6 +280,7 @@ class GoogleMapProvider(private val context: Context) :
     applyZoomLimits()
     applyInsetAdjustment()
     applyTheme()
+    setMapType(mapType)
     applyUserLocation()
     processPendingMarkers()
     processPendingPolylines()
@@ -542,6 +547,7 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   override fun setMapType(value: String) {
+    mapType = value
     googleMap?.mapType = when (value) {
       "satellite" -> GoogleMap.MAP_TYPE_SATELLITE
       "terrain" -> GoogleMap.MAP_TYPE_TERRAIN
@@ -1198,6 +1204,24 @@ class GoogleMapProvider(private val context: Context) :
     pendingTileOverlayViews.forEach { syncTileOverlayView(it) }
     pendingTileOverlayViews.clear()
   }
+
+  // endregion
+
+  // region Camera
+
+  // A static map's camera is inset-shifted (staticCameraTarget), so report
+  // the requested camera instead
+  private val liveCameraPosition: CameraPosition?
+    get() = if (staticMode) null else googleMap?.cameraPosition
+
+  override val cameraLatitude: Double
+    get() = liveCameraPosition?.target?.latitude ?: initialLatitude
+
+  override val cameraLongitude: Double
+    get() = liveCameraPosition?.target?.longitude ?: initialLongitude
+
+  override val cameraZoom: Float
+    get() = liveCameraPosition?.zoom ?: initialZoom
 
   // endregion
 

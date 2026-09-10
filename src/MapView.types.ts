@@ -135,6 +135,13 @@ export interface MapViewRef {
     options?: FitCoordinatesOptions
   ): void;
   setEdgeInsets(edgeInsets: EdgeInsets, options?: SetEdgeInsetsOptions): void;
+  /**
+   * Loads the map again, e.g. to recover from missing tiles. A static map
+   * re-renders its base map, discarding the cached snapshot. A live map is
+   * recreated at its current coordinate and zoom (heading and pitch reset)
+   * and fires onReady again.
+   */
+  reload(): void;
 }
 
 /**
@@ -224,7 +231,8 @@ export interface MapViewProps extends ViewProps {
    * remounted with the same key (and same size, provider, and map settings)
    * reuses its cached snapshot instead of rendering a live map again -
    * e.g. set it to your list item's id. The key must uniquely identify the
-   * map's content, including markers and other children.
+   * map's content, including markers and other children. Only fully loaded
+   * renders are cached.
    * Only used with staticMode.
    */
   staticKey?: string;

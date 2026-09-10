@@ -131,7 +131,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
   // region Provider Initialization
 
-  private fun initializeProvider() {
+  private fun initializeProvider(latitude: Double = initialLatitude, longitude: Double = initialLongitude, zoom: Float = initialZoom) {
     if (provider != null || mapWrapperView == null) return
 
     if (staticMode) {
@@ -146,7 +146,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
     applyProps()
 
-    google.initializeMap(mapWrapperView!!, initialLatitude, initialLongitude, initialZoom)
+    google.initializeMap(mapWrapperView!!, latitude, longitude, zoom)
 
     // Flush children mounted before provider was created
     for (i in 0 until childCount) {
@@ -369,6 +369,19 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     duration: Int
   ) {
     provider?.fitCoordinates(coordinates, edgeInsetsTop, edgeInsetsLeft, edgeInsetsBottom, edgeInsetsRight, duration)
+  }
+
+  fun reload() {
+    val current = provider ?: return
+    val latitude = current.cameraLatitude
+    val longitude = current.cameraLongitude
+    val zoom = current.cameraZoom
+
+    current.destroy()
+    provider = null
+    if (isAttachedToWindow) {
+      initializeProvider(latitude, longitude, zoom)
+    }
   }
 
   // endregion

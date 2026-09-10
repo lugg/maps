@@ -42,6 +42,11 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 /// delegate callbacks and marks the base render done.
 - (void)displayBaseImage:(UIImage *)image fromCache:(BOOL)fromCache;
 
+/// Discards any cached, displayed or in-flight base render and renders
+/// again at the current camera. The displayed image stays until the new
+/// one replaces it.
+- (void)rerenderBaseMap;
+
 /// Shows the marker and shape overlays (idempotent). Called automatically
 /// when the base image displays; subclasses whose base map is already
 /// visible earlier (e.g. a live warmup map) can call it sooner.

@@ -127,10 +127,16 @@ export const MapView = memo(
     const id = useId();
     const map = useMap(id);
     const containerRef = useRef<View>(null);
-    const readyFired = useRef(false);
+    const readyMap = useRef<google.maps.Map | null>(null);
     const isDraggingRef = useRef(false);
     const wasGesture = useRef(false);
     const prevEdgeInsets = useRef(edgeInsets);
+    // Bumped by reload() to remount the map at the camera captured then
+    const [reloadState, setReloadState] = useState<{
+      key: number;
+      center?: google.maps.LatLngLiteral;
+      zoom?: number;
+    }>({ key: 0 });
 
     const offsetCenter = useCallback(
       (
@@ -268,13 +274,25 @@ export const MapView = memo(
         ) {
           applyEdgeInsets(newEdgeInsets, options?.duration);
         },
+
+        // The JS SDK can't reload tiles in place; remount the map at the
+        // current camera
+        reload() {
+          if (!map) return;
+
+          setReloadState((state) => ({
+            key: state.key + 1,
+            center: map.getCenter()?.toJSON(),
+            zoom: map.getZoom(),
+          }));
+        },
       }),
       [map, initialZoom, offsetCenter, applyEdgeInsets]
     );
 
     useEffect(() => {
-      if (map && !readyFired.current) {
-        readyFired.current = true;
+      if (map && readyMap.current !== map) {
+        readyMap.current = map;
         onReady?.();
       }
     }, [map, onReady]);
@@ -481,10 +499,11 @@ export const MapView = memo(
       >
         <View ref={containerRef} style={style}>
           <Map
+            key={reloadState.key}
             id={id}
             mapId={mapId}
-            defaultCenter={defaultCenter}
-            defaultZoom={initialZoom}
+            defaultCenter={reloadState.center ?? defaultCenter}
+            defaultZoom={reloadState.zoom ?? initialZoom}
             minZoom={minZoom}
             maxZoom={maxZoom}
             mapTypeId={mapTypeId}

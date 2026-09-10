@@ -297,6 +297,7 @@ export const Map = memo(
           moveCamera: (...args) => mapRef.current?.moveCamera(...args),
           fitCoordinates: (...args) => mapRef.current?.fitCoordinates(...args),
           setEdgeInsets: (...args) => mapRef.current?.setEdgeInsets(...args),
+          reload: () => mapRef.current?.reload(),
           showMarkerCallout: (markerId) =>
             markerRefsMap.current.get(markerId)?.showCallout(),
           hideMarkerCallout: (markerId) =>

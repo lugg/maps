@@ -311,11 +311,20 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 #pragma mark - Provider Initialization
 
 - (void)initializeProvider {
-  if (_provider || !_mapWrapperView)
-    return;
-
   const auto &viewProps =
       *std::static_pointer_cast<LuggMapViewProps const>(_props);
+  [self
+      initializeProviderWithCoordinate:CLLocationCoordinate2DMake(
+                                           viewProps.initialCoordinate.latitude,
+                                           viewProps.initialCoordinate
+                                               .longitude)
+                                  zoom:viewProps.initialZoom];
+}
+
+- (void)initializeProviderWithCoordinate:(CLLocationCoordinate2D)coordinate
+                                    zoom:(double)zoom {
+  if (_provider || !_mapWrapperView)
+    return;
 
   if (_providerType == LuggMapViewProvider::Apple) {
     _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
@@ -333,13 +342,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   _provider.delegate = self;
   _provider.staticMode = _staticMode;
 
-  CLLocationCoordinate2D coordinate =
-      CLLocationCoordinate2DMake(viewProps.initialCoordinate.latitude,
-                                 viewProps.initialCoordinate.longitude);
-
   [_provider initializeMapInView:_mapWrapperView
                initialCoordinate:coordinate
-                     initialZoom:viewProps.initialZoom];
+                     initialZoom:zoom];
 
   // After initializeMapInView so the cache key reads the provider's camera;
   // the base render is async and picks up the cached image
@@ -580,6 +585,63 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [_provider setEdgeInsets:_edgeInsets
              oldEdgeInsets:oldInsets
                   duration:duration];
+}
+
+// Loads the map again, e.g. to recover from missing tiles. A static map
+// drops its cached snapshot and renders the base map again in place.
+// Neither SDK can reload a live map's tiles, so the native map view is
+// recreated at the current camera (coordinate and zoom; heading and pitch
+// reset) with children re-added.
+- (void)reload {
+  if (_staticMode) {
+    _staticSnapshotDone = NO;
+    NSString *cacheKey = [self staticSnapshotCacheKey];
+    if (cacheKey) {
+      [StaticSnapshotCache() removeObjectForKey:cacheKey];
+    }
+    if ([_provider isKindOfClass:[StaticMapProviderBase class]]) {
+      [(StaticMapProviderBase *)_provider rerenderBaseMap];
+    }
+    return;
+  }
+
+  if (!_provider)
+    return;
+
+  CLLocationCoordinate2D coordinate = _provider.coordinate;
+  double zoom = _provider.zoom;
+  // Children keep their native marker/overlay objects from the old map;
+  // detach them so the new provider creates fresh ones on the flush
+  [self removeChildrenFromProvider];
+  [_provider destroy];
+  _provider = nil;
+  _initialized = NO;
+  [self initializeProviderWithCoordinate:coordinate zoom:zoom];
+  if (_providerType == LuggMapViewProvider::Apple) {
+    // The captured camera already includes the previous inset offset.
+    [_provider moveCamera:coordinate.latitude
+                longitude:coordinate.longitude
+                     zoom:zoom
+                 duration:0];
+  }
+}
+
+- (void)removeChildrenFromProvider {
+  for (UIView *subview in self.subviews) {
+    if ([subview isKindOfClass:[LuggMarkerView class]]) {
+      [_provider removeMarkerView:(LuggMarkerView *)subview];
+    } else if ([subview isKindOfClass:[LuggPolylineView class]]) {
+      [_provider removePolylineView:(LuggPolylineView *)subview];
+    } else if ([subview isKindOfClass:[LuggPolygonView class]]) {
+      [_provider removePolygonView:(LuggPolygonView *)subview];
+    } else if ([subview isKindOfClass:[LuggCircleView class]]) {
+      [_provider removeCircleView:(LuggCircleView *)subview];
+    } else if ([subview isKindOfClass:[LuggGroundOverlayView class]]) {
+      [_provider removeGroundOverlayView:(LuggGroundOverlayView *)subview];
+    } else if ([subview isKindOfClass:[LuggTileOverlayView class]]) {
+      [_provider removeTileOverlayView:(LuggTileOverlayView *)subview];
+    }
+  }
 }
 
 - (void)handleCommand:(const NSString *)commandName args:(const NSArray *)args {

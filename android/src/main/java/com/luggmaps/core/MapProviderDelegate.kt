@@ -58,6 +58,11 @@ interface MapProvider {
   fun addTileOverlayView(tileOverlayView: LuggTileOverlayView)
   fun removeTileOverlayView(tileOverlayView: LuggTileOverlayView)
 
+  // Current camera (the initial camera until the map is ready)
+  val cameraLatitude: Double
+  val cameraLongitude: Double
+  val cameraZoom: Float
+
   // Lifecycle
   fun pauseAnimations()
   fun resumeAnimations()

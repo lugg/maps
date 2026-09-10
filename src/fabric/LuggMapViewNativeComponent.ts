@@ -120,10 +120,16 @@ interface NativeCommands {
     right: Double,
     duration: Double
   ) => void;
+  reload: (viewRef: React.ElementRef<ComponentType>) => void;
 }
 
 export const Commands = codegenNativeCommands<NativeCommands>({
-  supportedCommands: ['moveCamera', 'fitCoordinates', 'setEdgeInsets'],
+  supportedCommands: [
+    'moveCamera',
+    'fitCoordinates',
+    'setEdgeInsets',
+    'reload',
+  ],
 });
 
 export default codegenNativeComponent<NativeProps>(
