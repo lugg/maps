@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { MapProvider, MapView, Marker } from '@lugg/maps';
+import { MapProvider, MapView, Marker, type MapProviderType } from '@lugg/maps';
 
-import { ThemedText } from '../components';
+import { Button, ThemedText } from '../components';
 import { INITIAL_MARKERS } from '../markers';
 import { CIRCLE_CENTER } from '../mapData';
 import { sizes, useTheme } from '../theme';
@@ -26,6 +27,9 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
   const { colors } = useTheme();
   const { width, height } = useWindowDimensions();
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const [provider, setProvider] = useState<MapProviderType>(
+    Platform.OS === 'ios' ? 'apple' : 'google'
+  );
 
   const marker = INITIAL_MARKERS.find((m) => m.name === name);
   const place = PLACES.find((p) => p.name === name);
@@ -37,7 +41,7 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
   const camera = place
     ? fittedCamera(
         placeCoordinates(place),
-        Platform.OS === 'ios' ? 'apple' : 'google',
+        provider,
         { width, height: height - CARD_BOTTOM - CARD_HEIGHT },
         sizes.xl
       )
@@ -47,6 +51,8 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
     <View style={styles.container}>
       <MapProvider apiKey={apiKey}>
         <MapView
+          key={provider}
+          provider={provider}
           style={StyleSheet.absoluteFill}
           staticMode
           staticKey={name}
@@ -69,6 +75,14 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
           )}
         </MapView>
       </MapProvider>
+      <Button
+        style={styles.providerButton}
+        title={provider === 'google' ? 'Apple Maps' : 'Google Maps'}
+        disabled={Platform.OS !== 'ios'}
+        onPress={() =>
+          setProvider((p) => (p === 'google' ? 'apple' : 'google'))
+        }
+      />
       <View
         style={[
           styles.overlay,
@@ -97,6 +111,11 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  providerButton: {
+    position: 'absolute',
+    right: sizes.lg,
+    bottom: CARD_BOTTOM + CARD_HEIGHT + sizes.lg,
   },
   overlay: {
     position: 'absolute',
