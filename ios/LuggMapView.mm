@@ -8,8 +8,7 @@
 #import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
 #import "core/AppleStaticMapProvider.h"
-#if __has_include(<GoogleMaps/GoogleMaps.h>)
-#define LUGG_GOOGLE_MAPS_AVAILABLE 1
+#if LUGG_GOOGLE_MAPS_ENABLED
 #import "core/GoogleMapProvider.h"
 #import "core/GoogleStaticMapProvider.h"
 #endif
@@ -332,7 +331,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (_providerType == LuggMapViewProvider::Apple) {
     _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
                             : [[AppleMapProvider alloc] init];
-#if LUGG_GOOGLE_MAPS_AVAILABLE
+#if LUGG_GOOGLE_MAPS_ENABLED
   } else if (_staticMode) {
     GoogleStaticMapProvider *google = [[GoogleStaticMapProvider alloc] init];
     google.mapId = _mapId;
@@ -629,7 +628,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   _provider = nil;
   _initialized = NO;
   [self initializeProviderWithCoordinate:coordinate zoom:zoom];
-  if (_providerType == LuggMapViewProvider::Apple) {
+  if ([_provider isKindOfClass:[AppleMapProvider class]]) {
     // The captured camera already includes the previous inset offset.
     [_provider moveCamera:coordinate.latitude
                 longitude:coordinate.longitude

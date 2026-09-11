@@ -16,25 +16,38 @@ export const withLuggMapsIOS: ConfigPlugin<MapsIOSPluginProps> = (
   config,
   { apiKey, googleEnabled = true }
 ) => {
-  if (!googleEnabled) {
-    return withPodfile(config, (c) => {
-      if (!c.modResults.contents.includes(GMS_EXCLUSION_PODFILE_FLAG)) {
-        c.modResults.contents = `${GMS_EXCLUSION_PODFILE_FLAG}\n${c.modResults.contents}`;
-      }
-      return c;
-    });
-  }
+  config = withPodfile(config, (c) => {
+    const contents = c.modResults.contents.replace(
+      /^\$LuggMapsGoogleEnabled = false\r?\n/gm,
+      ''
+    );
+    c.modResults.contents = googleEnabled
+      ? contents
+      : `${GMS_EXCLUSION_PODFILE_FLAG}\n${contents}`;
+    return c;
+  });
 
-  if (!apiKey) {
+  if (googleEnabled && !apiKey) {
     return config;
   }
 
   config = withInfoPlist(config, (c) => {
-    c.modResults.GMSApiKey = apiKey;
+    if (googleEnabled) {
+      c.modResults.GMSApiKey = apiKey;
+    } else {
+      delete c.modResults.GMSApiKey;
+    }
     return c;
   });
 
   config = withAppDelegate(config, (c) => {
+    if (!googleEnabled) {
+      c.modResults.contents = c.modResults.contents
+        .replace(/^[ \t]*import GoogleMaps\r?\n/gm, '')
+        .replace(/^[ \t]*GMSServices\.provideAPIKey\("[^"\r\n]*"\)\r?\n/gm, '');
+      return c;
+    }
+
     const contents = c.modResults.contents;
 
     // Add import for GoogleMaps
@@ -49,7 +62,7 @@ export const withLuggMapsIOS: ConfigPlugin<MapsIOSPluginProps> = (
     if (!c.modResults.contents.includes('GMSServices.provideAPIKey')) {
       c.modResults.contents = c.modResults.contents.replace(
         /(func application\([^)]+\)[^{]*\{)/,
-        `$1\n    GMSServices.provideAPIKey("${apiKey}")\n`
+        `$1\n    GMSServices.provideAPIKey("${apiKey}")`
       );
     }
 
