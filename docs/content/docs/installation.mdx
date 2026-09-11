@@ -38,6 +38,22 @@ Apple Maps works out of the box on iOS. Google Maps requires an API key on every
     ```sh
     npx expo prebuild --clean
     ```
+
+    #### Apple Maps only
+
+    If you only use `provider="apple"` on iOS, set `iosGoogleMapsEnabled` to `false` to skip the Google Maps SDK entirely (it adds roughly 10 MB to the app). The plugin writes `$LuggMapsGoogleEnabled = false` to your `Podfile` and `iosGoogleMapsApiKey` is ignored:
+
+    ```json title="app.json"
+    [
+      "@lugg/maps",
+      {
+        "iosGoogleMapsEnabled": false,
+        "androidGoogleMapsApiKey": "YOUR_ANDROID_API_KEY"
+      }
+    ]
+    ```
+
+    With the SDK excluded, a `MapView` requesting `provider="google"` falls back to Apple Maps and logs a warning.
   </Tab>
   <Tab value="Bare React Native">
     ### iOS

@@ -2,16 +2,29 @@ import {
   type ConfigPlugin,
   withInfoPlist,
   withAppDelegate,
+  withPodfile,
 } from '@expo/config-plugins';
 
 export interface MapsIOSPluginProps {
   apiKey?: string;
+  googleEnabled?: boolean;
 }
+
+const GMS_EXCLUSION_PODFILE_FLAG = '$LuggMapsGoogleEnabled = false';
 
 export const withLuggMapsIOS: ConfigPlugin<MapsIOSPluginProps> = (
   config,
-  { apiKey }
+  { apiKey, googleEnabled = true }
 ) => {
+  if (!googleEnabled) {
+    return withPodfile(config, (c) => {
+      if (!c.modResults.contents.includes(GMS_EXCLUSION_PODFILE_FLAG)) {
+        c.modResults.contents = `${GMS_EXCLUSION_PODFILE_FLAG}\n${c.modResults.contents}`;
+      }
+      return c;
+    });
+  }
+
   if (!apiKey) {
     return config;
   }
