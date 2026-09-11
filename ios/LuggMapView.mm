@@ -8,8 +8,11 @@
 #import "LuggTileOverlayView.h"
 #import "core/AppleMapProvider.h"
 #import "core/AppleStaticMapProvider.h"
+#if __has_include(<GoogleMaps/GoogleMaps.h>)
+#define LUGG_GOOGLE_MAPS_AVAILABLE 1
 #import "core/GoogleMapProvider.h"
 #import "core/GoogleStaticMapProvider.h"
+#endif
 #import "core/MapProviderDelegate.h"
 #import "events/CameraIdleEvent.h"
 #import "events/CameraMoveEvent.h"
@@ -329,6 +332,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (_providerType == LuggMapViewProvider::Apple) {
     _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
                             : [[AppleMapProvider alloc] init];
+#if LUGG_GOOGLE_MAPS_AVAILABLE
   } else if (_staticMode) {
     GoogleStaticMapProvider *google = [[GoogleStaticMapProvider alloc] init];
     google.mapId = _mapId;
@@ -338,6 +342,14 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     google.mapId = _mapId;
     _provider = google;
   }
+#else
+  } else {
+    NSLog(@"[LuggMaps] provider=\"google\" requested but the Google Maps SDK "
+          @"is excluded ($LuggMapsGoogleEnabled = false); using Apple Maps");
+    _provider = _staticMode ? [[AppleStaticMapProvider alloc] init]
+                            : [[AppleMapProvider alloc] init];
+  }
+#endif
 
   _provider.delegate = self;
   _provider.staticMode = _staticMode;

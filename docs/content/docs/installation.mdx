@@ -57,6 +57,16 @@ Apple Maps works out of the box on iOS. Google Maps requires an API key on every
     cd ios && pod install
     ```
 
+    #### Apple Maps only
+
+    If you only use `provider="apple"` on iOS, you can skip the Google Maps SDK entirely (it adds roughly 10 MB to the app). Set this at the top of your `Podfile` before running `pod install`:
+
+    ```ruby title="Podfile"
+    $LuggMapsGoogleEnabled = false
+    ```
+
+    With the SDK excluded, a `MapView` requesting `provider="google"` falls back to Apple Maps and logs a warning.
+
     ### Android
 
     Add your Google Maps API key to `AndroidManifest.xml`:
