@@ -38,6 +38,26 @@ Apple Maps works out of the box on iOS. Google Maps requires an API key on every
     ```sh
     npx expo prebuild --clean
     ```
+
+    #### Apple Maps only
+
+    If you only use Apple Maps on iOS, set `iosGoogleMapsEnabled` to `false` to exclude the Google Maps SDK:
+
+    ```json title="app.json"
+    [
+      "@lugg/maps",
+      {
+        "iosGoogleMapsEnabled": false,
+        "androidGoogleMapsApiKey": "YOUR_ANDROID_API_KEY"
+      }
+    ]
+    ```
+
+    The plugin ignores `iosGoogleMapsApiKey` and removes the Google Maps initialization from `AppDelegate.swift`.
+    After changing this option, run `npx expo prebuild --platform ios` and rebuild your app.
+    To enable Google Maps again, set `iosGoogleMapsEnabled` to `true` and provide `iosGoogleMapsApiKey`.
+
+    With the SDK excluded, a `MapView` requesting `provider="google"` falls back to Apple Maps and logs a warning.
   </Tab>
   <Tab value="Bare React Native">
     ### iOS
@@ -56,6 +76,20 @@ Apple Maps works out of the box on iOS. Google Maps requires an API key on every
     ```sh
     cd ios && pod install
     ```
+
+    #### Apple Maps only
+
+    If you only use Apple Maps on iOS, add this flag at the top of your `Podfile`:
+
+    ```ruby title="Podfile"
+    $LuggMapsGoogleEnabled = false
+    ```
+
+    Remove `import GoogleMaps` and `GMSServices.provideAPIKey(...)` from `AppDelegate.swift`.
+    Then run `pod install` and rebuild your app.
+    To enable Google Maps again, remove the flag and restore the API key initialization before running `pod install`.
+
+    With the SDK excluded, a `MapView` requesting `provider="google"` falls back to Apple Maps and logs a warning.
 
     ### Android
 

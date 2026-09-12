@@ -16,7 +16,20 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm,swift,cpp}"
   s.private_header_files = "ios/**/*.h"
 
-  s.dependency "GoogleMaps"
+  # `$LuggMapsGoogleEnabled = false` in the Podfile drops the Google Maps SDK (Apple Maps only)
+  google_enabled = defined?($LuggMapsGoogleEnabled) ? $LuggMapsGoogleEnabled : true
+  s.pod_target_xcconfig = {
+    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) LUGG_GOOGLE_MAPS_ENABLED=#{google_enabled ? 1 : 0}"
+  }
+  if google_enabled
+    s.dependency "GoogleMaps"
+  else
+    unless defined?($LuggMapsGoogleDisabledLogged)
+      Pod::UI.puts "[LuggMaps] Google Maps SDK is disabled, Apple Maps only.".yellow
+      $LuggMapsGoogleDisabledLogged = true
+    end
+    s.exclude_files = "ios/core/Google*", "ios/core/GMS*"
+  end
   s.frameworks = "MapKit"
 
   install_modules_dependencies(s)

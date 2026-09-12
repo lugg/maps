@@ -17,12 +17,25 @@ export interface MapsPluginProps {
    * Required for Android as it only supports Google Maps.
    */
   androidGoogleMapsApiKey?: string;
+
+  /**
+   * Whether to link the Google Maps SDK on iOS. Set to `false` when only
+   * Apple Maps is used to drop the SDK from the app. Defaults to `true`.
+   */
+  iosGoogleMapsEnabled?: boolean;
 }
 
 const withMaps: ConfigPlugin<MapsPluginProps | void> = (config, props = {}) => {
-  const { iosGoogleMapsApiKey, androidGoogleMapsApiKey } = props ?? {};
+  const {
+    iosGoogleMapsApiKey,
+    androidGoogleMapsApiKey,
+    iosGoogleMapsEnabled = true,
+  } = props ?? {};
 
-  config = withLuggMapsIOS(config, { apiKey: iosGoogleMapsApiKey });
+  config = withLuggMapsIOS(config, {
+    apiKey: iosGoogleMapsApiKey,
+    googleEnabled: iosGoogleMapsEnabled,
+  });
   config = withLuggMapsAndroid(config, { apiKey: androidGoogleMapsApiKey });
 
   return config;
