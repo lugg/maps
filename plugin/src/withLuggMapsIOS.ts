@@ -17,6 +17,10 @@ export const withLuggMapsIOS: ConfigPlugin<MapsIOSPluginProps> = (
   { apiKey, googleEnabled = true }
 ) => {
   config = withPodfile(config, (c) => {
+    if (!googleEnabled) {
+      console.log('[LuggMaps] Google Maps SDK is disabled, Apple Maps only.');
+    }
+
     const contents = c.modResults.contents.replace(
       /^\$LuggMapsGoogleEnabled = false\r?\n/gm,
       ''

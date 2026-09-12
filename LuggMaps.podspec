@@ -24,6 +24,10 @@ Pod::Spec.new do |s|
   if google_enabled
     s.dependency "GoogleMaps"
   else
+    unless defined?($LuggMapsGoogleDisabledLogged)
+      Pod::UI.puts "[LuggMaps] Google Maps SDK is disabled, Apple Maps only.".yellow
+      $LuggMapsGoogleDisabledLogged = true
+    end
     s.exclude_files = "ios/core/Google*", "ios/core/GMS*"
   end
   s.frameworks = "MapKit"
