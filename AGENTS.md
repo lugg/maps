@@ -24,9 +24,24 @@ ios/                 # iOS native (Objective-C)
 android/             # Android native (Kotlin)
 plugin/              # Expo config plugin
 example/bare/        # Bare React Native example app
+example/expo/        # Expo example app
+example/shared/      # Screens and components shared by both example apps
+skills/maps-usage/   # Consumer-facing AI skill (npx skills add lugg/maps)
 docs/                # Documentation site (Next.js + Fumadocs), deployed to maps.lodev09.com
 docs/content/docs/   # MDX documentation pages
 ```
+
+### Updating the AI skill
+
+`skills/maps-usage/` is the consumer-facing skill installed via `npx skills add lugg/maps`. Whenever `docs/content/docs/` changes (new prop, event, method, platform limitation, or pattern), update the skill to match in the same PR:
+
+- `SKILL.md` - quick start, recipes, "Rules That Save Debugging Time", platform table
+- `references/configuration.md` - setup snippets and props (mirror `installation.mdx`, `components/*.mdx`, `types.mdx`)
+- `references/api.md` - ref methods, events, payload types
+- `references/advanced-patterns.md` - patterns from `example/shared/`
+- `references/troubleshooting.md` - symptom → cause → fix entries
+
+The skill summarizes the docs and the source, it does not copy them. Keep entries terse and code-first. When docs and `src/` disagree, follow `src/` and fix the docs.
 
 ### Creating a Pull Request
 

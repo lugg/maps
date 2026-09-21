@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
+  BookOpen,
+  Bot,
   Camera,
   Globe,
   Image as ImageIcon,
@@ -10,6 +12,8 @@ import {
   MapPin,
   Rows3,
   Route,
+  ShieldAlert,
+  Sparkles,
   Zap,
 } from 'lucide-react';
 import { CodeSample } from '@/components/code-sample';
@@ -182,6 +186,30 @@ const PLATFORMS = [
   { name: 'iOS', providers: 'Apple Maps · Google Maps' },
   { name: 'Android', providers: 'Google Maps' },
   { name: 'Web', providers: 'Google Maps' },
+];
+
+const SKILL_COMMAND = 'npx skills add lugg/maps';
+const SKILL_URL = `${GITHUB_URL}/tree/main/skills/maps-usage`;
+
+const SKILL_TOPICS = [
+  {
+    icon: BookOpen,
+    title: 'Setup and API',
+    description:
+      'Expo plugin, bare iOS and Android, web provider. Every prop, event, and ref method with platform support.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Recipes and patterns',
+    description:
+      'Camera control, custom markers and callouts, routes, GeoJSON, static lists, bottom sheet insets, Reanimated markers.',
+  },
+  {
+    icon: ShieldAlert,
+    title: 'Limitations and fixes',
+    description:
+      'What differs between Apple, Google, Android, and web, plus a symptom-to-fix troubleshooting guide.',
+  },
 ];
 
 export default function HomePage() {
@@ -381,7 +409,73 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-fd-border">
+      <section className="border-y border-fd-border bg-fd-card/40">
+        <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 py-20 md:py-28 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-wider text-fd-primary">
+              Built for agents
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-fd-foreground md:text-4xl">
+              Teach your coding agent the library.
+            </h2>
+            <p className="mt-4 text-fd-muted-foreground">
+              One command installs the <strong>Maps Usage</strong> skill into
+              your project. Claude Code, Cursor, Codex, and other agents then
+              pick the right patterns, respect platform limits, and generate
+              correct{' '}
+              <code className="font-mono text-fd-foreground">MapView</code> code
+              without you explaining the API every time.
+            </p>
+            <div className="mt-8">
+              <InstallCommand command={SKILL_COMMAND} />
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-5 text-sm">
+              <Link
+                href={SKILL_URL}
+                className="inline-flex items-center gap-1.5 font-medium text-fd-primary hover:underline"
+              >
+                Read the skill source
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/usage#ai-skills"
+                className="inline-flex items-center gap-1.5 font-medium text-fd-muted-foreground hover:text-fd-foreground"
+              >
+                Usage guide
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {SKILL_TOPICS.map((topic) => (
+              <div
+                key={topic.title}
+                className="flex gap-4 rounded-2xl border border-fd-border bg-fd-background p-5 transition-colors hover:border-fd-primary/40"
+              >
+                <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-fd-primary/10 text-fd-primary">
+                  <topic.icon className="size-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-fd-foreground">
+                    {topic.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-fd-muted-foreground">
+                    {topic.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-fd-border px-5 py-4 text-sm text-fd-muted-foreground">
+              <Bot className="size-4 shrink-0 text-fd-primary" />
+              <span>
+                Ships as a standard <code className="font-mono">SKILL.md</code>{' '}
+                with reference files, so any agent that reads skills can use it.
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-6 py-20 text-center md:py-24">
           <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-fd-primary/10 text-fd-primary">
             <LayoutGrid className="size-6" />
