@@ -40,6 +40,16 @@ import { MapView, Marker } from '@lugg/maps';
 
 Google Maps needs an API key on every platform. See [Installation](https://maps.lodev09.com/installation) for Expo, iOS, Android, and web setup.
 
+## AI Skills
+
+Skills give your AI coding agent working knowledge of `@lugg/maps` - setup, camera control, markers and callouts, static maps, advanced patterns, and platform limitations - so it generates correct code without you explaining the library each time.
+
+```sh
+npx skills add lugg/maps
+```
+
+This installs the **Maps Usage** skill into your project. The source lives in [`skills/maps-usage`](skills/maps-usage).
+
 ## Contributing
 
 - [Development workflow](CONTRIBUTING.md#development-workflow)
