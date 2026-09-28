@@ -44,6 +44,15 @@ const config: ExpoConfig = {
       },
     ],
     'expo-router',
+    'expo-status-bar',
+    [
+      'expo-build-properties',
+      {
+        ios: {
+          enableSceneSupport: true,
+        },
+      },
+    ],
   ],
 };
 

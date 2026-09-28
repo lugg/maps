@@ -32,5 +32,14 @@ target 'LuggMapsExample' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 27 rejects resource bundles below iOS 15 (e.g. RNSVGFilters at 12.4)
+    installer.target_installation_results.pod_target_installation_results.each_value do |result|
+      result.resource_bundle_targets.each do |bundle_target|
+        bundle_target.build_configurations.each do |config|
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+        end
+      end
+    end
   end
 end
