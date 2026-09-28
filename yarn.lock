@@ -4117,6 +4117,7 @@ __metadata:
     "@vis.gl/react-google-maps": "npm:^1.5.0"
     babel-preset-expo: "npm:~57.0.13"
     expo: "npm:~57.0.25"
+    expo-build-properties: "npm:~57.0.22"
     expo-constants: "npm:~57.0.19"
     expo-linking: "npm:~57.0.11"
     expo-location: "npm:~57.0.20"
@@ -10644,6 +10645,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/b4c944ad85c5c0bc0bbd2888712ba30a3e582ff9c0d9a47dc4189bfac53beafdad1c5b0e10a8fd39aee587948fcf83a5ec31aa42b99263756a00a750e7c318a2
+  languageName: node
+  linkType: hard
+
+"expo-build-properties@npm:~57.0.22":
+  version: 57.0.22
+  resolution: "expo-build-properties@npm:57.0.22"
+  dependencies:
+    "@expo/schema-utils": "npm:^57.0.2"
+    resolve-from: "npm:^5.0.0"
+    semver: "npm:^7.6.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/e2247e535a88c215d4becc5d4d6c4b4965c3380464326c1a704cbc35b052f13e509d15448fd1dd9ad0ffa35629531039e78d04e199e9b35a4e050f12bcce92cc
   languageName: node
   linkType: hard
 

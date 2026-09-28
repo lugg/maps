@@ -17,6 +17,7 @@
     "@lugg/shared-example": "workspace:*",
     "@vis.gl/react-google-maps": "^1.5.0",
     "expo": "~57.0.25",
+    "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.19",
     "expo-linking": "~57.0.11",
     "expo-location": "~57.0.20",
