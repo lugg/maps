@@ -103,6 +103,7 @@ using namespace luggmaps::events;
     [_iconView insertSubview:childComponentView atIndex:index];
   }
   _didLayout = NO;
+  [self setNeedsLayout];
 }
 
 - (void)unmountChildComponentView:
@@ -114,6 +115,7 @@ using namespace luggmaps::events;
     [childComponentView removeFromSuperview];
   }
   _didLayout = NO;
+  [self setNeedsLayout];
 }
 
 - (void)layoutSubviews {
