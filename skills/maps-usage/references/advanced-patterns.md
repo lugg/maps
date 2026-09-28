@@ -223,7 +223,7 @@ Carry the camera over by storing the last `onCameraIdle` payload and feeding it 
 
 ## Fitted camera for static maps
 
-Static maps can't animate, so compute the camera before mount instead of calling `fitCoordinates` in `onReady`. This mirrors the native static framing (Google: world is `256 · 2^zoom` points wide; Apple fits a square span to the short side):
+Static maps can't animate, so compute the camera before mount instead of calling `fitCoordinates` in `onReady`. This mirrors the native static framing (Google: world is `256 · 2^zoom` points wide; Apple fits a square span to the full view's short side). Pass the same `edgeInsets` you give the `MapView`: the content fits the inset viewport, but the Apple zoom still derives from the full view size because insets only shift the center:
 
 ```ts
 const mercatorX = (lng: number) => (lng + 180) / 360;
@@ -233,7 +233,8 @@ export const fittedCamera = (
   coordinates: Coordinate[],
   provider: MapProviderType,
   size: { width: number; height: number },
-  padding: number
+  padding: number,
+  insets: Partial<EdgeInsets> = {}
 ) => {
   const xs = coordinates.map((c) => mercatorX(c.longitude));
   const ys = coordinates.map((c) => mercatorY(c.latitude));
@@ -243,10 +244,9 @@ export const fittedCamera = (
     latitude: (Math.atan(Math.sinh(Math.PI * (1 - 2 * centerY))) * 180) / Math.PI,
     longitude: ((minX + maxX) / 2) * 360 - 180,
   };
-  const scale = Math.max(
-    (maxX - minX) / Math.max(size.width - padding * 2, 1),
-    (maxY - minY) / Math.max(size.height - padding * 2, 1)
-  );
+  const availWidth = size.width - (insets.left ?? 0) - (insets.right ?? 0) - padding * 2;
+  const availHeight = size.height - (insets.top ?? 0) - (insets.bottom ?? 0) - padding * 2;
+  const scale = Math.max((maxX - minX) / Math.max(availWidth, 1), (maxY - minY) / Math.max(availHeight, 1));
   const zoom =
     provider === 'apple'
       ? 0.5 + Math.log2(1 / (scale * Math.min(size.width, size.height) * Math.cos((coordinate.latitude * Math.PI) / 180)))
@@ -255,7 +255,7 @@ export const fittedCamera = (
 };
 ```
 
-Use with `initialCoordinate={camera.coordinate} initialZoom={camera.zoom}`. For a single point just pass it with a fixed zoom.
+Use with `initialCoordinate={camera.coordinate} initialZoom={camera.zoom}`. For a single point just pass it with a fixed zoom. For a detail screen with a bottom card, pass the full window size plus `{ bottom: cardHeight }` as `insets` and the same object as the map's `edgeInsets`.
 
 ## Static map list with detail hand-off
 

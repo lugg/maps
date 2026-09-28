@@ -13,6 +13,7 @@ import {
   Marker,
   Polyline,
   type Coordinate,
+  type EdgeInsets,
   type MapProviderType,
 } from '@lugg/maps';
 
@@ -157,16 +158,17 @@ const mercatorX = (longitude: number) => (longitude + 180) / 360;
 const mercatorY = (latitude: number) =>
   (1 - Math.asinh(Math.tan((latitude * Math.PI) / 180)) / Math.PI) / 2;
 
-// Camera that fits the coordinates in the given view size, derived up
+// Camera that fits the coordinates in the view's inset viewport, derived up
 // front so static maps center their content without imperative commands.
 // Matches the native static framing: Google shows the world 256 * 2^zoom
-// points wide; Apple fits a square span rect to the view's short side
-// (see LuggStaticFittedMapRect)
+// points wide; Apple fits a square span rect to the full view's short side
+// (see LuggStaticFittedMapRect), and edge insets only shift the center
 export const fittedCamera = (
   coordinates: Coordinate[],
   provider: MapProviderType,
   size: { width: number; height: number },
-  padding: number
+  padding: number,
+  insets: Partial<EdgeInsets> = {}
 ): { coordinate: Coordinate; zoom: number } => {
   const xs = coordinates.map((c) => mercatorX(c.longitude));
   const ys = coordinates.map((c) => mercatorY(c.latitude));
@@ -182,10 +184,15 @@ export const fittedCamera = (
     longitude: ((minX + maxX) / 2) * 360 - 180,
   };
 
-  // World fraction per view point at which the bounds fit the padded view
+  const availWidth =
+    size.width - (insets.left ?? 0) - (insets.right ?? 0) - padding * 2;
+  const availHeight =
+    size.height - (insets.top ?? 0) - (insets.bottom ?? 0) - padding * 2;
+
+  // World fraction per view point at which the bounds fit the padded viewport
   const scale = Math.max(
-    (maxX - minX) / Math.max(size.width - padding * 2, 1),
-    (maxY - minY) / Math.max(size.height - padding * 2, 1)
+    (maxX - minX) / Math.max(availWidth, 1),
+    (maxY - minY) / Math.max(availHeight, 1)
   );
 
   const zoom =
