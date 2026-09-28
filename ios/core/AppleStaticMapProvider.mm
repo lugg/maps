@@ -185,7 +185,19 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
       _poiEnabled, _poiFilterMode, _poiFilterCategories);
   mapView.overrideUserInterfaceStyle =
       [self snapshotTraitCollection].userInterfaceStyle;
-  [mapView setVisibleMapRect:self.mapRect
+  // MKMapView fits the rect into the layout-margin viewport, and mapRect
+  // is already inset-shifted for the whole view: pass its viewport slice so
+  // the fit puts mapRect over the full view, matching the overlay projection
+  MKMapRect mapRect = self.mapRect;
+  CGSize size = self.projectedSize;
+  UIEdgeInsets insets = self.edgeInsets;
+  double scale = mapRect.size.width / size.width;
+  MKMapRect viewportRect =
+      MKMapRectMake(mapRect.origin.x + insets.left * scale,
+                    mapRect.origin.y + insets.top * scale,
+                    (size.width - insets.left - insets.right) * scale,
+                    (size.height - insets.top - insets.bottom) * scale);
+  [mapView setVisibleMapRect:viewportRect
                  edgePadding:UIEdgeInsetsZero
                     animated:NO];
   _warmupMapView = mapView;

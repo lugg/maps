@@ -16,20 +16,31 @@ import {
 
 interface MarkerDetailScreenProps {
   name: string;
+  bottomInset?: number;
 }
 
 const CARD_HEIGHT = 200;
-const CARD_BOTTOM = sizes.xl * 3;
 
 const formatCoordinate = (value: number) => value.toFixed(4);
 
-export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
+export const MarkerDetailScreen = ({
+  name,
+  bottomInset = 0,
+}: MarkerDetailScreenProps) => {
   const { colors } = useTheme();
   const { width, height } = useWindowDimensions();
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const [provider, setProvider] = useState<MapProviderType>(
     Platform.OS === 'ios' ? 'apple' : 'google'
   );
+
+  const cardBottom = bottomInset + sizes.lg;
+  const edgeInsets = {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: cardBottom + CARD_HEIGHT,
+  };
 
   const marker = INITIAL_MARKERS.find((m) => m.name === name);
   const place = PLACES.find((p) => p.name === name);
@@ -42,8 +53,9 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
     ? fittedCamera(
         placeCoordinates(place),
         provider,
-        { width, height: height - CARD_BOTTOM - CARD_HEIGHT },
-        sizes.xl
+        { width, height },
+        sizes.xl,
+        edgeInsets
       )
     : { coordinate, zoom: 15 };
 
@@ -58,12 +70,7 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
           staticKey={name}
           initialCoordinate={camera.coordinate}
           initialZoom={camera.zoom}
-          edgeInsets={{
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: CARD_BOTTOM + CARD_HEIGHT,
-          }}
+          edgeInsets={edgeInsets}
         >
           {place ? (
             <>
@@ -76,7 +83,10 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
         </MapView>
       </MapProvider>
       <Button
-        style={styles.providerButton}
+        style={{
+          ...styles.providerButton,
+          bottom: edgeInsets.bottom + sizes.lg,
+        }}
         title={provider === 'google' ? 'Apple Maps' : 'Google Maps'}
         disabled={Platform.OS !== 'ios'}
         onPress={() =>
@@ -87,6 +97,7 @@ export const MarkerDetailScreen = ({ name }: MarkerDetailScreenProps) => {
         style={[
           styles.overlay,
           {
+            bottom: cardBottom,
             backgroundColor: colors.backgroundElevated,
             shadowColor: colors.shadow,
           },
@@ -115,13 +126,11 @@ const styles = StyleSheet.create({
   providerButton: {
     position: 'absolute',
     right: sizes.lg,
-    bottom: CARD_BOTTOM + CARD_HEIGHT + sizes.lg,
   },
   overlay: {
     position: 'absolute',
     left: sizes.lg,
     right: sizes.lg,
-    bottom: CARD_BOTTOM,
     height: CARD_HEIGHT,
     padding: sizes.xl,
     gap: sizes.sm,
