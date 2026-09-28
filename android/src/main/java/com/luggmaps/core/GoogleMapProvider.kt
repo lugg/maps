@@ -769,7 +769,11 @@ class GoogleMapProvider(private val context: Context) :
 
   private fun processPendingMarkers() {
     if (googleMap == null) return
-    pendingMarkerViews.forEach { addMarkerViewToMap(it) }
+    pendingMarkerViews.forEach {
+      // markerViewDidLayout adds it once the bitmap can be drawn
+      if (it.hasCustomView && !it.didLayout) return@forEach
+      addMarkerViewToMap(it)
+    }
     pendingMarkerViews.clear()
   }
 

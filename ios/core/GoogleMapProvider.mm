@@ -667,6 +667,11 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   if (!_mapView)
     return;
 
+  // Custom icons rasterize from layout; adding before that shows the SDK's
+  // default pin until markerViewDidLayout re-syncs.
+  if (markerView.hasCustomView && !markerView.didLayout)
+    return;
+
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
   marker.title = markerView.title.length > 0 ? markerView.title : nil;
