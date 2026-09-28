@@ -44,6 +44,7 @@ const config: ExpoConfig = {
       },
     ],
     'expo-router',
+    'expo-status-bar',
   ],
 };
 
