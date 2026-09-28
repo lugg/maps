@@ -6,7 +6,7 @@ PODS:
   - hermes-engine (250829098.0.17):
     - hermes-engine/Pre-built (= 250829098.0.17)
   - hermes-engine/Pre-built (250829098.0.17)
-  - LuggMaps (1.1.1):
+  - LuggMaps (1.1.2):
     - GoogleMaps
     - hermes-engine
     - RCTRequired
@@ -2491,7 +2491,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 2138c6c2ab66c31bf5754dc18097fbc498a49c7f
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
   hermes-engine: 63c5db7d529c36335fada6582fd293ae2a105d77
-  LuggMaps: 4f14c4cbe769e9937708c42310c90285517165c6
+  LuggMaps: 5574aaf76890c42e3c5d00fc90865014c9eaddfb
   RCTDeprecation: 96f68ebf33f8762466b01d57d6e873c4f30efb07
   RCTRequired: 166eed8ad6d8440e73e56d09a9090366609823d2
   RCTSwiftUI: e818198d11928a78c2b2afe281d072171dab617f
