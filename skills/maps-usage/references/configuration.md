@@ -134,7 +134,7 @@ export function App() {
 | `initialZoom` | `number` | `10` | 🍎🅶🤖🌐 | Starting zoom (Google-style levels). Also the zoom `fitCoordinates` uses for a single coordinate |
 | `minZoom` | `number` | — | 🍎🅶🤖🌐 | Lower zoom clamp |
 | `maxZoom` | `number` | — | 🍎🅶🤖🌐 | Upper zoom clamp |
-| `edgeInsets` | `EdgeInsets` | — | 🍎🅶🤖🌐 | Viewport insets. Shifts the logical center, attribution, and controls. Prefer `setEdgeInsets()` for animated changes |
+| `edgeInsets` | `EdgeInsets` | — | 🍎🅶🤖🌐 | Viewport insets. Shifts the logical center, attribution, and controls. Prefer `setEdgeInsets()` for animated changes. Applied only when the value changes, so re-renders keep `setEdgeInsets()` insets |
 | `insetAdjustment` | `'never' \| 'automatic'` | `'never'` | 🍎🅶🤖 | `'automatic'` adds safe-area insets to the map padding |
 
 ### Gestures

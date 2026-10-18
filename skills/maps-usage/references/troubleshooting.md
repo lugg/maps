@@ -15,6 +15,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 - [Marker animation janks or re-renders every frame](#marker-animation-janks-or-re-renders-every-frame)
 - [Overlapping markers stack wrong](#overlapping-markers-stack-wrong)
 - [Center pin / selected coordinate is offset under a sheet](#center-pin--selected-coordinate-is-offset-under-a-sheet)
+- [Sheet insets reset when another prop changes](#sheet-insets-reset-when-another-prop-changes)
 - [`e.nativeEvent.dragging` is undefined](#enativeeventdragging-is-undefined)
 - [User location dot never appears](#user-location-dot-never-appears)
 - [Static maps in a list are slow or crash the app](#static-maps-in-a-list-are-slow-or-crash-the-app)
@@ -117,6 +118,14 @@ Common issues with `@lugg/maps`, organized by symptom.
 **Cause:** The map is shrunk or the sheet is ignored, so the visual center and the map center differ.
 
 **Fix:** Keep the map full-size and push the viewport with `setEdgeInsets({ bottom: sheetHeight })`. Camera events then report the inset-adjusted center, and a pin translated up by `bottom / 2` sits exactly on it. See [Bottom sheet pattern](./advanced-patterns.md#bottom-sheet-with-edge-insets-and-center-pin).
+
+## Sheet insets reset when another prop changes
+
+**Symptom:** After `setEdgeInsets`, the map snaps back (content slides under the sheet or header) when `theme`, `mapType`, `userLocationEnabled`, or another prop changes, or on any re-render (web).
+
+**Cause:** `@lugg/maps` ≤ 1.1.3 on iOS and web re-applied the unchanged `edgeInsets` prop over the command's insets.
+
+**Fix:** Upgrade. Now the last write wins: only a changed `edgeInsets` value replaces command insets. On older versions, drive the sheet insets through the `edgeInsets` prop instead of the command.
 
 ## `e.nativeEvent.dragging` is undefined
 
