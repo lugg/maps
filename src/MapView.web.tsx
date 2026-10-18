@@ -131,6 +131,7 @@ export const MapView = memo(
     const isDraggingRef = useRef(false);
     const wasGesture = useRef(false);
     const prevEdgeInsets = useRef(edgeInsets);
+    const prevEdgeInsetsProp = useRef(edgeInsets);
     // Bumped by reload() to remount the map at the camera captured then
     const [reloadState, setReloadState] = useState<{
       key: number;
@@ -300,7 +301,9 @@ export const MapView = memo(
     useEffect(() => {
       if (!map || !edgeInsets) return;
 
-      const prev = prevEdgeInsets.current;
+      // Compare with the last prop, not prevEdgeInsets: the setEdgeInsets
+      // ref method writes prevEdgeInsets, and re-renders carry the old prop
+      const prev = prevEdgeInsetsProp.current;
       const changed =
         prev?.top !== edgeInsets.top ||
         prev?.left !== edgeInsets.left ||
@@ -308,6 +311,7 @@ export const MapView = memo(
         prev?.right !== edgeInsets.right;
 
       if (changed) {
+        prevEdgeInsetsProp.current = edgeInsets;
         applyEdgeInsets(edgeInsets);
       }
     }, [map, edgeInsets, applyEdgeInsets]);

@@ -69,7 +69,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   double _minZoom;
   double _maxZoom;
   UIEdgeInsets _edgeInsets;
-  UIEdgeInsets _oldEdgeInsets;
+  UIEdgeInsets _edgeInsetsProp;
   LuggMapViewInsetAdjustment _insetAdjustment;
 }
 
@@ -284,9 +284,11 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 // staticKey identifies the map's content; when it changes (e.g. a recycled
 // list row bound to a new item), any live warmup or displayed snapshot is
 // stale and the static lifecycle restarts. Without this, an in-flight
-// warmup caches the old item's map under the new key.
+// warmup caches the old item's map under the new key. Insets from the
+// setEdgeInsets command belong to the old item, so the prop insets return.
 - (void)resetStaticContent {
   _staticSnapshotDone = NO;
+  _edgeInsets = _edgeInsetsProp;
 
   if (_provider) {
     [_provider destroy];
@@ -303,6 +305,8 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [super prepareForRecycle];
 
   _staticSnapshotDone = NO;
+  _edgeInsets = UIEdgeInsetsZero;
+  _edgeInsetsProp = UIEdgeInsetsZero;
 
   [_provider destroy];
   _provider = nil;
@@ -546,10 +550,15 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   UIEdgeInsets newEdgeInsets = UIEdgeInsetsMake(
       newViewProps.edgeInsets.top, newViewProps.edgeInsets.left,
       newViewProps.edgeInsets.bottom, newViewProps.edgeInsets.right);
-  if (!UIEdgeInsetsEqualToEdgeInsets(newEdgeInsets, _edgeInsets)) {
-    _oldEdgeInsets = _edgeInsets;
-    _edgeInsets = newEdgeInsets;
-    [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:_oldEdgeInsets];
+  // Compare with the last prop, not _edgeInsets: the setEdgeInsets command
+  // writes _edgeInsets, and unrelated prop updates carry the old edgeInsets
+  if (!UIEdgeInsetsEqualToEdgeInsets(newEdgeInsets, _edgeInsetsProp)) {
+    _edgeInsetsProp = newEdgeInsets;
+    [self setEdgeInsets:newEdgeInsets.top
+                   left:newEdgeInsets.left
+                 bottom:newEdgeInsets.bottom
+                  right:newEdgeInsets.right
+               duration:0];
   }
 
   [super updateProps:props oldProps:oldProps];

@@ -490,6 +490,11 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets
         oldEdgeInsets:(UIEdgeInsets)oldEdgeInsets
              duration:(double)duration {
+  // An interrupted animation leaves the map at its in-flight insets, not at
+  // the caller's last target
+  if (_edgeInsetsDisplayLink) {
+    oldEdgeInsets = _edgeInsetsCurrent;
+  }
   [self stopEdgeInsetsAnimation];
 
   if (duration != 0 && _mapView) {
