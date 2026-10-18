@@ -533,6 +533,17 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   _edgeInsetsDisplayLink = nil;
 }
 
+// An inset animation re-centers the map on every frame, which stops a camera
+// animation. A camera command moves the map anyway, so it takes the final
+// insets without the re-center.
+- (void)finishEdgeInsetsAnimation {
+  if (!_edgeInsetsDisplayLink)
+    return;
+  [self stopEdgeInsetsAnimation];
+  _mapView.layoutMargins = _edgeInsetsTo;
+  _edgeInsetsCurrent = _edgeInsetsTo;
+}
+
 - (CLLocationDistance)cameraDistanceForZoomLevel:(double)zoomLevel {
   return 128000000.0 / pow(2, zoomLevel);
 }
@@ -1785,6 +1796,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   if (!_mapView)
     return;
 
+  [self finishEdgeInsetsAnimation];
   double targetZoom = zoom > 0 ? zoom : _mapView.zoomLevel;
 
   if (duration < 0) {
@@ -1837,6 +1849,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   UIEdgeInsets insets = UIEdgeInsetsMake(edgeInsetsTop, edgeInsetsLeft,
                                          edgeInsetsBottom, edgeInsetsRight);
 
+  [self finishEdgeInsetsAnimation];
   if (duration < 0) {
     [_mapView setVisibleMapRect:mapRect edgePadding:insets animated:YES];
   } else if (duration > 0) {

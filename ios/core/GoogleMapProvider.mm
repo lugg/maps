@@ -1176,18 +1176,26 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
 
   UIEdgeInsets insets = UIEdgeInsetsMake(edgeInsetsTop, edgeInsetsLeft,
                                          edgeInsetsBottom, edgeInsetsRight);
-  GMSCameraUpdate *cameraUpdate = [GMSCameraUpdate fitBounds:bounds
-                                              withEdgeInsets:insets];
+
+  // An inset animation may still be moving the padding toward _edgeInsets.
+  // Fit against the padding it ends at: the camera target stays centered in
+  // the padding while the animation finishes.
+  UIEdgeInsets padding = _mapView.padding;
+  _mapView.padding = _edgeInsets;
+  GMSCameraPosition *camera = [_mapView cameraForBounds:bounds insets:insets];
+  _mapView.padding = padding;
+  if (!camera)
+    return;
 
   if (duration < 0) {
-    [_mapView animateWithCameraUpdate:cameraUpdate];
+    [_mapView animateToCameraPosition:camera];
   } else if (duration > 0) {
     [CATransaction begin];
     [CATransaction setAnimationDuration:duration / 1000.0];
-    [_mapView animateWithCameraUpdate:cameraUpdate];
+    [_mapView animateToCameraPosition:camera];
     [CATransaction commit];
   } else {
-    [_mapView moveCamera:cameraUpdate];
+    [_mapView setCamera:camera];
   }
 }
 
