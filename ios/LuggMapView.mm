@@ -69,6 +69,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   double _minZoom;
   double _maxZoom;
   UIEdgeInsets _edgeInsets;
+  UIEdgeInsets _edgeInsetsProp;
   UIEdgeInsets _oldEdgeInsets;
   LuggMapViewInsetAdjustment _insetAdjustment;
 }
@@ -303,6 +304,8 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [super prepareForRecycle];
 
   _staticSnapshotDone = NO;
+  _edgeInsets = UIEdgeInsetsZero;
+  _edgeInsetsProp = UIEdgeInsetsZero;
 
   [_provider destroy];
   _provider = nil;
@@ -546,7 +549,10 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   UIEdgeInsets newEdgeInsets = UIEdgeInsetsMake(
       newViewProps.edgeInsets.top, newViewProps.edgeInsets.left,
       newViewProps.edgeInsets.bottom, newViewProps.edgeInsets.right);
-  if (!UIEdgeInsetsEqualToEdgeInsets(newEdgeInsets, _edgeInsets)) {
+  // Compare with the last prop, not _edgeInsets: the setEdgeInsets command
+  // writes _edgeInsets, and unrelated prop updates carry the old edgeInsets
+  if (!UIEdgeInsetsEqualToEdgeInsets(newEdgeInsets, _edgeInsetsProp)) {
+    _edgeInsetsProp = newEdgeInsets;
     _oldEdgeInsets = _edgeInsets;
     _edgeInsets = newEdgeInsets;
     [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:_oldEdgeInsets];
