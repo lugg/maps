@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.ImageView
@@ -11,6 +12,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.facebook.react.uimanager.PixelUtil.dpToPx
+import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMapOptions
@@ -133,6 +135,9 @@ class GoogleMapProvider(private val context: Context) :
   // Edge Insets
   private var edgeInsets: EdgeInsets = EdgeInsets()
 
+  // The moveCamera or fitCoordinates animation in flight, if any
+  private var cameraAnimation: CameraAnimation? = null
+
   // Inset adjustment
   private var insetAdjustment: String = "never"
   private var systemInsets: EdgeInsets = EdgeInsets()
@@ -212,6 +217,7 @@ class GoogleMapProvider(private val context: Context) :
     groundOverlayToViewMap.clear()
     markerToViewMap.clear()
     wrapperView?.touchEventHandler = null
+    cameraAnimation = null
     // The wrapper outlives the provider on reload; don't leave the dead map
     // view in it
     mapView?.let { wrapperView?.removeView(it) }
@@ -603,7 +609,18 @@ class GoogleMapProvider(private val context: Context) :
     val oldInsets = this.edgeInsets
     this.edgeInsets = edgeInsets
 
-    if (map != null && oldInsets != edgeInsets) {
+    val animation = cameraAnimation
+    if (map != null && oldInsets != edgeInsets && animation != null) {
+      // Any camera update cancels the animation in flight, and its target was resolved against
+      // the old insets. Re-apply it for the time it has left so it lands on the new insets.
+      applyEdgeInsets(duration)
+      val remaining = if (animation.duration > 0) {
+        (animation.endTime - SystemClock.uptimeMillis()).toInt().coerceAtLeast(0)
+      } else {
+        animation.duration
+      }
+      applyCameraUpdate(animation.update, remaining, animation.padding)
+    } else if (map != null && oldInsets != edgeInsets) {
       val cameraUpdate = CameraUpdateFactory.newCameraPosition(map.cameraPosition)
       applyEdgeInsets(duration)
       when {
@@ -1262,12 +1279,7 @@ class GoogleMapProvider(private val context: Context) :
       .target(position)
       .zoom(targetZoom)
       .build()
-    val cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition)
-    when {
-      duration < 0 -> map.animateCamera(cameraUpdate)
-      duration > 0 -> map.animateCamera(cameraUpdate, duration, null)
-      else -> map.moveCamera(cameraUpdate)
-    }
+    applyCameraUpdate(CameraUpdateFactory.newCameraPosition(cameraPosition), duration)
   }
 
   override fun fitCoordinates(
@@ -1278,8 +1290,7 @@ class GoogleMapProvider(private val context: Context) :
     edgeInsetsRight: Int,
     duration: Int
   ) {
-    val map = googleMap ?: return
-    if (coordinates.isEmpty()) return
+    if (googleMap == null || coordinates.isEmpty()) return
 
     val latLongs = coordinates.filterIsInstance<LatLng>()
     if (latLongs.isEmpty()) return
@@ -1298,23 +1309,11 @@ class GoogleMapProvider(private val context: Context) :
     latLongs.forEach { boundsBuilder.include(it) }
     val bounds = boundsBuilder.build()
 
-    val combined = combinedEdgeInsets()
-    map.setPadding(
-      combined.left + left,
-      combined.top + top,
-      combined.right + right,
-      combined.bottom + bottom
+    applyCameraUpdate(
+      CameraUpdateFactory.newLatLngBounds(bounds, 0),
+      duration,
+      EdgeInsets(top, left, bottom, right)
     )
-
-    val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 0)
-
-    when {
-      duration < 0 -> map.animateCamera(cameraUpdate)
-      duration > 0 -> map.animateCamera(cameraUpdate, duration, null)
-      else -> map.moveCamera(cameraUpdate)
-    }
-
-    map.setPadding(combined.left, combined.top, combined.right, combined.bottom)
   }
 
   // endregion
@@ -1366,6 +1365,39 @@ class GoogleMapProvider(private val context: Context) :
     } else {
       edgeInsets
     }
+
+  // A camera update resolves against the map's padding when it is applied, so `padding` is added
+  // to the insets only for the call
+  private fun applyCameraUpdate(update: CameraUpdate, duration: Int, padding: EdgeInsets = EdgeInsets()) {
+    val map = googleMap ?: return
+    val combined = combinedEdgeInsets()
+    map.setPadding(
+      combined.left + padding.left,
+      combined.top + padding.top,
+      combined.right + padding.right,
+      combined.bottom + padding.bottom
+    )
+
+    if (duration == 0) {
+      cameraAnimation = null
+      map.moveCamera(update)
+    } else {
+      val animation = CameraAnimation(update, padding, duration, SystemClock.uptimeMillis() + duration)
+      cameraAnimation = animation
+      val callback = object : GoogleMap.CancelableCallback {
+        override fun onFinish() {
+          if (cameraAnimation === animation) cameraAnimation = null
+        }
+
+        override fun onCancel() {
+          if (cameraAnimation === animation) cameraAnimation = null
+        }
+      }
+      if (duration < 0) map.animateCamera(update, callback) else map.animateCamera(update, duration, callback)
+    }
+
+    map.setPadding(combined.left, combined.top, combined.right, combined.bottom)
+  }
 
   private fun applyEdgeInsets(duration: Int = 0) {
     val combined = combinedEdgeInsets()
@@ -1591,6 +1623,8 @@ class GoogleMapProvider(private val context: Context) :
   }
 
   // endregion
+
+  private class CameraAnimation(val update: CameraUpdate, val padding: EdgeInsets, val duration: Int, val endTime: Long)
 
   companion object {
     const val DEMO_MAP_ID = "DEMO_MAP_ID"
