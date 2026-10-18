@@ -330,6 +330,9 @@ change. The last write wins: a new `edgeInsets` prop value replaces them
 (instantly, also during an animation), and a later `setEdgeInsets` call
 replaces the prop.
 
+`moveCamera` and `fitCoordinates` frame against the final insets, also while
+an inset animation is still running.
+
 ### reload
 
 Load the map again, e.g. to recover from missing tiles after a network
