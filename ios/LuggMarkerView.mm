@@ -63,6 +63,15 @@ using namespace luggmaps::events;
   return self;
 }
 
+- (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
+           oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics {
+  [super updateLayoutMetrics:layoutMetrics oldLayoutMetrics:oldLayoutMetrics];
+
+  // RN 0.88+ resets layout metrics on recycle, so the next mount force-applies
+  // `hidden` from the display type and would reveal this placeholder view.
+  self.hidden = YES;
+}
+
 - (void)updateProps:(Props::Shared const &)props
            oldProps:(Props::Shared const &)oldProps {
   [super updateProps:props oldProps:oldProps];
@@ -132,8 +141,12 @@ using namespace luggmaps::events;
       height = MAX(fh, height);
     }
 
-    if (width > 0 && height > 0) {
+    // Providers own the icon view's position; only resize it and re-sync.
+    // Setting the frame on every pass snapped positioned icons to the origin.
+    if (width > 0 && height > 0 &&
+        !CGSizeEqualToSize(_iconView.bounds.size, CGSizeMake(width, height))) {
       _iconView.frame = CGRectMake(0, 0, width, height);
+      _didLayout = NO;
     }
   }
 
