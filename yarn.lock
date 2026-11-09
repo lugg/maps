@@ -4296,6 +4296,7 @@ __metadata:
     "@release-it/conventional-changelog": "npm:^10.0.1"
     "@types/jest": "npm:^29.5.14"
     "@types/react": "npm:^19.2.0"
+    "@types/react-dom": "npm:~19.2.0"
     "@vis.gl/react-google-maps": "npm:^1.7.1"
     commitlint: "npm:^19.8.1"
     del-cli: "npm:^6.0.0"
@@ -4315,11 +4316,14 @@ __metadata:
     "@vis.gl/react-google-maps": ">=1.0.0"
     expo: "*"
     react: "*"
+    react-dom: "*"
     react-native: "*"
   peerDependenciesMeta:
     "@vis.gl/react-google-maps":
       optional: true
     expo:
+      optional: true
+    react-dom:
       optional: true
   languageName: unknown
   linkType: soft
@@ -7043,7 +7047,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.2.5":
+"@types/react-dom@npm:^19.2.5, @types/react-dom@npm:~19.2.0":
   version: 19.2.7
   resolution: "@types/react-dom@npm:19.2.7"
   peerDependencies:

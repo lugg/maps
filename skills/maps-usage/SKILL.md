@@ -117,7 +117,7 @@ mapRef.current?.reload();
 ```
 
 - `anchor` is the fraction of the view placed at the coordinate. Default `{x: 0.5, y: 1}` (bottom-center, pin-style). Use `{x: 0.5, y: 0.5}` for dots and avatars.
-- Custom views are rasterized to a bitmap by default (`rasterize`). Set `rasterize={false}` only when the content itself animates (Lottie, spinners). `coordinate`, `rotate`, `scale`, `zIndex` updates work either way.
+- Custom views are rasterized to a bitmap by default (`rasterize`). Set `rasterize={false}` only when the content itself animates (Lottie, spinners). `coordinate`, `rotate`, `scale`, `zIndex` updates work either way. On web, `rasterize={false}` positions the marker between pixels, for markers moved every frame (ignored with `title`, `callout` or `draggable`).
 - Remote images inside markers appear when loaded — no extra handling.
 
 ### Callouts
@@ -248,7 +248,7 @@ const animatedProps = useAnimatedProps(() => ({
 </AnimatedMarker>
 ```
 
-Native only — on web drive `coordinate` / `rotate` with state (`Platform.select` or a `.web.tsx` file). Full example in [Advanced Patterns](./references/advanced-patterns.md#animated-marker-along-a-route).
+Works on every platform. Web markers round to whole pixels, so pass `rasterize={Platform.OS !== 'web'}` to make a marker moved every frame glide there. Full example in [Advanced Patterns](./references/advanced-patterns.md#animated-marker-along-a-route).
 
 ## Rules That Save Debugging Time
 
@@ -259,8 +259,8 @@ Native only — on web drive `coordinate` / `rotate` with state (`Platform.selec
 5. **Camera payload is `{ coordinate, zoom, gesture }`.** `gesture` is `true` for user-driven moves. Prefer `onCameraIdle` for state; `onCameraMove` fires every frame.
 6. **`moveCamera` without `zoom` keeps the current zoom.** `fitCoordinates` resets heading to north and falls back to `moveCamera` for one coordinate.
 7. **Interactive callouts need `calloutOptions={{ bubbled: false }}`.** Bubbled custom callouts are bitmaps on Google Maps.
-8. **Don't set `rasterize={false}` by default.** Only for markers whose *content* animates. Coordinate/rotate/scale changes don't need it.
-9. **Animate markers with `animatedProps`, not `setState` per frame.** Web falls back to state.
+8. **Don't set `rasterize={false}` by default.** Only for markers whose *content* animates, and on web for markers moved every frame. Native coordinate/rotate/scale changes don't need it.
+9. **Animate markers with `animatedProps`, not `setState` per frame.** This works on web too.
 10. **`userLocationEnabled` doesn't ask for permission.** Request first, then enable.
 11. **No `onPress` on `Polyline`; `TileOverlay.onPress` is not supported natively.** Put a transparent `Polygon` or markers on top if you need taps on a line.
 12. **Overlapping markers: derive `zIndex` from latitude** (`Math.round((90 - lat) * 10000)`) so southern markers draw on top, like real pins.
@@ -288,8 +288,8 @@ Native only — on web drive `coordinate` / `rotate` with state (`Platform.selec
 | `staticKey` cache | Yes | Yes | No | No |
 | Bubbled custom callout | Live view | Rasterized image | Rasterized image | InfoWindow (live) |
 | Non-bubbled callout | Live view | Live view | Live view | Styled InfoWindow |
-| Marker `rasterize` | Yes | Yes | Yes | N/A |
-| Reanimated `animatedProps` on `Marker` | Yes | Yes | Yes | No |
+| Marker `rasterize` | Yes | Yes | Yes | `false` = overlay positioned between pixels |
+| Reanimated `animatedProps` on `Marker` | Yes | Yes | Yes | Yes |
 | `Polyline` gradient + `animated` | Yes | Yes | Yes | Yes (JS) |
 | `GroundOverlay.bearing` | No | Yes | Yes | No |
 | `TileOverlay.onPress` | No | No | No | Yes |
