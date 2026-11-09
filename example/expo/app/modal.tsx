@@ -15,7 +15,7 @@ export default function ModalScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
   const { top, bottom } = useSafeAreaInsets();
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const handleReady = () => {
     mapRef.current?.fitCoordinates(TOUR_COORDINATES, {
