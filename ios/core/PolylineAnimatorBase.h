@@ -24,6 +24,9 @@
 
 @end
 
+// Animated polylines redraw at most this often; each redraw makes the map render a frame.
+static const float kPolylineAnimationFrameRate = 30;
+
 typedef struct {
   CGFloat r, g, b, a;
 } RGBAComponents;

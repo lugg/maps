@@ -217,7 +217,7 @@ Callout rendering by platform:
 | `coordinates` | `Coordinate[]` | **required** | 🍎🅶🤖🌐 | Path |
 | `strokeWidth` | `number` | — (`1` on web) | 🍎🅶🤖🌐 | Points |
 | `strokeColors` | `ColorValue[]` | — | 🍎🅶🤖🌐 | One color = solid, many = gradient spread evenly along the path |
-| `animated` | `boolean` | `false` | 🍎🅶🤖🌐 | Snake animation from start to end, looping. Static maps render it complete |
+| `animated` | `boolean` | `false` | 🍎🅶🤖🌐 | Snake animation from start to end, looping, redrawn at up to 30 fps. Static maps render it complete |
 | `animatedOptions` | `PolylineAnimatedOptions` | — | 🍎🅶🤖🌐 | `{ duration?: 2150, easing?: 'linear' \| 'easeIn' \| 'easeOut' \| 'easeInOut', trailLength?: 1 (0–1), delay?: 0 }` |
 | `zIndex` | `number` | — | 🍎🅶🤖🌐 | Layering. Web defaults animated polylines to `1` |
 

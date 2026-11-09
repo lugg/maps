@@ -32,6 +32,7 @@ static const NSUInteger kMaxGradientSpans = 512;
 @implementation GMSPolylineAnimator {
   CADisplayLink *_displayLink;
   GMSDisplayLinkProxy *_displayLinkProxy;
+  CFTimeInterval _lastTickTimestamp;
   CGFloat _animationProgress;
   CGFloat _delayRemaining;
   NSArray<NSNumber *> *_cumulativeDistances;
@@ -82,6 +83,10 @@ static const NSUInteger kMaxGradientSpans = 512;
   _delayRemaining = self.animatedOptions.delay / 1000.0;
   _displayLinkProxy = [[GMSDisplayLinkProxy alloc] initWithTarget:self selector:@selector(animationTick:)];
   _displayLink = [CADisplayLink displayLinkWithTarget:_displayLinkProxy selector:@selector(tick:)];
+  _displayLink.preferredFrameRateRange = CAFrameRateRangeMake(kPolylineAnimationFrameRate,
+                                                              kPolylineAnimationFrameRate,
+                                                              kPolylineAnimationFrameRate);
+  _lastTickTimestamp = 0;
   [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
@@ -109,15 +114,22 @@ static const NSUInteger kMaxGradientSpans = 512;
 
 - (void)pause {
   _displayLink.paused = YES;
+  _lastTickTimestamp = 0;
 }
 
 - (void)resume {
   _displayLink.paused = NO;
+  _lastTickTimestamp = 0;
 }
 
 - (void)animationTick:(CADisplayLink *)displayLink {
+  // Step by the real time since the last tick: `duration` stays the display's refresh interval when the
+  // link runs slower than the display.
+  CFTimeInterval elapsed = _lastTickTimestamp > 0 ? MIN(displayLink.timestamp - _lastTickTimestamp, 0.1) : 0;
+  _lastTickTimestamp = displayLink.timestamp;
+
   if (_delayRemaining > 0) {
-    _delayRemaining -= displayLink.duration;
+    _delayRemaining -= elapsed;
     return;
   }
 
@@ -127,7 +139,7 @@ static const NSUInteger kMaxGradientSpans = 512;
   CGFloat trailLength = MAX(0.01, MIN(1.0, self.animatedOptions.trailLength));
   CGFloat maxProgress = (trailLength < 1.0) ? 1.0 : 2.15;
 
-  CGFloat speed = displayLink.duration / duration;
+  CGFloat speed = elapsed / duration;
   _animationProgress += speed;
 
   if (_animationProgress >= maxProgress) {
