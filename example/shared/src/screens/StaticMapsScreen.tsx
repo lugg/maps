@@ -329,7 +329,7 @@ export const StaticMapsScreen = ({
   onSelect,
   topInset = 0,
 }: StaticMapsScreenProps) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const { colors } = useTheme();
 
   const [provider, setProvider] = useState<MapProviderType>(

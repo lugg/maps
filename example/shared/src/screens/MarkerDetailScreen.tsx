@@ -29,7 +29,7 @@ export const MarkerDetailScreen = ({
 }: MarkerDetailScreenProps) => {
   const { colors } = useTheme();
   const { width, height } = useWindowDimensions();
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [provider, setProvider] = useState<MapProviderType>(
     Platform.OS === 'ios' ? 'apple' : 'google'
   );

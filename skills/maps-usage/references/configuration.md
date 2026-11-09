@@ -150,7 +150,7 @@ export function App() {
 
 | Prop | Type | Default | Platforms | Description |
 |------|------|---------|-----------|-------------|
-| `staticMode` | `boolean` | `false` | 🍎🅶🤖🌐 | Creation-time. Non-interactive map for lists. Android lite mode (bitmap ≤ ~2048px, larger views fall back to a gesture-less full map), iOS snapshot, web live map with gestures/POI clicks/keyboard/press off |
+| `staticMode` | `boolean` | `false` | 🍎🅶🤖🌐 | Creation-time. Non-interactive map for lists. Android lite mode (bitmap ≤ ~2048px, larger views fall back to a gesture-less full map; dark `theme` uses a built-in style), iOS snapshot, web live map with gestures/POI clicks/keyboard/press off |
 | `staticKey` | `string` | — | 🍎🅶 | Stable id for the base-image cache (e.g. row id). Camera, size, provider, and map settings are part of the key automatically. Changing it discards the current image. Only fully loaded renders are cached |
 
 Static-mode behavior notes:
