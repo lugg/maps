@@ -201,7 +201,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 **Cause:** Web markers are Google Advanced Markers, which round their position to whole pixels. A slow marker steps a pixel at a time.
 
-**Fix:** `rasterize={false}` on that marker, on web only: `rasterize={Platform.OS !== 'web'}`. It draws the marker in an overlay positioned between pixels. Callouts and dragging need the default.
+**Fix:** `rasterize={false}` on that marker, on web only: `rasterize={Platform.OS !== 'web'}`. It draws the marker in an overlay positioned between pixels. Markers with `title`, `callout` or `draggable` keep whole-pixel positioning, so drop those on markers that must glide.
 
 ## Web: import of `MapProviderType` / `MarkerRef` fails typecheck
 

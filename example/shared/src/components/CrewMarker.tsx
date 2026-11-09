@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { Marker, type Coordinate } from '@lugg/maps';
 import Animated, {
   Easing,
@@ -144,6 +145,7 @@ export const CrewMarker = ({
     <AnimatedMarker
       coordinate={route[0]}
       anchor={DEFAULT_ANCHOR}
+      rasterize={Platform.OS !== 'web'}
       animatedProps={animatedProps}
     >
       <PickupIcon loaded={loaded} />

@@ -192,7 +192,7 @@ Static-mode behavior notes:
 | `zIndex` | `number` | — | 🍎🅶🤖🌐 | Higher renders on top. Animatable |
 | `rotate` | `number` | `0` | 🍎🅶🤖🌐 | Degrees clockwise from north. Animatable |
 | `scale` | `number` | `1` | 🍎🅶🤖🌐 | Scale factor. Animatable |
-| `rasterize` | `boolean` | `true` | 🍎🅶🤖🌐 | Rasterize the custom view to a bitmap. `false` keeps a live view for content that animates internally. On web, `false` positions the marker between pixels for markers moved every frame, without callouts or dragging |
+| `rasterize` | `boolean` | `true` | 🍎🅶🤖🌐 | Rasterize the custom view to a bitmap. `false` keeps a live view for content that animates internally. On web, `false` positions the custom view between pixels for markers moved every frame. Markers with `title`, `callout` or `draggable` keep whole pixels |
 | `centerOnPress` | `boolean` | `true` | 🍎🅶🤖🌐 | Center the map on the marker when tapped |
 | `draggable` | `boolean` | `false` | 🍎🅶🤖🌐 | Long-press-and-drag. Update `coordinate` from `onDragEnd` |
 | `callout` | `ReactElement \| ComponentType` | — | 🍎🅶🤖🌐 | Custom callout content. Falls back to `title`/`description` bubble when omitted |

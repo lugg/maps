@@ -162,7 +162,7 @@ export function Vehicle({ route, zoom }: { route: Coordinate[]; zoom: number }) 
 - Track zoom from `onCameraIdle` to scale the icon (bigger when zoomed in).
 - Smooth raw GPS points with a Catmull-Rom spline before animating so turns look natural.
 
-Web: the same code works. Pass `rasterize={Platform.OS !== 'web'}` so the marker glides: web markers round their position to whole pixels, and `rasterize={false}` draws the marker in an overlay positioned between pixels instead. Callouts and dragging need the default.
+Web: the same code works. Pass `rasterize={Platform.OS !== 'web'}` so the marker glides: web markers round their position to whole pixels, and `rasterize={false}` draws the marker in an overlay positioned between pixels instead. Markers with `title`, `callout` or `draggable` keep whole-pixel positioning.
 
 ## Route polylines
 
@@ -372,7 +372,7 @@ Differences to plan for:
 - Ignored props: `rotateEnabled`, `poiEnabled`, `poiFilter`, `staticKey`, `insetAdjustment`, `userLocationButtonEnabled`.
 - `staticMode` keeps a live map with gestures, POI clicks, keyboard shortcuts, and press events disabled.
 - `onLongPress` is emulated (500 ms mousedown without drag).
-- Markers round their position to whole pixels. For a marker moved every frame (Reanimated `animatedProps` works here too), `rasterize={false}` positions it between pixels, without callouts or dragging.
+- Markers round their position to whole pixels. For a marker moved every frame (Reanimated `animatedProps` works here too), `rasterize={false}` positions it between pixels. Markers with `title`, `callout` or `draggable` keep whole pixels.
 - `Polyline` gradients and snake animation are drawn in JS with `requestAnimationFrame`.
 - `GroundOverlay.bearing` is not applied.
 - Restrict the browser key by HTTP referrer in Google Cloud; it's public in the bundle.

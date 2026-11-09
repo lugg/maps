@@ -1,4 +1,5 @@
 import React, {
+  Children,
   forwardRef,
   isValidElement,
   memo,
@@ -112,14 +113,41 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
     const [markerRef, markerElement] = useAdvancedMarkerRef();
     const markerElementRef = useRef(markerElement);
     // The latest values, including those `setNativeProps` set between renders.
-    const latest = useRef({ coordinate, rotate, scale });
+    const latest = useRef<AnimatableProps & Pick<MarkerProps, 'coordinate'>>({
+      coordinate,
+      rotate,
+      scale,
+      zIndex,
+    });
     const [infoWindowOpen, setInfoWindowOpen] = useState(false);
     const calloutBubbled = calloutOptions?.bubbled ?? true;
     const calloutOffset = calloutOptions?.offset;
 
-    useEffect(() => {
-      markerElementRef.current = markerElement;
-    }, [markerElement]);
+    const applyNativeProps = useCallback((props: AnimatableProps) => {
+      const current = latest.current;
+      if (props.coordinate) current.coordinate = props.coordinate;
+      if (props.rotate !== undefined) current.rotate = props.rotate;
+      if (props.scale !== undefined) current.scale = props.scale;
+      if (props.zIndex !== undefined) current.zIndex = props.zIndex;
+
+      const marker = markerElementRef.current;
+      if (!marker) return;
+      if (props.coordinate && !dragPositionRef.current) {
+        marker.position = {
+          lat: props.coordinate.latitude,
+          lng: props.coordinate.longitude,
+        };
+      }
+      if (props.zIndex !== undefined) marker.zIndex = props.zIndex;
+      if (props.rotate !== undefined || props.scale !== undefined) {
+        // vis.gl wraps the children in a div that carries the `style` prop.
+        const content = (marker.content as HTMLElement | null)
+          ?.firstElementChild;
+        if (content instanceof HTMLElement) {
+          content.style.transform = toTransform(current.rotate, current.scale);
+        }
+      }
+    }, []);
 
     // Props apply when their values change. Reanimated passes its first values
     // again on every render, so a re-render must not pull a moving marker back.
@@ -133,6 +161,15 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
     useEffect(() => {
       latest.current.scale = scale;
     }, [scale]);
+    useEffect(() => {
+      latest.current.zIndex = zIndex;
+    }, [zIndex]);
+
+    // vis.gl recreates the marker from props, so restore the latest values.
+    useEffect(() => {
+      markerElementRef.current = markerElement;
+      if (markerElement) applyNativeProps(latest.current);
+    }, [markerElement, applyNativeProps]);
 
     const closeCallout = useCallback(() => setInfoWindowOpen(false), []);
 
@@ -159,35 +196,9 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
         hideCallout() {
           setInfoWindowOpen(false);
         },
-        setNativeProps(props) {
-          const current = latest.current;
-          if (props.coordinate) current.coordinate = props.coordinate;
-          if (props.rotate !== undefined) current.rotate = props.rotate;
-          if (props.scale !== undefined) current.scale = props.scale;
-
-          const marker = markerElementRef.current;
-          if (!marker) return;
-          if (props.coordinate && !dragPositionRef.current) {
-            marker.position = {
-              lat: props.coordinate.latitude,
-              lng: props.coordinate.longitude,
-            };
-          }
-          if (props.zIndex !== undefined) marker.zIndex = props.zIndex;
-          if (props.rotate !== undefined || props.scale !== undefined) {
-            // vis.gl wraps the children in a div that carries the `style` prop.
-            const content = (marker.content as HTMLElement | null)
-              ?.firstElementChild;
-            if (content instanceof HTMLElement) {
-              content.style.transform = toTransform(
-                current.rotate,
-                current.scale
-              );
-            }
-          }
-        },
+        setNativeProps: applyNativeProps,
       }),
-      [hasCallout, closeCallouts, closeCallout]
+      [hasCallout, closeCallouts, closeCallout, applyNativeProps]
     );
 
     const calloutContent = callout
@@ -323,8 +334,9 @@ function createLiveElement() {
   element.style.position = 'absolute';
   element.style.left = '0';
   element.style.top = '0';
-  element.style.pointerEvents = 'none';
+  element.style.cursor = 'pointer';
   element.style.willChange = 'transform';
+  google.maps.OverlayView.preventMapHitsAndGesturesFrom(element);
   return element;
 }
 
@@ -332,7 +344,7 @@ function createLiveElement() {
  * `rasterize={false}`: the children live in an `OverlayView` element moved
  * with a fractional transform. `AdvancedMarker` rounds its position to whole
  * pixels, so a marker moved every frame steps instead of gliding.
- * Callouts and dragging need the default marker.
+ * It shares the `AdvancedMarker` pane, so `zIndex` orders both kinds.
  */
 const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
   (
@@ -359,7 +371,6 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
       scale: scale ?? 1,
       anchor: anchor ?? DEFAULT_ANCHOR,
     });
-    const pressable = !!onPress;
 
     const place = useCallback(() => {
       const projection = overlayRef.current?.getProjection();
@@ -379,11 +390,7 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
       if (!map) return;
       const overlay = new google.maps.OverlayView();
       overlay.onAdd = () => {
-        const panes = overlay.getPanes();
-        const pane = pressable
-          ? panes?.overlayMouseTarget
-          : panes?.overlayLayer;
-        pane?.appendChild(element);
+        overlay.getPanes()?.overlayMouseTarget.appendChild(element);
       };
       // The map calls draw whenever the camera moves.
       overlay.draw = place;
@@ -394,17 +401,13 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
         overlay.setMap(null);
         overlayRef.current = null;
       };
-    }, [map, element, place, pressable]);
+    }, [map, element, place]);
 
     useEffect(() => {
       onPressRef.current = onPress;
     }, [onPress]);
 
     useEffect(() => {
-      if (!map || !pressable) return;
-      element.style.pointerEvents = 'auto';
-      element.style.cursor = 'pointer';
-      google.maps.OverlayView.preventMapHitsAndGesturesFrom(element);
       const handleClick = (event: MouseEvent) => {
         const at = latest.current.coordinate;
         if (centerOnPress) moveCamera(at);
@@ -416,12 +419,8 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
         } as any);
       };
       element.addEventListener('click', handleClick);
-      return () => {
-        element.removeEventListener('click', handleClick);
-        element.style.pointerEvents = 'none';
-        element.style.cursor = '';
-      };
-    }, [map, element, pressable, centerOnPress, moveCamera]);
+      return () => element.removeEventListener('click', handleClick);
+    }, [element, centerOnPress, moveCamera]);
 
     // Props apply when their values change. Reanimated passes its first values
     // again on every render, so a re-render must not pull a moving marker back.
@@ -478,9 +477,23 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
   }
 );
 
+// Live markers have no default pin, callouts or dragging.
+const isLive = ({
+  rasterize,
+  children,
+  title,
+  callout,
+  draggable,
+}: MarkerProps) =>
+  rasterize === false &&
+  Children.count(children) > 0 &&
+  !title &&
+  !callout &&
+  !draggable;
+
 export const Marker = memo(
   forwardRef<MarkerRef, MarkerProps>((props, ref) =>
-    props.rasterize === false ? (
+    isLive(props) ? (
       <LiveMarker {...props} ref={ref} />
     ) : (
       <DefaultMarker {...props} ref={ref} />

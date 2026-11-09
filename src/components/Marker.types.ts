@@ -69,9 +69,9 @@ export interface MarkerProps {
   /**
    * Rasterize custom marker view to bitmap for better performance.
    * Set to false if you need live view updates (e.g., animations).
-   * On web, false positions the marker between pixels instead of rounding to
-   * whole pixels, for markers that move every frame. Callouts and dragging
-   * need the default.
+   * On web, false positions the custom view between pixels instead of
+   * rounding to whole pixels, for markers that move every frame. Markers with
+   * `title`, `callout` or `draggable` keep whole-pixel positioning.
    * @default true
    */
   rasterize?: boolean;

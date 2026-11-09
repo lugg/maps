@@ -117,7 +117,7 @@ mapRef.current?.reload();
 ```
 
 - `anchor` is the fraction of the view placed at the coordinate. Default `{x: 0.5, y: 1}` (bottom-center, pin-style). Use `{x: 0.5, y: 0.5}` for dots and avatars.
-- Custom views are rasterized to a bitmap by default (`rasterize`). Set `rasterize={false}` only when the content itself animates (Lottie, spinners). `coordinate`, `rotate`, `scale`, `zIndex` updates work either way. On web, `rasterize={false}` positions the marker between pixels, for markers moved every frame.
+- Custom views are rasterized to a bitmap by default (`rasterize`). Set `rasterize={false}` only when the content itself animates (Lottie, spinners). `coordinate`, `rotate`, `scale`, `zIndex` updates work either way. On web, `rasterize={false}` positions the marker between pixels, for markers moved every frame (ignored with `title`, `callout` or `draggable`).
 - Remote images inside markers appear when loaded — no extra handling.
 
 ### Callouts
