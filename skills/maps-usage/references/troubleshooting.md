@@ -168,6 +168,8 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 **Cause:** Android lite mode doesn't support cloud styling; iOS static maps ignore map-setting prop changes after the snapshot.
 
+`theme` still works on lite maps: dark uses a built-in JSON style approximating Google's dark scheme (lite mode ignores the color scheme).
+
 **Fix:** Accept the default style for lite maps, or render a small live map with all gestures disabled (`zoomEnabled={false} scrollEnabled={false} rotateEnabled={false} pitchEnabled={false}`) when styling matters more than memory.
 
 ## GeoJSON renders in the wrong place
