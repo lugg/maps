@@ -234,18 +234,18 @@ export const Polyline = memo(
           delayRemaining = 0;
         }
 
+        if (time - lastDrawn < MIN_FRAME_INTERVAL_MS) {
+          animationRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        lastDrawn = time;
+
         const rawProgress = (time - startTime) / duration;
 
         if (rawProgress >= cycleMax) {
           delayRemaining = delay;
           startTime = time;
         }
-
-        if (time - lastDrawn < MIN_FRAME_INTERVAL_MS) {
-          animationRef.current = requestAnimationFrame(animate);
-          return;
-        }
-        lastDrawn = time;
 
         const clampedProgress = Math.min(rawProgress, renderMax);
         const easedProgress =

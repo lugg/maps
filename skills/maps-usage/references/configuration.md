@@ -221,6 +221,8 @@ Callout rendering by platform:
 | `animatedOptions` | `PolylineAnimatedOptions` | — | 🍎🅶🤖🌐 | `{ duration?: 2150, easing?: 'linear' \| 'easeIn' \| 'easeOut' \| 'easeInOut', trailLength?: 1 (0–1), delay?: 0 }` |
 | `zIndex` | `number` | — | 🍎🅶🤖🌐 | Layering. Web defaults animated polylines to `1` |
 
+On web, the final animation frame remains visible during the delay between loops.
+
 No `onPress`. Polylines are `pointerEvents: 'none'`.
 
 ## Polygon
