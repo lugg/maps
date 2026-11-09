@@ -1,19 +1,14 @@
 import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
-import type { ViewProps, HostComponent } from 'react-native';
-import type {
-  Double,
-  WithDefault,
-  DirectEventHandler,
-} from 'react-native/Libraries/Types/CodegenTypes';
+import type { ViewProps, HostComponent, CodegenTypes } from 'react-native';
 
 export interface Coordinate {
-  latitude: Double;
-  longitude: Double;
+  latitude: CodegenTypes.Double;
+  longitude: CodegenTypes.Double;
 }
 
 export interface Point {
-  x: Double;
-  y: Double;
+  x: CodegenTypes.Double;
+  y: CodegenTypes.Double;
 }
 
 export interface NativeProps extends ViewProps {
@@ -22,49 +17,49 @@ export interface NativeProps extends ViewProps {
   title?: string;
   description?: string;
   anchor?: Point;
-  rotate?: WithDefault<Double, 0>;
-  scale?: WithDefault<Double, 1>;
-  rasterize?: WithDefault<boolean, true>;
-  centerOnPress?: WithDefault<boolean, true>;
-  draggable?: WithDefault<boolean, false>;
-  onMarkerPress?: DirectEventHandler<{
+  rotate?: CodegenTypes.WithDefault<CodegenTypes.Double, 0>;
+  scale?: CodegenTypes.WithDefault<CodegenTypes.Double, 1>;
+  rasterize?: CodegenTypes.WithDefault<boolean, true>;
+  centerOnPress?: CodegenTypes.WithDefault<boolean, true>;
+  draggable?: CodegenTypes.WithDefault<boolean, false>;
+  onMarkerPress?: CodegenTypes.DirectEventHandler<{
     coordinate: {
-      latitude: Double;
-      longitude: Double;
+      latitude: CodegenTypes.Double;
+      longitude: CodegenTypes.Double;
     };
     point: {
-      x: Double;
-      y: Double;
+      x: CodegenTypes.Double;
+      y: CodegenTypes.Double;
     };
   }>;
-  onMarkerDragStart?: DirectEventHandler<{
+  onMarkerDragStart?: CodegenTypes.DirectEventHandler<{
     coordinate: {
-      latitude: Double;
-      longitude: Double;
+      latitude: CodegenTypes.Double;
+      longitude: CodegenTypes.Double;
     };
     point: {
-      x: Double;
-      y: Double;
+      x: CodegenTypes.Double;
+      y: CodegenTypes.Double;
     };
   }>;
-  onMarkerDragChange?: DirectEventHandler<{
+  onMarkerDragChange?: CodegenTypes.DirectEventHandler<{
     coordinate: {
-      latitude: Double;
-      longitude: Double;
+      latitude: CodegenTypes.Double;
+      longitude: CodegenTypes.Double;
     };
     point: {
-      x: Double;
-      y: Double;
+      x: CodegenTypes.Double;
+      y: CodegenTypes.Double;
     };
   }>;
-  onMarkerDragEnd?: DirectEventHandler<{
+  onMarkerDragEnd?: CodegenTypes.DirectEventHandler<{
     coordinate: {
-      latitude: Double;
-      longitude: Double;
+      latitude: CodegenTypes.Double;
+      longitude: CodegenTypes.Double;
     };
     point: {
-      x: Double;
-      y: Double;
+      x: CodegenTypes.Double;
+      y: CodegenTypes.Double;
     };
   }>;
 }
