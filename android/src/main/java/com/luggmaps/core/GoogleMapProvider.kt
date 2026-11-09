@@ -1,7 +1,6 @@
 package com.luggmaps.core
 
 import android.annotation.SuppressLint
-import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.os.SystemClock
@@ -77,8 +76,7 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
-  GoogleMap.InfoWindowAdapter,
-  ComponentCallbacks2 {
+  GoogleMap.InfoWindowAdapter {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -164,7 +162,7 @@ class GoogleMapProvider(private val context: Context) :
     wrapper.relayoutChildOnRequest = staticMode
     this.wrapperView = wrapper
 
-    context.applicationContext.registerComponentCallbacks(this)
+    wrapper.onConfigurationChange = ::updateNightMode
 
     // Static mode needs the view size to pick lite vs full map, so wait
     // for the first layout if it hasn't happened yet
@@ -198,9 +196,9 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun destroy() {
     wrapperView?.onLayoutReady = null
+    wrapperView?.onConfigurationChange = null
     detachWindowInsetsListener()
     detachWatermarkLayoutListener()
-    context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
     for (markerView in liveMarkerViews) {
       markerView.onUpdate = null
@@ -1590,18 +1588,13 @@ class GoogleMapProvider(private val context: Context) :
     mapView?.let { ViewCompat.setOnApplyWindowInsetsListener(it, null) }
   }
 
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+  private fun updateNightMode(config: Configuration) {
+    val newNightMode = config.uiMode and Configuration.UI_MODE_NIGHT_MASK
     if (newNightMode != currentNightMode) {
       currentNightMode = newNightMode
       applyTheme()
     }
   }
-
-  @Deprecated("Deprecated in Java")
-  override fun onLowMemory() {}
-
-  override fun onTrimMemory(level: Int) {}
 
   private fun applyTheme() {
     // Lite mode ignores mapColorScheme, but supports JSON styling

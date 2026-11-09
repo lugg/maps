@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.view.MotionEvent
 import android.view.View
 import com.facebook.react.uimanager.ThemedReactContext
@@ -21,7 +22,22 @@ class LuggMapWrapperView(context: ThemedReactContext) : ReactViewGroup(context) 
   // provider can create a map sized to the view
   var onLayoutReady: (() -> Unit)? = null
 
+  // View configs include in-app night mode overrides (AppCompat), unlike
+  // app-wide ComponentCallbacks. Also invoked on attach, since detached
+  // views miss changes
+  var onConfigurationChange: ((Configuration) -> Unit)? = null
+
   private val measureAndLayoutChild = Runnable { layoutChild(width, height) }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    onConfigurationChange?.invoke(resources.configuration)
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    onConfigurationChange?.invoke(newConfig)
+  }
 
   override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     touchEventHandler?.invoke(event)
