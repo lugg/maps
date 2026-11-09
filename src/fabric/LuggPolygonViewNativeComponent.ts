@@ -1,23 +1,24 @@
 import { codegenNativeComponent } from 'react-native';
-import type { ViewProps, HostComponent, ColorValue } from 'react-native';
 import type {
-  Double,
-  DirectEventHandler,
-} from 'react-native/Libraries/Types/CodegenTypes';
+  ViewProps,
+  HostComponent,
+  ColorValue,
+  CodegenTypes,
+} from 'react-native';
 
 export interface Coordinate {
-  latitude: Double;
-  longitude: Double;
+  latitude: CodegenTypes.Double;
+  longitude: CodegenTypes.Double;
 }
 
 export interface NativeProps extends ViewProps {
   coordinates: ReadonlyArray<Coordinate>;
   holes?: ReadonlyArray<ReadonlyArray<Coordinate>>;
   strokeColor?: ColorValue;
-  strokeWidth?: Double;
+  strokeWidth?: CodegenTypes.Double;
   fillColor?: ColorValue;
   tappable?: boolean;
-  onPolygonPress?: DirectEventHandler<null>;
+  onPolygonPress?: CodegenTypes.DirectEventHandler<null>;
 }
 
 export default codegenNativeComponent<NativeProps>(

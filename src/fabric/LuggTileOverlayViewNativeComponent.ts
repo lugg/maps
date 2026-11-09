@@ -1,14 +1,9 @@
 import { codegenNativeComponent } from 'react-native';
-import type { ViewProps, HostComponent } from 'react-native';
-import type {
-  Double,
-  Int32,
-  DirectEventHandler,
-} from 'react-native/Libraries/Types/CodegenTypes';
+import type { ViewProps, HostComponent, CodegenTypes } from 'react-native';
 
 export interface Coordinate {
-  latitude: Double;
-  longitude: Double;
+  latitude: CodegenTypes.Double;
+  longitude: CodegenTypes.Double;
 }
 
 export interface Bounds {
@@ -18,11 +13,11 @@ export interface Bounds {
 
 export interface NativeProps extends ViewProps {
   urlTemplate: string;
-  tileSize?: Int32;
-  opacity?: Double;
+  tileSize?: CodegenTypes.Int32;
+  opacity?: CodegenTypes.Double;
   bounds?: Bounds;
   tappable?: boolean;
-  onTileOverlayPress?: DirectEventHandler<null>;
+  onTileOverlayPress?: CodegenTypes.DirectEventHandler<null>;
 }
 
 export default codegenNativeComponent<NativeProps>(
