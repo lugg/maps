@@ -39,7 +39,7 @@ import { MapView, Marker } from '@lugg/maps';
 | `zIndex` | `number` | - | Z-index for marker ordering. Higher values render on top |
 | `rotate` | `number` | `0` | Rotation angle in degrees clockwise from north |
 | `scale` | `number` | `1` | Scale factor for the marker |
-| `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android only) |
+| `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android). On web, `false` positions the marker between pixels so markers moved every frame glide; callouts and dragging need the default |
 | `centerOnPress` | `boolean` | `true` | Whether the map centers on the marker when pressed |
 | `draggable` | `boolean` | `false` | Whether the marker can be dragged by the user |
 | `onPress` | `(event: MarkerPressEvent) => void` | - | Called when the marker is pressed. Event includes `coordinate` and `point` |

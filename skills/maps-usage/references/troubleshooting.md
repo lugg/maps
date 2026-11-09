@@ -197,11 +197,11 @@ Common issues with `@lugg/maps`, organized by symptom.
 3. The key has Maps JavaScript API enabled and an HTTP referrer restriction matching your origin.
 4. Markers need a `mapId` (Advanced Markers). The default `DEMO_MAP_ID` works for development; set your own for production.
 
-## Web: `Animated.createAnimatedComponent(Marker)` doesn't animate
+## Web: an animated marker moves in 1 px steps
 
-**Cause:** `animatedProps` on `Marker` is native-only.
+**Cause:** Web markers are Google Advanced Markers, which round their position to whole pixels. A slow marker steps a pixel at a time.
 
-**Fix:** Add a `.web.tsx` variant that animates `coordinate` / `rotate` with `requestAnimationFrame` + state.
+**Fix:** `rasterize={false}` on that marker, on web only: `rasterize={Platform.OS !== 'web'}`. It draws the marker in an overlay positioned between pixels. Callouts and dragging need the default.
 
 ## Web: import of `MapProviderType` / `MarkerRef` fails typecheck
 

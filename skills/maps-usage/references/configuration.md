@@ -185,14 +185,14 @@ Static-mode behavior notes:
 
 | Prop | Type | Default | Platforms | Description |
 |------|------|---------|-----------|-------------|
-| `coordinate` | `Coordinate` | **required** | 🍎🅶🤖🌐 | Position. Animatable via Reanimated `animatedProps` on native |
+| `coordinate` | `Coordinate` | **required** | 🍎🅶🤖🌐 | Position. Animatable via Reanimated `animatedProps` |
 | `title` | `string` | — | 🍎🅶🤖🌐 | Native callout title |
 | `description` | `string` | — | 🍎🅶🤖🌐 | Native callout subtitle |
 | `anchor` | `Point` | `{x: 0.5, y: 1}` | 🍎🅶🤖🌐 | Fraction of the custom view placed at the coordinate. `{0.5, 1}` bottom-center (pin), `{0.5, 0.5}` center |
 | `zIndex` | `number` | — | 🍎🅶🤖🌐 | Higher renders on top. Animatable |
 | `rotate` | `number` | `0` | 🍎🅶🤖🌐 | Degrees clockwise from north. Animatable |
 | `scale` | `number` | `1` | 🍎🅶🤖🌐 | Scale factor. Animatable |
-| `rasterize` | `boolean` | `true` | 🍎🅶🤖 | Rasterize the custom view to a bitmap. `false` keeps a live view for content that animates internally |
+| `rasterize` | `boolean` | `true` | 🍎🅶🤖🌐 | Rasterize the custom view to a bitmap. `false` keeps a live view for content that animates internally. On web, `false` positions the marker between pixels for markers moved every frame, without callouts or dragging |
 | `centerOnPress` | `boolean` | `true` | 🍎🅶🤖🌐 | Center the map on the marker when tapped |
 | `draggable` | `boolean` | `false` | 🍎🅶🤖🌐 | Long-press-and-drag. Update `coordinate` from `onDragEnd` |
 | `callout` | `ReactElement \| ComponentType` | — | 🍎🅶🤖🌐 | Custom callout content. Falls back to `title`/`description` bubble when omitted |

@@ -99,7 +99,7 @@ Name the ref map `globalThis.Map` when `Map` collides with your map component.
 
 ## Animated marker along a route
 
-Native: drive `coordinate`, `rotate`, `scale`, and `zIndex` from Reanimated shared values with `animatedProps`. No re-renders per frame.
+Drive `coordinate`, `rotate`, `scale`, and `zIndex` from Reanimated shared values with `animatedProps`, on every platform. No re-renders per frame.
 
 ```tsx
 import Animated, { Easing, useAnimatedProps, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -162,7 +162,7 @@ export function Vehicle({ route, zoom }: { route: Coordinate[]; zoom: number }) 
 - Track zoom from `onCameraIdle` to scale the icon (bigger when zoomed in).
 - Smooth raw GPS points with a Catmull-Rom spline before animating so turns look natural.
 
-Web: `animatedProps` isn't supported. Ship a `Vehicle.web.tsx` that interpolates with `requestAnimationFrame` and `setState` on `coordinate` / `rotate`.
+Web: the same code works. Pass `rasterize={Platform.OS !== 'web'}` so the marker glides: web markers round their position to whole pixels, and `rasterize={false}` draws the marker in an overlay positioned between pixels instead. Callouts and dragging need the default.
 
 ## Route polylines
 
@@ -369,10 +369,10 @@ Differences to plan for:
 
 - Google only. `provider="apple"` is ignored.
 - Markers are Advanced Markers, so a `mapId` is required; the library falls back to `DEMO_MAP_ID`. Supply your own for production.
-- Ignored props: `rotateEnabled`, `poiEnabled`, `poiFilter`, `staticKey`, `insetAdjustment`, `userLocationButtonEnabled`, `rasterize`.
+- Ignored props: `rotateEnabled`, `poiEnabled`, `poiFilter`, `staticKey`, `insetAdjustment`, `userLocationButtonEnabled`.
 - `staticMode` keeps a live map with gestures, POI clicks, keyboard shortcuts, and press events disabled.
 - `onLongPress` is emulated (500 ms mousedown without drag).
-- Reanimated `animatedProps` on `Marker` isn't available — animate with state in a `.web.tsx` file.
+- Markers round their position to whole pixels. For a marker moved every frame (Reanimated `animatedProps` works here too), `rasterize={false}` positions it between pixels, without callouts or dragging.
 - `Polyline` gradients and snake animation are drawn in JS with `requestAnimationFrame`.
 - `GroundOverlay.bearing` is not applied.
 - Restrict the browser key by HTTP referrer in Google Cloud; it's public in the bundle.
