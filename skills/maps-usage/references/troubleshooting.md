@@ -211,11 +211,11 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 ## Build fails: New Architecture / Codegen
 
-**Symptom:** `LuggMapView was not found in the UIManager`, or missing `RNMapsSpec` symbols.
+**Symptom:** `LuggMapView was not found in the UIManager`, missing `RNMapsSpec` symbols, or codegen throws `Unknown prop type for "bubbled": "undefined"`.
 
-**Cause:** New Architecture disabled, or pods/gradle not regenerated after install.
+**Cause:** React Native below 0.80 (its codegen can't read the `CodegenTypes.*` specs), New Architecture disabled, or pods/gradle not regenerated after install.
 
-**Fix:** Enable Fabric (`newArchEnabled=true` in `gradle.properties`, `RCT_NEW_ARCH_ENABLED=1` for pods — default in RN 0.76+ / Expo SDK 52+). Then `pod install` / Gradle sync and a clean native rebuild. Expo: `npx expo prebuild --clean`.
+**Fix:** Upgrade to RN 0.80+ / Expo SDK 54+. Enable Fabric (`newArchEnabled=true` in `gradle.properties`, `RCT_NEW_ARCH_ENABLED=1` for pods — default in RN 0.76+). Then `pod install` / Gradle sync and a clean native rebuild. Expo: `npx expo prebuild --clean`.
 
 ## iOS Apple-only build still links GoogleMaps
 

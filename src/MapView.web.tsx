@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentRef,
   type CSSProperties,
 } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
@@ -126,7 +127,7 @@ export const MapView = memo(
 
     const id = useId();
     const map = useMap(id);
-    const containerRef = useRef<View>(null);
+    const containerRef = useRef<ComponentRef<typeof View>>(null);
     const readyMap = useRef<google.maps.Map | null>(null);
     const isDraggingRef = useRef(false);
     const wasGesture = useRef(false);

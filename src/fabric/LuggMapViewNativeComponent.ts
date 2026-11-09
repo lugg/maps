@@ -1,96 +1,94 @@
 import { codegenNativeComponent, codegenNativeCommands } from 'react-native';
-import type { ViewProps, HostComponent } from 'react-native';
-import type {
-  Double,
-  WithDefault,
-  DirectEventHandler,
-} from 'react-native/Libraries/Types/CodegenTypes';
+import type { ViewProps, HostComponent, CodegenTypes } from 'react-native';
 
 export interface Coordinate {
-  latitude: Double;
-  longitude: Double;
+  latitude: CodegenTypes.Double;
+  longitude: CodegenTypes.Double;
 }
 
 export interface EdgeInsets {
-  top: Double;
-  left: Double;
-  bottom: Double;
-  right: Double;
+  top: CodegenTypes.Double;
+  left: CodegenTypes.Double;
+  bottom: CodegenTypes.Double;
+  right: CodegenTypes.Double;
 }
 
 export interface CameraMoveEvent {
   coordinate: {
-    latitude: Double;
-    longitude: Double;
+    latitude: CodegenTypes.Double;
+    longitude: CodegenTypes.Double;
   };
-  zoom: Double;
+  zoom: CodegenTypes.Double;
   gesture: boolean;
 }
 
 export interface CameraIdleEvent {
   coordinate: {
-    latitude: Double;
-    longitude: Double;
+    latitude: CodegenTypes.Double;
+    longitude: CodegenTypes.Double;
   };
-  zoom: Double;
+  zoom: CodegenTypes.Double;
   gesture: boolean;
 }
 
 export interface PressEvent {
   coordinate: {
-    latitude: Double;
-    longitude: Double;
+    latitude: CodegenTypes.Double;
+    longitude: CodegenTypes.Double;
   };
   point: {
-    x: Double;
-    y: Double;
+    x: CodegenTypes.Double;
+    y: CodegenTypes.Double;
   };
 }
 
 export interface LongPressEvent {
   coordinate: {
-    latitude: Double;
-    longitude: Double;
+    latitude: CodegenTypes.Double;
+    longitude: CodegenTypes.Double;
   };
   point: {
-    x: Double;
-    y: Double;
+    x: CodegenTypes.Double;
+    y: CodegenTypes.Double;
   };
 }
 
 export interface ReadyEvent {}
 
 export interface NativeProps extends ViewProps {
-  provider?: WithDefault<'google' | 'apple', 'google'>;
-  mapType?: WithDefault<
+  provider?: CodegenTypes.WithDefault<'google' | 'apple', 'google'>;
+  mapType?: CodegenTypes.WithDefault<
     'standard' | 'satellite' | 'terrain' | 'hybrid' | 'muted-standard',
     'standard'
   >;
   mapId?: string;
   initialCoordinate?: Coordinate;
-  initialZoom?: Double;
-  minZoom?: Double;
-  maxZoom?: Double;
-  zoomEnabled?: WithDefault<boolean, true>;
-  scrollEnabled?: WithDefault<boolean, true>;
-  rotateEnabled?: WithDefault<boolean, true>;
-  pitchEnabled?: WithDefault<boolean, true>;
-  compassEnabled?: WithDefault<boolean, true>;
+  initialZoom?: CodegenTypes.Double;
+  minZoom?: CodegenTypes.Double;
+  maxZoom?: CodegenTypes.Double;
+  zoomEnabled?: CodegenTypes.WithDefault<boolean, true>;
+  scrollEnabled?: CodegenTypes.WithDefault<boolean, true>;
+  rotateEnabled?: CodegenTypes.WithDefault<boolean, true>;
+  pitchEnabled?: CodegenTypes.WithDefault<boolean, true>;
+  compassEnabled?: CodegenTypes.WithDefault<boolean, true>;
   staticMode?: boolean;
   staticKey?: string;
   edgeInsets?: EdgeInsets;
   userLocationEnabled?: boolean;
   userLocationButtonEnabled?: boolean;
   poiEnabled?: boolean;
-  poiFilterMode?: WithDefault<'including' | 'excluding', 'including'>;
+  poiFilterMode?: CodegenTypes.WithDefault<
+    'including' | 'excluding',
+    'including'
+  >;
   poiFilterCategories?: ReadonlyArray<string>;
-  theme?: WithDefault<'system' | 'light' | 'dark', 'system'>;
-  insetAdjustment?: WithDefault<'never' | 'automatic', 'never'>;
-  onMapPress?: DirectEventHandler<PressEvent>;
-  onMapLongPress?: DirectEventHandler<LongPressEvent>;
-  onCameraMove?: DirectEventHandler<CameraMoveEvent>;
-  onCameraIdle?: DirectEventHandler<CameraIdleEvent>;
-  onReady?: DirectEventHandler<ReadyEvent>;
+  theme?: CodegenTypes.WithDefault<'system' | 'light' | 'dark', 'system'>;
+  insetAdjustment?: CodegenTypes.WithDefault<'never' | 'automatic', 'never'>;
+  onMapPress?: CodegenTypes.DirectEventHandler<PressEvent>;
+  onMapLongPress?: CodegenTypes.DirectEventHandler<LongPressEvent>;
+  onCameraMove?: CodegenTypes.DirectEventHandler<CameraMoveEvent>;
+  onCameraIdle?: CodegenTypes.DirectEventHandler<CameraIdleEvent>;
+  onReady?: CodegenTypes.DirectEventHandler<ReadyEvent>;
 }
 
 type ComponentType = HostComponent<NativeProps>;
@@ -98,27 +96,27 @@ type ComponentType = HostComponent<NativeProps>;
 interface NativeCommands {
   moveCamera: (
     viewRef: React.ElementRef<ComponentType>,
-    latitude: Double,
-    longitude: Double,
-    zoom: Double,
-    duration: Double
+    latitude: CodegenTypes.Double,
+    longitude: CodegenTypes.Double,
+    zoom: CodegenTypes.Double,
+    duration: CodegenTypes.Double
   ) => void;
   fitCoordinates: (
     viewRef: React.ElementRef<ComponentType>,
     coordinates: Coordinate[],
-    edgeInsetsTop: Double,
-    edgeInsetsLeft: Double,
-    edgeInsetsBottom: Double,
-    edgeInsetsRight: Double,
-    duration: Double
+    edgeInsetsTop: CodegenTypes.Double,
+    edgeInsetsLeft: CodegenTypes.Double,
+    edgeInsetsBottom: CodegenTypes.Double,
+    edgeInsetsRight: CodegenTypes.Double,
+    duration: CodegenTypes.Double
   ) => void;
   setEdgeInsets: (
     viewRef: React.ElementRef<ComponentType>,
-    top: Double,
-    left: Double,
-    bottom: Double,
-    right: Double,
-    duration: Double
+    top: CodegenTypes.Double,
+    left: CodegenTypes.Double,
+    bottom: CodegenTypes.Double,
+    right: CodegenTypes.Double,
+    duration: CodegenTypes.Double
   ) => void;
   reload: (viewRef: React.ElementRef<ComponentType>) => void;
 }

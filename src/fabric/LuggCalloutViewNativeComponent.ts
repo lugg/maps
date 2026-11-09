@@ -1,17 +1,13 @@
 import { codegenNativeComponent } from 'react-native';
-import type { ViewProps, HostComponent } from 'react-native';
-import type {
-  Double,
-  WithDefault,
-} from 'react-native/Libraries/Types/CodegenTypes';
+import type { ViewProps, HostComponent, CodegenTypes } from 'react-native';
 
 export interface Point {
-  x: Double;
-  y: Double;
+  x: CodegenTypes.Double;
+  y: CodegenTypes.Double;
 }
 
 export interface NativeProps extends ViewProps {
-  bubbled?: WithDefault<boolean, true>;
+  bubbled?: CodegenTypes.WithDefault<boolean, true>;
   offset?: Point;
 }
 

@@ -19,7 +19,7 @@ description: >-
 
 Use this skill to produce correct, idiomatic code for apps that consume `@lugg/maps`. It covers setup, picking the right provider, applying the public API correctly, and avoiding platform-specific pitfalls.
 
-Requires React Native New Architecture (Fabric) — on by default in React Native 0.76+ and Expo SDK 52+. Google Maps needs an API key on every platform; Apple Maps needs none.
+Requires React Native 0.80+ (Expo SDK 54+) with the New Architecture (Fabric), which is on by default there. Google Maps needs an API key on every platform; Apple Maps needs none.
 
 ## Quick Start
 
