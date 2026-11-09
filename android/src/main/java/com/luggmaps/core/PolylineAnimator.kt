@@ -17,9 +17,10 @@ class PolylineAnimator {
     private const val MAX_ANIMATION_SPANS = 16
     private const val MAX_GRADIENT_SPANS = 512
 
-    // Cap polyline updates to ~60fps; every update crosses Binder into the
-    // maps renderer, and 120Hz displays double that churn (CONSUMER-APP-44Y)
-    private const val MIN_UPDATE_INTERVAL_NANOS = 16_000_000L
+    // Cap polyline updates to ~30fps; every update crosses Binder into the
+    // maps renderer and redraws the map, and 120Hz displays multiply that
+    // churn (CONSUMER-APP-44Y)
+    private const val MIN_UPDATE_INTERVAL_NANOS = 32_000_000L
   }
 
   var polyline: Polyline? = null

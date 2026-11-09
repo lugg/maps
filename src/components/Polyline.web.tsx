@@ -3,6 +3,8 @@ import { useMapContext } from '../MapProvider.web';
 import type { PolylineProps, PolylineEasing } from './Polyline.types';
 
 const DEFAULT_DURATION = 2150;
+// Redraw an animated polyline at most ~30 times a second, like iOS and Android.
+const MIN_FRAME_INTERVAL_MS = 32;
 
 const applyEasing = (t: number, easing: PolylineEasing = 'linear'): number => {
   switch (easing) {
@@ -199,6 +201,7 @@ export const Polyline = memo(
 
       let startTime: number | null = null;
       let delayRemaining = delay;
+      let lastDrawn = -Infinity;
 
       let pausedAt: number | null = null;
 
@@ -230,6 +233,12 @@ export const Polyline = memo(
           startTime = time - (elapsed - delayRemaining);
           delayRemaining = 0;
         }
+
+        if (time - lastDrawn < MIN_FRAME_INTERVAL_MS) {
+          animationRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        lastDrawn = time;
 
         const rawProgress = (time - startTime) / duration;
 
