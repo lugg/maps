@@ -1,7 +1,6 @@
 package com.luggmaps
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import android.view.View
 import android.view.View.VISIBLE
 import com.facebook.react.uimanager.ThemedReactContext
@@ -166,15 +165,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     // A user-provided background acts as the placeholder
     if (background != null) return
 
-    val isDark = when (theme) {
-      "dark" -> true
-
-      "light" -> false
-
-      else ->
-        (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-          Configuration.UI_MODE_NIGHT_YES
-    }
+    val isDark = GoogleMapProvider.isDarkTheme(theme, context.resources.configuration.uiMode)
     mapWrapperView?.setBackgroundColor(if (isDark) COLOR_PLACEHOLDER_DARK else COLOR_PLACEHOLDER_LIGHT)
   }
 

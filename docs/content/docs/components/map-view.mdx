@@ -112,6 +112,9 @@ Notes:
   appears when ready, and marker prop updates still apply.
 - While a static map loads, a theme-aware placeholder background is shown.
   Set a `backgroundColor` style on the `MapView` to use your own.
+- On Android, lite mode doesn't support Google's dark color scheme, so a
+  dark `theme` (or `'system'` in dark mode) applies a built-in dark style
+  instead.
 - Set `staticKey` (e.g. your list item's id) to cache base map images
   across list recycling on iOS - scrolling back to a row reuses its image
   instead of rendering the map again (markers and shapes stay live and

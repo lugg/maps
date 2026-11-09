@@ -1,7 +1,6 @@
 package com.luggmaps.core
 
 import android.annotation.SuppressLint
-import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.os.SystemClock
@@ -27,6 +26,7 @@ import com.google.android.gms.maps.model.GroundOverlayOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapColorScheme
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.Polygon
@@ -76,8 +76,7 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
-  GoogleMap.InfoWindowAdapter,
-  ComponentCallbacks2 {
+  GoogleMap.InfoWindowAdapter {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -107,6 +106,7 @@ class GoogleMapProvider(private val context: Context) :
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
   private var staticProjectionReady = false
+  private var isLiteMode = false
   private var activeNonBubbledMarker: Marker? = null
   private var tapLocation: LatLng? = null
 
@@ -162,7 +162,7 @@ class GoogleMapProvider(private val context: Context) :
     wrapper.relayoutChildOnRequest = staticMode
     this.wrapperView = wrapper
 
-    context.applicationContext.registerComponentCallbacks(this)
+    wrapper.onConfigurationChange = ::updateNightMode
 
     // Static mode needs the view size to pick lite vs full map, so wait
     // for the first layout if it hasn't happened yet
@@ -180,11 +180,11 @@ class GoogleMapProvider(private val context: Context) :
     // Lite mode renders the map as a single bitmap capped at ~2048px per
     // dimension, centered in the view — bigger views get letterboxed. Fall
     // back to a full map (gestures disabled) when the view exceeds the cap
-    val useLite = staticMode && maxOf(wrapper.width, wrapper.height) <= LITE_MODE_MAX_SIZE
-    val options = GoogleMapOptions().liteMode(useLite)
+    isLiteMode = staticMode && maxOf(wrapper.width, wrapper.height) <= LITE_MODE_MAX_SIZE
+    val options = GoogleMapOptions().liteMode(isLiteMode)
     // Lite mode doesn't support map IDs (cloud-based styling); setting one
     // makes the static map render blank
-    if (!useLite) options.mapId(mapId)
+    if (!isLiteMode) options.mapId(mapId)
     mapView = MapView(context, options).also { view ->
       view.onCreate(null)
       view.onResume()
@@ -196,9 +196,9 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun destroy() {
     wrapperView?.onLayoutReady = null
+    wrapperView?.onConfigurationChange = null
     detachWindowInsetsListener()
     detachWatermarkLayoutListener()
-    context.applicationContext.unregisterComponentCallbacks(this)
     dismissNonBubbledCallout()
     for (markerView in liveMarkerViews) {
       markerView.onUpdate = null
@@ -1588,20 +1588,21 @@ class GoogleMapProvider(private val context: Context) :
     mapView?.let { ViewCompat.setOnApplyWindowInsetsListener(it, null) }
   }
 
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    val newNightMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+  private fun updateNightMode(config: Configuration) {
+    val newNightMode = config.uiMode and Configuration.UI_MODE_NIGHT_MASK
     if (newNightMode != currentNightMode) {
       currentNightMode = newNightMode
       applyTheme()
     }
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun onLowMemory() {}
-
-  override fun onTrimMemory(level: Int) {}
-
   private fun applyTheme() {
+    // Lite mode ignores mapColorScheme, but supports JSON styling
+    if (isLiteMode) {
+      val style = if (isDarkTheme(theme, currentNightMode)) MapStyleOptions(LITE_MODE_DARK_STYLE) else null
+      googleMap?.setMapStyle(style)
+      return
+    }
     val colorScheme = when (theme) {
       "dark" -> MapColorScheme.DARK
       "light" -> MapColorScheme.LIGHT
@@ -1632,5 +1633,25 @@ class GoogleMapProvider(private val context: Context) :
     // Undocumented cap on the lite mode bitmap (2048 minus a 2px border,
     // measured empirically)
     private const val LITE_MODE_MAX_SIZE = 2046
+
+    // Approximates MapColorScheme.DARK so lite and full maps match
+    private const val LITE_MODE_DARK_STYLE = """[
+      {"elementType":"geometry","stylers":[{"color":"#1c2a40"}]},
+      {"elementType":"labels.text.fill","stylers":[{"color":"#b0b0b0"}]},
+      {"elementType":"labels.text.stroke","stylers":[{"color":"#1c2a40"}]},
+      {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#144a57"}]},
+      {"featureType":"road","elementType":"geometry.fill","stylers":[{"color":"#3c4d62"}]},
+      {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#1c2a40"}]},
+      {"featureType":"road.highway","elementType":"geometry.fill","stylers":[{"color":"#3e5a77"}]},
+      {"featureType":"transit","elementType":"geometry","stylers":[{"color":"#23314f"}]},
+      {"featureType":"water","elementType":"geometry","stylers":[{"color":"#00102e"}]}
+    ]"""
+
+    fun isDarkTheme(theme: String, uiMode: Int): Boolean =
+      when (theme) {
+        "dark" -> true
+        "light" -> false
+        else -> (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+      }
   }
 }
