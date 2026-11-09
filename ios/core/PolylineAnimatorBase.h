@@ -24,7 +24,8 @@
 
 @end
 
-// Animated polylines redraw at most this often; each redraw makes the map render a frame.
+// Animated polylines redraw at most this often; each redraw makes the map
+// render a frame.
 static const float kPolylineAnimationFrameRate = 30;
 
 typedef struct {

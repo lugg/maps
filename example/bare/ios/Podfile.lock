@@ -17,7 +17,7 @@ PODS:
   - hermes-engine (260318099.0.5):
     - hermes-engine/Pre-built (= 260318099.0.5)
   - hermes-engine/Pre-built (260318099.0.5)
-  - LuggMaps (1.1.7):
+  - LuggMaps (1.2.0):
     - GoogleMaps
     - hermes-engine
     - RCTRequired
@@ -2467,7 +2467,7 @@ SPEC CHECKSUMS:
   glog: 3cf7cb46f743c4bc758ae3e6d9c15bd1b4cfd6d4
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
   hermes-engine: 79484fc4e58f328d01b9339ef899ca633d3702ee
-  LuggMaps: 1edf7cffd3fea1e222398c02000005ff7af31952
+  LuggMaps: 5a70bd766f482300bfd8332a8f67df483dcf1689
   RCT-Folly: 82921e585c0400eda46fac1068297aa9dfb035e4
   RCTDeprecation: c62b9b3fbf0d26b76755f3ebd1c913a4fb469dde
   RCTRequired: d0563e2484633b657976195f0543e180133afd3a
