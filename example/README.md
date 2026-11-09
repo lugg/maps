@@ -26,6 +26,12 @@ Edit both `.env` files with your API key:
 GOOGLE_MAPS_API_KEY=your_api_key_here
 ```
 
+The Expo `.env` also exposes the key to the web example:
+
+```sh
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+```
+
 ## Running
 
 From the repo root:
@@ -41,6 +47,9 @@ yarn bare android
 # Run expo example
 yarn expo ios
 yarn expo android
+
+# Run web example
+yarn expo web
 ```
 
 ## Shared Components
