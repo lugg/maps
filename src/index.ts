@@ -1,13 +1,15 @@
 export { MapView } from './MapView';
 export { MapProvider } from './MapProvider';
 export type { MapProviderProps } from './MapProvider.types';
-export { Marker } from './components';
+export { Marker, pathPositionAt } from './components';
 export type {
   CalloutOptions,
   MarkerRef,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
+  MarkerPath,
+  MarkerPathPosition,
 } from './components';
 export { Polygon } from './components';
 export type { PolygonProps } from './components';
@@ -36,6 +38,7 @@ export type {
   MapPressEvent,
   MapType,
   MapTheme,
+  MapIdleFrameRate,
   InsetAdjustment,
   PoiCategory,
   PoiFilter,

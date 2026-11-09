@@ -1,10 +1,13 @@
 export { Marker } from './Marker';
+export { pathPositionAt } from './markerPath';
+export type { MarkerPathPosition } from './markerPath';
 export type {
   CalloutOptions,
   MarkerRef,
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
+  MarkerPath,
 } from './Marker.types';
 export { Polygon } from './Polygon';
 export type { PolygonProps } from './Polygon.types';

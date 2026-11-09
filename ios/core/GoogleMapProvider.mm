@@ -1,5 +1,6 @@
 #import "GoogleMapProvider.h"
 
+using facebook::react::LuggMapViewIdleFrameRate;
 using facebook::react::LuggMapViewInsetAdjustment;
 using facebook::react::LuggMapViewMapType;
 using facebook::react::LuggMapViewPoiFilterMode;
@@ -14,9 +15,28 @@ using facebook::react::LuggMapViewTheme;
 #import "../LuggTileOverlayView.h"
 #import "GMSPolylineAnimator.h"
 #import "MapEdgeInsets.h"
+#import "MarkerPathTicker.h"
 #import "PolylineAnimatorBase.h"
 
 static NSString *const kDemoMapId = @"DEMO_MAP_ID";
+static NSString *const kPathLatitudeAnimationKey = @"luggPathLatitude";
+static NSString *const kPathLongitudeAnimationKey = @"luggPathLongitude";
+static NSString *const kPathRotationAnimationKey = @"luggPathRotation";
+// Core Animation scans every keyframe each frame, so each marker animates only the next minute of
+// its path, and a timer replaces those animations twice a minute.
+static const double kPathWindowMilliseconds = 60000;
+static const NSTimeInterval kPathRefreshInterval = 30;
+
+static float LuggFramesPerSecond(GMSFrameRate frameRate) {
+  switch (frameRate) {
+  case kGMSFrameRatePowerSave:
+    return 15;
+  case kGMSFrameRateConservative:
+    return 30;
+  default:
+    return 0;
+  }
+}
 
 GMSMapID *LuggGMSMapIDFromString(NSString *_Nullable mapId) {
   if (mapId.length == 0 || [mapId isEqualToString:kDemoMapId]) {
@@ -78,6 +98,16 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
       *_groundOverlayToViewMap;
   LuggMarkerView *_activeNonBubbledMarker;
 
+  // Path markers and the idle frame rate
+  NSMapTable<GMSMarker *, LuggMarkerPath *> *_markerPaths;
+  NSHashTable<GMSMarker *> *_tickedMarkers;
+  NSHashTable<GMSMarker *> *_animatedMarkers;
+  NSTimer *_pathRefreshTimer;
+  MarkerPathTicker *_pathTicker;
+  GMSFrameRate _idleFrameRate;
+  BOOL _cameraMoving;
+  dispatch_block_t _pendingIdleFrameRate;
+
   // Edge insets animation
   CADisplayLink *_edgeInsetsDisplayLink;
   UIEdgeInsets _edgeInsetsFrom;
@@ -104,6 +134,10 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
     _circleToViewMap = [NSMapTable strongToWeakObjectsMapTable];
     _markerToViewMap = [NSMapTable strongToWeakObjectsMapTable];
     _groundOverlayToViewMap = [NSMapTable strongToWeakObjectsMapTable];
+    _markerPaths = [NSMapTable weakToStrongObjectsMapTable];
+    _tickedMarkers = [NSHashTable weakObjectsHashTable];
+    _animatedMarkers = [NSHashTable weakObjectsHashTable];
+    _idleFrameRate = kGMSFrameRateMaximum;
   }
   return self;
 }
@@ -140,6 +174,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   _mapView.delegate = self;
   _mapView.paddingAdjustmentBehavior =
       kGMSMapViewPaddingAdjustmentBehaviorNever;
+  _mapView.preferredFrameRate = _idleFrameRate;
 
   _wrapperView = wrapperView;
   [wrapperView addSubview:_mapView];
@@ -159,6 +194,17 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
 
 - (void)destroy {
   [self stopEdgeInsetsAnimation];
+  if (_pendingIdleFrameRate) {
+    dispatch_block_cancel(_pendingIdleFrameRate);
+    _pendingIdleFrameRate = nil;
+  }
+  [_pathTicker stop];
+  _pathTicker = nil;
+  [_pathRefreshTimer invalidate];
+  _pathRefreshTimer = nil;
+  [_markerPaths removeAllObjects];
+  [_tickedMarkers removeAllObjects];
+  [_animatedMarkers removeAllObjects];
   [_pendingMarkerViews removeAllObjects];
   [_pendingPolylineViews removeAllObjects];
   [_pendingPolygonViews removeAllObjects];
@@ -247,6 +293,58 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   _mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(_theme);
 }
 
+- (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
+  switch (idleFrameRate) {
+  case LuggMapViewIdleFrameRate::PowerSave:
+    _idleFrameRate = kGMSFrameRatePowerSave;
+    break;
+  case LuggMapViewIdleFrameRate::Conservative:
+    _idleFrameRate = kGMSFrameRateConservative;
+    break;
+  case LuggMapViewIdleFrameRate::Maximum:
+    _idleFrameRate = kGMSFrameRateMaximum;
+    break;
+  }
+  _pathTicker.framesPerSecond = LuggFramesPerSecond(_idleFrameRate);
+  if (!_cameraMoving) {
+    _mapView.preferredFrameRate = _idleFrameRate;
+  }
+}
+
+// The map renders at full rate while the camera moves, and drops back to the idle rate after a
+// short hold so a double-tap zoom and its follow-through stay smooth.
+- (void)cameraWillMove {
+  _cameraMoving = YES;
+  if (_pendingIdleFrameRate) {
+    dispatch_block_cancel(_pendingIdleFrameRate);
+    _pendingIdleFrameRate = nil;
+  }
+  _mapView.preferredFrameRate = kGMSFrameRateMaximum;
+}
+
+- (void)cameraDidIdle {
+  _cameraMoving = NO;
+  if (_idleFrameRate == kGMSFrameRateMaximum || _edgeInsetsDisplayLink) {
+    return;
+  }
+  if (_pendingIdleFrameRate) {
+    dispatch_block_cancel(_pendingIdleFrameRate);
+  }
+  __weak GoogleMapProvider *weakSelf = self;
+  _pendingIdleFrameRate = dispatch_block_create((dispatch_block_flags_t)0, ^{
+    [weakSelf applyIdleFrameRate];
+  });
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(300 * NSEC_PER_MSEC)),
+                 dispatch_get_main_queue(), _pendingIdleFrameRate);
+}
+
+- (void)applyIdleFrameRate {
+  _pendingIdleFrameRate = nil;
+  if (!_cameraMoving) {
+    _mapView.preferredFrameRate = _idleFrameRate;
+  }
+}
+
 - (void)setMinZoom:(double)minZoom {
   if (!_mapView)
     return;
@@ -285,6 +383,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
     _edgeInsetsDisplayLink = [CADisplayLink
         displayLinkWithTarget:self
                      selector:@selector(edgeInsetsAnimationTick:)];
+    [self cameraWillMove];
     [_edgeInsetsDisplayLink addToRunLoop:[NSRunLoop mainRunLoop]
                                  forMode:NSRunLoopCommonModes];
   } else {
@@ -308,13 +407,18 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
 }
 
 - (void)stopEdgeInsetsAnimation {
+  if (!_edgeInsetsDisplayLink) {
+    return;
+  }
   [_edgeInsetsDisplayLink invalidate];
   _edgeInsetsDisplayLink = nil;
+  [self cameraDidIdle];
 }
 
 #pragma mark - GMSMapViewDelegate
 
 - (void)mapView:(GMSMapView *)mapView willMove:(BOOL)gesture {
+  [self cameraWillMove];
   _isDragging = gesture;
   if (_isDragging) {
     for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
@@ -334,6 +438,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
 
 - (void)mapView:(GMSMapView *)mapView
     idleAtCameraPosition:(GMSCameraPosition *)position {
+  [self cameraDidIdle];
   BOOL wasDragging = _isDragging;
   _isDragging = NO;
   if (wasDragging) {
@@ -394,13 +499,19 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
 
   LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
   if (markerView) {
-    CGPoint point = [_mapView.projection pointForCoordinate:marker.position];
+    CLLocationCoordinate2D position = marker.position;
+    LuggMarkerPath *path = [_markerPaths objectForKey:marker];
+    if (path) {
+      position = [path coordinateAt:LuggWallClockMilliseconds() rotation:NULL];
+      [markerView updateCoordinate:position];
+    }
+    CGPoint point = [_mapView.projection pointForCoordinate:position];
     [markerView emitPressEventWithPoint:point];
 
     LuggCalloutView *calloutView = markerView.calloutView;
     if (calloutView && calloutView.hasCustomContent) {
       if (markerView.centerOnPress) {
-        [mapView animateToLocation:marker.position];
+        [mapView animateToLocation:position];
       }
 
       mapView.selectedMarker = marker;
@@ -409,6 +520,12 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
         [self showNonBubbledCallout:markerView];
       }
 
+      return YES;
+    }
+
+    // The SDK would center on the marker's model position, which a path animation doesn't move.
+    if (path && markerView.centerOnPress) {
+      [mapView animateToLocation:position];
       return YES;
     }
 
@@ -622,6 +739,10 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
   if (marker) {
     [_markerToViewMap removeObjectForKey:marker];
+    [_markerPaths removeObjectForKey:marker];
+    [_tickedMarkers removeObject:marker];
+    [_animatedMarkers removeObject:marker];
+    [self updatePathTicker];
     marker.iconView = nil;
     marker.map = nil;
     markerView.marker = nil;
@@ -643,7 +764,9 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   }
 
   GMSAdvancedMarker *marker = (GMSAdvancedMarker *)markerView.marker;
-  marker.position = markerView.coordinate;
+  if (!markerView.path) {
+    marker.position = markerView.coordinate;
+  }
   marker.title = markerView.title.length > 0 ? markerView.title : nil;
   marker.snippet = markerView.markerDescription.length > 0
                        ? markerView.markerDescription
@@ -651,6 +774,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   marker.zIndex = (int)markerView.zIndex;
   marker.draggable = markerView.draggable;
   [self applyMarkerStyle:markerView marker:marker];
+  [self applyPathForMarkerView:markerView marker:marker];
 }
 
 - (void)processPendingMarkers {
@@ -686,6 +810,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   marker.map = _mapView;
   markerView.marker = marker;
   [_markerToViewMap setObject:markerView forKey:marker];
+  [self applyPathForMarkerView:markerView marker:marker];
 }
 
 - (void)applyMarkerStyle:(LuggMarkerView *)markerView
@@ -694,27 +819,202 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
     if (markerView.rasterize) {
       marker.iconView = nil;
       marker.icon = [markerView createScaledIconImage];
-      marker.rotation = markerView.rotate;
+      if (!markerView.path.rotations) {
+        marker.rotation = markerView.rotate;
+      }
     } else {
       UIView *iconView = markerView.iconView;
       if (marker.iconView != iconView) {
         [iconView removeFromSuperview];
         marker.iconView = iconView;
       }
-      CGFloat scale = markerView.scale;
-      CGFloat radians = markerView.rotate * M_PI / 180.0;
-      iconView.transform =
-          CGAffineTransformConcat(CGAffineTransformMakeScale(scale, scale),
-                                  CGAffineTransformMakeRotation(radians));
+      CLLocationDegrees rotation = markerView.rotate;
+      [markerView.path coordinateAt:LuggWallClockMilliseconds() rotation:&rotation];
+      [self applyIconViewTransform:markerView rotation:rotation];
       marker.rotation = 0;
     }
     marker.groundAnchor = markerView.anchor;
   } else {
     marker.iconView = nil;
     marker.icon = nil;
-    marker.rotation = markerView.rotate;
+    if (!markerView.path.rotations) {
+      marker.rotation = markerView.rotate;
+    }
     marker.groundAnchor = CGPointMake(0.5, 1);
   }
+}
+
+- (void)applyIconViewTransform:(LuggMarkerView *)markerView
+                      rotation:(CLLocationDegrees)rotation {
+  CGFloat scale = markerView.scale;
+  markerView.iconView.transform =
+      CGAffineTransformConcat(CGAffineTransformMakeScale(scale, scale),
+                              CGAffineTransformMakeRotation(rotation * M_PI / 180.0));
+}
+
+#pragma mark - Path markers
+
+// Markers with an image follow their path with Core Animation on the marker layer, so the map moves
+// them on its own frames. Icon-view markers ignore those animations, so the ticker moves them.
+- (void)applyPathForMarkerView:(LuggMarkerView *)markerView marker:(GMSMarker *)marker {
+  LuggMarkerPath *path = markerView.path;
+  BOOL ticked = path && marker.iconView;
+  if ([_markerPaths objectForKey:marker] == path &&
+      [_tickedMarkers containsObject:marker] == ticked) {
+    return;
+  }
+
+  [marker.layer removeAnimationForKey:kPathLatitudeAnimationKey];
+  [marker.layer removeAnimationForKey:kPathLongitudeAnimationKey];
+  [marker.layer removeAnimationForKey:kPathRotationAnimationKey];
+  [_tickedMarkers removeObject:marker];
+  [_animatedMarkers removeObject:marker];
+
+  [CATransaction begin];
+  [CATransaction setDisableActions:YES];
+  if (path) {
+    [_markerPaths setObject:path forKey:marker];
+    double now = LuggWallClockMilliseconds();
+    CLLocationDegrees rotation = markerView.rotate;
+    marker.position = [path coordinateAt:now rotation:&rotation];
+    if (ticked) {
+      [_tickedMarkers addObject:marker];
+    } else {
+      if (path.rotations) {
+        marker.rotation = rotation;
+      }
+      [_animatedMarkers addObject:marker];
+      [self animateMarker:marker alongPath:path now:now];
+    }
+  } else {
+    [_markerPaths removeObjectForKey:marker];
+    marker.position = markerView.coordinate;
+  }
+  [CATransaction commit];
+  [self updatePathTicker];
+}
+
+- (void)animateMarker:(GMSMarker *)marker alongPath:(LuggMarkerPath *)path now:(double)now {
+  if (path.duration <= 0) {
+    return;
+  }
+  NSMutableArray<NSNumber *> *keyTimes = [NSMutableArray array];
+  NSMutableArray<NSNumber *> *latitudes = [NSMutableArray array];
+  NSMutableArray<NSNumber *> *longitudes = [NSMutableArray array];
+  NSMutableArray<NSNumber *> *rotations = [NSMutableArray array];
+  void (^add)(double, CLLocationCoordinate2D, CLLocationDegrees) =
+      ^(double at, CLLocationCoordinate2D coordinate, CLLocationDegrees rotation) {
+        [keyTimes addObject:@((at - now) / kPathWindowMilliseconds)];
+        [latitudes addObject:@(coordinate.latitude)];
+        [longitudes addObject:@(coordinate.longitude)];
+        [rotations addObject:@(rotation)];
+      };
+
+  // Where the marker is now, the keyframes in the next minute (unrolling laps when the path
+  // loops), and where it is at the end of that minute.
+  CLLocationDegrees rotation = 0;
+  add(now, [path coordinateAt:now rotation:&rotation], rotation);
+  double end = now + kPathWindowMilliseconds;
+  double lapStart = path.loop ? now - [path progressAt:now] : path.startTime;
+  for (; lapStart < end; lapStart += path.duration) {
+    for (NSUInteger i = 0; i < path.count; i++) {
+      double at = lapStart + path.times[i];
+      if (at > now && at < end) {
+        add(at, path.coordinates[i], path.rotations ? path.rotations[i] : 0);
+      }
+    }
+    if (!path.loop) {
+      break;
+    }
+  }
+  CLLocationDegrees endRotation = rotation;
+  CLLocationCoordinate2D endCoordinate = [path coordinateAt:end rotation:&endRotation];
+  if (path.loop && path.rotations) {
+    // coordinateAt: unwraps rotations within a lap; continue from the last keyframe instead.
+    CLLocationDegrees previous = rotations.lastObject.doubleValue;
+    endRotation = previous + fmod(fmod(endRotation - previous, 360) + 540, 360) - 180;
+  }
+  add(end, endCoordinate, endRotation);
+
+  CFTimeInterval beginTime = [marker.layer convertTime:CACurrentMediaTime() fromLayer:nil];
+  void (^animate)(NSString *, NSArray *, NSString *) =
+      ^(NSString *keyPath, NSArray *values, NSString *key) {
+        CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:keyPath];
+        animation.values = values;
+        animation.keyTimes = keyTimes;
+        animation.calculationMode = kCAAnimationLinear;
+        animation.duration = kPathWindowMilliseconds / 1000;
+        animation.beginTime = beginTime;
+        animation.fillMode = kCAFillModeForwards;
+        animation.removedOnCompletion = NO;
+        [marker.layer addAnimation:animation forKey:key];
+      };
+  animate(kGMSMarkerLayerLatitude, latitudes, kPathLatitudeAnimationKey);
+  animate(kGMSMarkerLayerLongitude, longitudes, kPathLongitudeAnimationKey);
+  if (path.rotations) {
+    animate(kGMSMarkerLayerRotation, rotations, kPathRotationAnimationKey);
+  }
+}
+
+- (void)refreshPathAnimations {
+  double now = LuggWallClockMilliseconds();
+  for (GMSMarker *marker in _animatedMarkers) {
+    LuggMarkerPath *path = [_markerPaths objectForKey:marker];
+    if (path) {
+      [self animateMarker:marker alongPath:path now:now];
+    }
+  }
+}
+
+- (void)updatePathTicker {
+  if (_animatedMarkers.count == 0) {
+    [_pathRefreshTimer invalidate];
+    _pathRefreshTimer = nil;
+  } else if (!_pathRefreshTimer) {
+    __weak GoogleMapProvider *weakSelf = self;
+    _pathRefreshTimer = [NSTimer timerWithTimeInterval:kPathRefreshInterval
+                                               repeats:YES
+                                                 block:^(NSTimer *timer) {
+                                                   [weakSelf refreshPathAnimations];
+                                                 }];
+    [[NSRunLoop mainRunLoop] addTimer:_pathRefreshTimer forMode:NSRunLoopCommonModes];
+  }
+
+  if (_tickedMarkers.count == 0) {
+    [_pathTicker stop];
+    return;
+  }
+  if (!_pathTicker) {
+    __weak GoogleMapProvider *weakSelf = self;
+    _pathTicker = [[MarkerPathTicker alloc] initWithTick:^{
+      [weakSelf tickPathMarkers];
+    }];
+  }
+  _pathTicker.framesPerSecond = LuggFramesPerSecond(_idleFrameRate);
+  [_pathTicker start];
+}
+
+- (void)tickPathMarkers {
+  double now = LuggWallClockMilliseconds();
+  [CATransaction begin];
+  [CATransaction setDisableActions:YES];
+  for (GMSMarker *marker in _tickedMarkers) {
+    LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+    LuggMarkerPath *path = markerView.path;
+    if (!path) {
+      continue;
+    }
+    CLLocationDegrees rotation = markerView.rotate;
+    CLLocationCoordinate2D position = [path coordinateAt:now rotation:&rotation];
+    if (position.latitude != marker.position.latitude ||
+        position.longitude != marker.position.longitude) {
+      marker.position = position;
+    }
+    if (path.rotations) {
+      [self applyIconViewTransform:markerView rotation:rotation];
+    }
+  }
+  [CATransaction commit];
 }
 
 #pragma mark - Polyline Management
@@ -1123,12 +1423,16 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
     [animator pause];
   }
+  _pathTicker.paused = YES;
 }
 
 - (void)resumeAnimations {
   for (GMSPolylineAnimator *animator in _polylineAnimators.objectEnumerator) {
     [animator resume];
   }
+  _pathTicker.paused = NO;
+  // Windows that ran out in the background would hold their last position.
+  [self refreshPathAnimations];
 }
 
 #pragma mark - Commands

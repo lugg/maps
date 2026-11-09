@@ -110,6 +110,7 @@ export class MapView
       poiFilter,
       theme,
       insetAdjustment,
+      idleFrameRate,
       onPress,
       onLongPress,
       onCameraMove,
@@ -145,6 +146,7 @@ export class MapView
         poiFilterCategories={poiFilter?.categories}
         theme={theme}
         insetAdjustment={insetAdjustment}
+        idleFrameRate={idleFrameRate}
         onMapPress={onPress}
         onMapLongPress={onLongPress}
         onCameraMove={onCameraMove}

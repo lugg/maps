@@ -22,6 +22,11 @@ export interface NativeProps extends ViewProps {
   rasterize?: CodegenTypes.WithDefault<boolean, true>;
   centerOnPress?: CodegenTypes.WithDefault<boolean, true>;
   draggable?: CodegenTypes.WithDefault<boolean, false>;
+  pathCoordinates?: ReadonlyArray<Coordinate>;
+  pathTimes?: ReadonlyArray<CodegenTypes.Double>;
+  pathRotations?: ReadonlyArray<CodegenTypes.Double>;
+  pathStartTime?: CodegenTypes.Double;
+  pathLoop?: CodegenTypes.WithDefault<boolean, false>;
   onMarkerPress?: CodegenTypes.DirectEventHandler<{
     coordinate: {
       latitude: CodegenTypes.Double;

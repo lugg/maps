@@ -18,8 +18,9 @@ import {
   useAdvancedMarkerRef,
 } from '@vis.gl/react-google-maps';
 import { useMapContext } from '../MapProvider.web';
-import type { Point } from '../types';
-import type { MarkerProps, MarkerRef } from './Marker.types';
+import type { Coordinate, Point } from '../types';
+import type { MarkerPath, MarkerProps, MarkerRef } from './Marker.types';
+import { pathPositionAt } from './markerPath';
 
 const CALLOUT_ARROW_HEIGHT = 12;
 const UNBUBBLED_CLASS = 'rnm-callout-unbubbled';
@@ -74,6 +75,47 @@ const createEvent = (
     },
   } as any);
 
+const followsPath = (path: MarkerPath | undefined): path is MarkerPath =>
+  !!path &&
+  path.coordinates.length >= 2 &&
+  path.times.length === path.coordinates.length;
+
+/**
+ * Moves a marker along `path` on every animation frame, calling `apply` only
+ * when its position or rotation changes.
+ */
+function usePathAnimation(
+  path: MarkerPath | undefined,
+  apply: (coordinate: Coordinate, rotation?: number) => void
+) {
+  const { coordinates, times, rotations, startTime = 0, loop } = path ?? {};
+  useEffect(() => {
+    if (!coordinates || !times) return;
+    const current = { coordinates, times, rotations, startTime, loop };
+    if (!followsPath(current)) return;
+    let frame = 0;
+    let last = {
+      latitude: NaN,
+      longitude: NaN,
+      rotation: NaN as number | undefined,
+    };
+    const tick = () => {
+      const { coordinate, rotation } = pathPositionAt(current, Date.now())!;
+      if (
+        coordinate.latitude !== last.latitude ||
+        coordinate.longitude !== last.longitude ||
+        rotation !== last.rotation
+      ) {
+        last = { ...coordinate, rotation };
+        apply(coordinate, rotation);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [coordinates, times, rotations, startTime, loop, apply]);
+}
+
 /**
  * The props Reanimated's `useAnimatedProps` can drive. On web, Reanimated
  * applies them through `setNativeProps`, so they update without a React render.
@@ -98,6 +140,7 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
       scale,
       centerOnPress = true,
       draggable,
+      path,
       onPress,
       onDragStart,
       onDragChange,
@@ -109,6 +152,8 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
     ref
   ) => {
     const { moveCamera, onCalloutClose, closeCallouts } = useMapContext();
+    const pathRef = useRef(path);
+    pathRef.current = path;
     const dragPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
     const [markerRef, markerElement] = useAdvancedMarkerRef();
     const markerElementRef = useRef(markerElement);
@@ -149,13 +194,41 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
       }
     }, []);
 
+    // Reanimated's updates. A path overrides the position, and the rotation
+    // when it has rotations.
+    const setNativeProps = useCallback(
+      (props: AnimatableProps) => {
+        const following = pathRef.current;
+        if (!followsPath(following)) return applyNativeProps(props);
+        const rest = { ...props };
+        delete rest.coordinate;
+        if (following.rotations) delete rest.rotate;
+        return applyNativeProps(rest);
+      },
+      [applyNativeProps]
+    );
+
+    const applyPath = useCallback(
+      (at: Coordinate, rotation?: number) =>
+        applyNativeProps(
+          rotation === undefined
+            ? { coordinate: at }
+            : { coordinate: at, rotate: rotation }
+        ),
+      [applyNativeProps]
+    );
+    usePathAnimation(path, applyPath);
+
     // Props apply when their values change. Reanimated passes its first values
     // again on every render, so a re-render must not pull a moving marker back.
+    // A path overrides them, like Reanimated's updates.
     const { latitude, longitude } = coordinate;
     useEffect(() => {
+      if (followsPath(pathRef.current)) return;
       latest.current.coordinate = { latitude, longitude };
     }, [latitude, longitude]);
     useEffect(() => {
+      if (pathRef.current?.rotations && followsPath(pathRef.current)) return;
       latest.current.rotate = rotate;
     }, [rotate]);
     useEffect(() => {
@@ -196,9 +269,9 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
         hideCallout() {
           setInfoWindowOpen(false);
         },
-        setNativeProps: applyNativeProps,
+        setNativeProps,
       }),
-      [hasCallout, closeCallouts, closeCallout, applyNativeProps]
+      [hasCallout, closeCallouts, closeCallout, setNativeProps]
     );
 
     const calloutContent = callout
@@ -355,12 +428,15 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
       rotate,
       scale,
       centerOnPress = true,
+      path,
       onPress,
       children,
     },
     ref
   ) => {
     const { map, moveCamera } = useMapContext();
+    const pathRef = useRef(path);
+    pathRef.current = path;
     const [element] = useState(createLiveElement);
     const overlayRef = useRef<google.maps.OverlayView | null>(null);
     const onPressRef = useRef(onPress);
@@ -407,6 +483,16 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
       onPressRef.current = onPress;
     }, [onPress]);
 
+    const applyPath = useCallback(
+      (at: Coordinate, rotation?: number) => {
+        latest.current.coordinate = at;
+        if (rotation !== undefined) latest.current.rotate = rotation;
+        place();
+      },
+      [place]
+    );
+    usePathAnimation(path, applyPath);
+
     useEffect(() => {
       const handleClick = (event: MouseEvent) => {
         const at = latest.current.coordinate;
@@ -424,12 +510,15 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
 
     // Props apply when their values change. Reanimated passes its first values
     // again on every render, so a re-render must not pull a moving marker back.
+    // A path overrides them, like Reanimated's updates.
     const { latitude, longitude } = coordinate;
     useLayoutEffect(() => {
+      if (followsPath(pathRef.current)) return;
       latest.current.coordinate = { latitude, longitude };
       place();
     }, [latitude, longitude, place]);
     useLayoutEffect(() => {
+      if (pathRef.current?.rotations && followsPath(pathRef.current)) return;
       latest.current.rotate = rotate ?? 0;
       place();
     }, [rotate, place]);
@@ -455,8 +544,14 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
         hideCallout() {},
         setNativeProps(props) {
           const current = latest.current;
-          if (props.coordinate) current.coordinate = props.coordinate;
-          if (props.rotate !== undefined) current.rotate = props.rotate;
+          const following = pathRef.current;
+          const onPath = followsPath(following);
+          if (props.coordinate && !onPath) {
+            current.coordinate = props.coordinate;
+          }
+          if (props.rotate !== undefined && !(onPath && following.rotations)) {
+            current.rotate = props.rotate;
+          }
           if (props.scale !== undefined) current.scale = props.scale;
           if (props.zIndex !== undefined) {
             element.style.zIndex = String(props.zIndex);

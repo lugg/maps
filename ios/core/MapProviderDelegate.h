@@ -58,6 +58,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setUserLocationEnabled:(BOOL)enabled;
 - (void)setMapType:(facebook::react::LuggMapViewMapType)mapType;
 - (void)setTheme:(facebook::react::LuggMapViewTheme)theme;
+- (void)setIdleFrameRate:
+    (facebook::react::LuggMapViewIdleFrameRate)idleFrameRate;
 - (void)setMinZoom:(double)minZoom;
 - (void)setMaxZoom:(double)maxZoom;
 - (void)setEdgeInsets:(UIEdgeInsets)edgeInsets

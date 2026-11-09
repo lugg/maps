@@ -18,6 +18,8 @@ export type MapTheme = 'light' | 'dark' | 'system';
 
 export type InsetAdjustment = 'automatic' | 'never';
 
+export type MapIdleFrameRate = 'maximum' | 'conservative' | 'powerSave';
+
 export type PoiCategory =
   | 'airport'
   | 'amusement-park'
@@ -275,6 +277,16 @@ export interface MapViewProps extends ViewProps {
    * @default 'never'
    */
   insetAdjustment?: InsetAdjustment;
+  /**
+   * How often the map redraws while the camera is still, for markers that move along a `path`.
+   * The map redraws at full rate while the camera moves.
+   * - Google Maps on iOS: the map's frame rate at rest (60, 30 or 15 fps). It also slows other
+   *   animations on the map while the camera is still.
+   * - Android and Apple Maps: how often `path` markers move (every frame, 30 or 15 times a second).
+   * - Web: ignored.
+   * @default 'maximum'
+   */
+  idleFrameRate?: MapIdleFrameRate;
   /**
    * Called when the map is pressed
    */

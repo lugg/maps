@@ -1,5 +1,6 @@
 #import "AppleMapProvider.h"
 
+using facebook::react::LuggMapViewIdleFrameRate;
 using facebook::react::LuggMapViewInsetAdjustment;
 using facebook::react::LuggMapViewMapType;
 using facebook::react::LuggMapViewPoiFilterMode;
@@ -16,6 +17,13 @@ using facebook::react::LuggMapViewTheme;
 #import "LuggAnnotationView.h"
 #import "MKPolylineAnimator.h"
 #import "MapEdgeInsets.h"
+#import "MarkerPathTicker.h"
+
+static CLLocationDegrees LuggMarkerRotation(LuggMarkerView *markerView) {
+  CLLocationDegrees rotation = markerView.rotate;
+  [markerView.path coordinateAt:LuggWallClockMilliseconds() rotation:&rotation];
+  return rotation;
+}
 
 @interface AppleMarkerAnnotation : NSObject <MKAnnotation>
 @property(nonatomic, assign) CLLocationCoordinate2D coordinate;
@@ -116,6 +124,10 @@ static double tileToLng(NSInteger x, NSInteger z) {
 @end
 
 @implementation AppleMapProvider {
+  // MapKit can't animate annotations along a path, so the ticker moves them.
+  NSHashTable<AppleMarkerAnnotation *> *_pathAnnotations;
+  MarkerPathTicker *_pathTicker;
+  float _pathFramesPerSecond;
   UIView *_wrapperView;
   LuggAppleMapViewContent *_mapView;
   BOOL _isMapReady;
@@ -150,6 +162,7 @@ static double tileToLng(NSInteger x, NSInteger z) {
 
 - (instancetype)init {
   if (self = [super init]) {
+    _pathAnnotations = [NSHashTable weakObjectsHashTable];
     _overlayToPolylineMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToPolygonMap = [NSMapTable strongToWeakObjectsMapTable];
     _overlayToCircleMap = [NSMapTable strongToWeakObjectsMapTable];
@@ -218,6 +231,9 @@ static double tileToLng(NSInteger x, NSInteger z) {
 }
 
 - (void)destroy {
+  [_pathTicker stop];
+  _pathTicker = nil;
+  [_pathAnnotations removeAllObjects];
   [self destroyMapView];
   _isMapReady = NO;
 }
@@ -438,6 +454,21 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
   _mapView.mapType = LuggMKMapTypeFromMapType(mapType);
+}
+
+- (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
+  switch (idleFrameRate) {
+  case LuggMapViewIdleFrameRate::PowerSave:
+    _pathFramesPerSecond = 15;
+    break;
+  case LuggMapViewIdleFrameRate::Conservative:
+    _pathFramesPerSecond = 30;
+    break;
+  case LuggMapViewIdleFrameRate::Maximum:
+    _pathFramesPerSecond = 0;
+    break;
+  }
+  _pathTicker.framesPerSecond = _pathFramesPerSecond;
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
@@ -1172,7 +1203,15 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   if (!annotation)
     return;
 
-  annotation.coordinate = markerView.coordinate;
+  LuggMarkerPath *path = markerView.path;
+  if (path) {
+    annotation.coordinate = [path coordinateAt:LuggWallClockMilliseconds() rotation:NULL];
+    [_pathAnnotations addObject:annotation];
+  } else {
+    annotation.coordinate = markerView.coordinate;
+    [_pathAnnotations removeObject:annotation];
+  }
+  [self updatePathTicker];
   annotation.title = markerView.title;
   annotation.subtitle = markerView.markerDescription;
 
@@ -1249,6 +1288,8 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     annotation.annotationView = nil;
     [_mapView removeAnnotation:annotation];
     markerView.marker = nil;
+    [_pathAnnotations removeObject:annotation];
+    [self updatePathTicker];
   }
   [markerView resetIconViewTransform];
 }
@@ -1304,7 +1345,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   annotationView.centerOffset = CGPointMake(scaledWidth * (0.5 - anchor.x),
                                             scaledHeight * (0.5 - anchor.y));
   annotationView.transform =
-      CGAffineTransformMakeRotation(markerView.rotate * M_PI / 180.0);
+      CGAffineTransformMakeRotation(LuggMarkerRotation(markerView) * M_PI / 180.0);
 
   // Debounce: rasterize once updates settle
   if (markerView.rasterize) {
@@ -1320,6 +1361,42 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     dispatch_after(
         dispatch_time(DISPATCH_TIME_NOW, (int64_t)(150 * NSEC_PER_MSEC)),
         dispatch_get_main_queue(), rasterizeBlock);
+  }
+}
+
+- (void)updatePathTicker {
+  if (_pathAnnotations.count == 0) {
+    [_pathTicker stop];
+    return;
+  }
+  if (!_pathTicker) {
+    __weak AppleMapProvider *weakSelf = self;
+    _pathTicker = [[MarkerPathTicker alloc] initWithTick:^{
+      [weakSelf tickPathMarkers];
+    }];
+  }
+  _pathTicker.framesPerSecond = _pathFramesPerSecond;
+  [_pathTicker start];
+}
+
+- (void)tickPathMarkers {
+  double now = LuggWallClockMilliseconds();
+  for (AppleMarkerAnnotation *annotation in _pathAnnotations) {
+    LuggMarkerView *markerView = annotation.markerView;
+    LuggMarkerPath *path = markerView.path;
+    if (!path) {
+      continue;
+    }
+    CLLocationDegrees rotation = markerView.rotate;
+    CLLocationCoordinate2D coordinate = [path coordinateAt:now rotation:&rotation];
+    if (coordinate.latitude != annotation.coordinate.latitude ||
+        coordinate.longitude != annotation.coordinate.longitude) {
+      annotation.coordinate = coordinate;
+    }
+    if (path.rotations) {
+      annotation.annotationView.transform =
+          CGAffineTransformMakeRotation(rotation * M_PI / 180.0);
+    }
   }
 }
 
@@ -1777,6 +1854,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
     [renderer pause];
   }
+  _pathTicker.paused = YES;
 }
 
 - (void)resumeAnimations {
@@ -1785,6 +1863,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     MKPolylineAnimator *renderer = (MKPolylineAnimator *)polylineView.renderer;
     [renderer resume];
   }
+  _pathTicker.paused = NO;
 }
 
 #pragma mark - Commands

@@ -13,6 +13,7 @@ export type {
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
+  MarkerPath,
 } from './Marker.types';
 
 const DEFAULT_ANCHOR: Point = { x: 0.5, y: 1 };
@@ -60,6 +61,7 @@ export class Marker
       rasterize = true,
       centerOnPress = true,
       draggable = false,
+      path,
       onPress,
       onDragStart,
       onDragChange,
@@ -91,6 +93,11 @@ export class Marker
         rasterize={rasterize}
         centerOnPress={centerOnPress}
         draggable={draggable}
+        pathCoordinates={path?.coordinates}
+        pathTimes={path?.times}
+        pathRotations={path?.rotations}
+        pathStartTime={path?.startTime}
+        pathLoop={path?.loop}
         onMarkerPress={onPress}
         onMarkerDragStart={onDragStart}
         onMarkerDragChange={onDragChange}

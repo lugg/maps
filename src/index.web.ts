@@ -1,8 +1,13 @@
 export { MapView } from './MapView.web';
 export { MapProvider } from './MapProvider.web';
 export type { MapProviderProps } from './MapProvider.types';
-export { Marker } from './components/index.web';
-export type { CalloutOptions, MarkerProps } from './components/index.web';
+export { Marker, pathPositionAt } from './components/index.web';
+export type {
+  CalloutOptions,
+  MarkerProps,
+  MarkerPath,
+  MarkerPathPosition,
+} from './components/index.web';
 export { Polygon } from './components/index.web';
 export type { PolygonProps } from './components/index.web';
 export { Circle } from './components/index.web';

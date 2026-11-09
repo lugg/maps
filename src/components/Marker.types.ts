@@ -23,6 +23,38 @@ export interface CalloutOptions {
   offset?: Point;
 }
 
+/**
+ * A timed route that a marker follows natively, with no React renders or prop updates per frame.
+ */
+export interface MarkerPath {
+  /**
+   * Keyframe positions. The marker moves in a straight line between consecutive keyframes.
+   */
+  coordinates: Coordinate[];
+  /**
+   * Milliseconds from the start of the path for each keyframe, in increasing order.
+   * Same length as `coordinates`.
+   */
+  times: number[];
+  /**
+   * Rotation for each keyframe, in degrees clockwise from north. Each segment
+   * turns the short way. Without it, the marker keeps `rotate`.
+   */
+  rotations?: number[];
+  /**
+   * Wall-clock time in milliseconds, as from `Date.now()`, at which the marker is at the first
+   * keyframe.
+   */
+  startTime: number;
+  /**
+   * Repeat the path. A lap runs from the first time to the last.
+   * Without it, the marker waits at the first keyframe until `startTime` and stays at the last
+   * one after the path ends.
+   * @default false
+   */
+  loop?: boolean;
+}
+
 export interface MarkerRef {
   showCallout(): void;
   hideCallout(): void;
@@ -85,6 +117,12 @@ export interface MarkerProps {
    * @default false
    */
   draggable?: boolean;
+  /**
+   * Moves the marker along a timed path natively, so a moving marker costs no React work per
+   * frame. While set, `coordinate` is ignored, and so is `rotate` when the path has `rotations`.
+   * Pass the same object across renders: a new one is sent to native again.
+   */
+  path?: MarkerPath;
   /**
    * Called when the marker is pressed
    */

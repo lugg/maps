@@ -13,6 +13,123 @@
 using namespace facebook::react;
 using namespace luggmaps::events;
 
+static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
+  return props.pathCoordinates.size() >= 2 &&
+         props.pathTimes.size() == props.pathCoordinates.size();
+}
+
+@interface LuggMarkerPath ()
+- (nullable instancetype)initWithProps:(const LuggMarkerViewProps &)props;
+- (BOOL)matchesProps:(const LuggMarkerViewProps &)props;
+@end
+
+@implementation LuggMarkerPath {
+  std::vector<CLLocationCoordinate2D> _coordinateValues;
+  std::vector<double> _timeValues;
+  std::vector<double> _rotationValues;
+  std::vector<double> _rotationProps;
+}
+
+- (instancetype)initWithProps:(const LuggMarkerViewProps &)props {
+  if (!LuggMarkerPathPropsActive(props)) {
+    return nil;
+  }
+  if (self = [super init]) {
+    size_t count = props.pathCoordinates.size();
+    double first = props.pathTimes.front();
+    _coordinateValues.reserve(count);
+    _timeValues.reserve(count);
+    for (size_t i = 0; i < count; i++) {
+      _coordinateValues.push_back(CLLocationCoordinate2DMake(
+          props.pathCoordinates[i].latitude, props.pathCoordinates[i].longitude));
+      _timeValues.push_back(props.pathTimes[i] - first);
+    }
+    if (props.pathRotations.size() == count) {
+      // Unwrapped so each segment turns the short way (350 then 10 is +20, not -340).
+      _rotationProps = props.pathRotations;
+      _rotationValues.reserve(count);
+      double rotation = props.pathRotations[0];
+      _rotationValues.push_back(rotation);
+      for (size_t i = 1; i < count; i++) {
+        rotation += fmod(fmod(props.pathRotations[i] - rotation, 360) + 540, 360) - 180;
+        _rotationValues.push_back(rotation);
+      }
+    }
+    _startTime = props.pathStartTime;
+    _loop = props.pathLoop;
+    _duration = _timeValues.back();
+  }
+  return self;
+}
+
+- (BOOL)matchesProps:(const LuggMarkerViewProps &)props {
+  size_t count = _coordinateValues.size();
+  if (props.pathCoordinates.size() != count || props.pathTimes.size() != count ||
+      props.pathStartTime != _startTime || props.pathLoop != _loop ||
+      (props.pathRotations.size() == count) == _rotationValues.empty()) {
+    return NO;
+  }
+  double first = props.pathTimes.front();
+  for (size_t i = 0; i < count; i++) {
+    if (props.pathCoordinates[i].latitude != _coordinateValues[i].latitude ||
+        props.pathCoordinates[i].longitude != _coordinateValues[i].longitude ||
+        props.pathTimes[i] - first != _timeValues[i]) {
+      return NO;
+    }
+  }
+  return _rotationValues.empty() || props.pathRotations == _rotationProps;
+}
+
+- (NSUInteger)count {
+  return _coordinateValues.size();
+}
+
+- (const CLLocationCoordinate2D *)coordinates {
+  return _coordinateValues.data();
+}
+
+- (const double *)times {
+  return _timeValues.data();
+}
+
+- (const double *)rotations {
+  return _rotationValues.empty() ? NULL : _rotationValues.data();
+}
+
+- (double)progressAt:(double)now {
+  double elapsed = now - _startTime;
+  if (_loop && _duration > 0) {
+    return fmod(fmod(elapsed, _duration) + _duration, _duration);
+  }
+  return MIN(MAX(elapsed, 0), _duration);
+}
+
+- (CLLocationCoordinate2D)coordinateAt:(double)now
+                              rotation:(CLLocationDegrees *)rotation {
+  double t = [self progressAt:now];
+  size_t lo = 0;
+  size_t hi = _timeValues.size() - 1;
+  while (hi - lo > 1) {
+    size_t mid = (lo + hi) / 2;
+    if (_timeValues[mid] <= t) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  double span = _timeValues[hi] - _timeValues[lo];
+  double f = span > 0 ? (t - _timeValues[lo]) / span : 0;
+  if (rotation && !_rotationValues.empty()) {
+    *rotation = _rotationValues[lo] + (_rotationValues[hi] - _rotationValues[lo]) * f;
+  }
+  const CLLocationCoordinate2D &a = _coordinateValues[lo];
+  const CLLocationCoordinate2D &b = _coordinateValues[hi];
+  return CLLocationCoordinate2DMake(a.latitude + (b.latitude - a.latitude) * f,
+                                    a.longitude + (b.longitude - a.longitude) * f);
+}
+
+@end
+
 @interface LuggMarkerView () <RCTLuggMarkerViewViewProtocol>
 @end
 
@@ -28,6 +145,7 @@ using namespace luggmaps::events;
   BOOL _rasterize;
   BOOL _centerOnPress;
   BOOL _draggable;
+  LuggMarkerPath *_path;
   BOOL _didLayout;
   UIView *_iconView;
   LuggCalloutView *_calloutView;
@@ -91,6 +209,10 @@ using namespace luggmaps::events;
   _rasterize = newViewProps.rasterize;
   _centerOnPress = newViewProps.centerOnPress;
   _draggable = newViewProps.draggable;
+  if (_path ? ![_path matchesProps:newViewProps]
+            : LuggMarkerPathPropsActive(newViewProps)) {
+    _path = [[LuggMarkerPath alloc] initWithProps:newViewProps];
+  }
 }
 
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask {
@@ -198,6 +320,10 @@ using namespace luggmaps::events;
 
 - (BOOL)draggable {
   return _draggable;
+}
+
+- (LuggMarkerPath *)path {
+  return _path;
 }
 
 - (BOOL)hasCustomView {

@@ -250,6 +250,22 @@ const animatedProps = useAnimatedProps(() => ({
 
 Works on every platform. Web markers round to whole pixels, so pass `rasterize={Platform.OS !== 'web'}` to make a marker moved every frame glide there. Full example in [Advanced Patterns](./references/advanced-patterns.md#animated-marker-along-a-route).
 
+### Marker on a known route (`path`)
+
+When the route and timing are known ahead, hand the marker a `path` instead of animating `coordinate`: native code moves it with no React work per frame.
+
+```tsx
+const path = useMemo(() => ({ coordinates, times, rotations, startTime, loop: true }), [coordinates, times, rotations, startTime]);
+
+<MapView idleFrameRate="powerSave">
+  <Marker coordinate={coordinates[0]} path={path} anchor={{ x: 0.5, y: 0.5 }}>
+    <TruckIcon />
+  </Marker>
+</MapView>
+```
+
+`times` are ms after the first keyframe, `startTime` is `Date.now()` at the first keyframe, and each segment of `rotations` turns the short way. Moves are linear between keyframes, so add keyframes through corners. `pathPositionAt(path, Date.now())` gives the position and keyframe index in JS (no events). `idleFrameRate="powerSave"` redraws a still map at 15 fps on Google iOS.
+
 ## Rules That Save Debugging Time
 
 1. **Size the map.** `MapView` renders nothing without `flex: 1`, a fixed height, or `absoluteFill`.
@@ -290,6 +306,8 @@ Works on every platform. Web markers round to whole pixels, so pass `rasterize={
 | Non-bubbled callout | Live view | Live view | Live view | Styled InfoWindow |
 | Marker `rasterize` | Yes | Yes | Yes | `false` = overlay positioned between pixels |
 | Reanimated `animatedProps` on `Marker` | Yes | Yes | Yes | Yes |
+| Marker `path` | Frame timer | Core Animation (image markers), frame timer (`rasterize={false}`) | Frame timer | `requestAnimationFrame` |
+| `MapView` `idleFrameRate` | Path timer rate | Map frame rate at rest | Path timer rate | No |
 | `Polyline` gradient + `animated` | Yes | Yes | Yes | Yes (JS) |
 | `GroundOverlay.bearing` | No | Yes | Yes | No |
 | `TileOverlay.onPress` | No | No | No | Yes |

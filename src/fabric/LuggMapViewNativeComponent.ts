@@ -84,6 +84,10 @@ export interface NativeProps extends ViewProps {
   poiFilterCategories?: ReadonlyArray<string>;
   theme?: CodegenTypes.WithDefault<'system' | 'light' | 'dark', 'system'>;
   insetAdjustment?: CodegenTypes.WithDefault<'never' | 'automatic', 'never'>;
+  idleFrameRate?: CodegenTypes.WithDefault<
+    'maximum' | 'conservative' | 'powerSave',
+    'maximum'
+  >;
   onMapPress?: CodegenTypes.DirectEventHandler<PressEvent>;
   onMapLongPress?: CodegenTypes.DirectEventHandler<LongPressEvent>;
   onCameraMove?: CodegenTypes.DirectEventHandler<CameraMoveEvent>;

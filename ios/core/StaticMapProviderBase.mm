@@ -1,5 +1,6 @@
 #import "StaticMapProviderBase.h"
 
+using facebook::react::LuggMapViewIdleFrameRate;
 using facebook::react::LuggMapViewInsetAdjustment;
 using facebook::react::LuggMapViewMapType;
 using facebook::react::LuggMapViewPoiFilterMode;
@@ -473,6 +474,9 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 - (void)setTheme:(LuggMapViewTheme)theme {
   _theme = theme;
+}
+
+- (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
 }
 
 // Interaction and camera props don't apply to a static map

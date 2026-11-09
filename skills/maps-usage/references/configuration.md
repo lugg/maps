@@ -136,6 +136,7 @@ export function App() {
 | `maxZoom` | `number` | — | 🍎🅶🤖🌐 | Upper zoom clamp |
 | `edgeInsets` | `EdgeInsets` | — | 🍎🅶🤖🌐 | Viewport insets. Shifts the logical center, attribution, and controls. Prefer `setEdgeInsets()` for animated changes. Applied only when the value changes, so re-renders keep `setEdgeInsets()` insets |
 | `insetAdjustment` | `'never' \| 'automatic'` | `'never'` | 🍎🅶🤖 | `'automatic'` adds safe-area insets to the map padding |
+| `idleFrameRate` | `'maximum' \| 'conservative' \| 'powerSave'` | `'maximum'` | 🍎🅶🤖 | Redraw rate while the camera is still, for `path` markers. Google iOS: map frame rate 60/30/15 fps (also slows animated polylines at rest); Android and Apple: path markers move every frame/30/15 times a second. Full rate while the camera moves |
 
 ### Gestures
 
@@ -195,6 +196,7 @@ Static-mode behavior notes:
 | `rasterize` | `boolean` | `true` | 🍎🅶🤖🌐 | Rasterize the custom view to a bitmap. `false` keeps a live view for content that animates internally. On web, `false` positions the custom view between pixels for markers moved every frame. Markers with `title`, `callout` or `draggable` keep whole pixels |
 | `centerOnPress` | `boolean` | `true` | 🍎🅶🤖🌐 | Center the map on the marker when tapped |
 | `draggable` | `boolean` | `false` | 🍎🅶🤖🌐 | Long-press-and-drag. Update `coordinate` from `onDragEnd` |
+| `path` | `MarkerPath` | — | 🍎🅶🤖🌐 | `{ coordinates, times (ms from start), rotations?, startTime (Date.now() at the first keyframe), loop? }`. Native code moves the marker, linear between keyframes, each turn the short way, following the wall clock. Ignores `coordinate`, and `rotate` when `rotations` is set. Presses report the on-path position. `pathPositionAt(path, time)` gives the position in JS. Keep the object stable across renders |
 | `callout` | `ReactElement \| ComponentType` | — | 🍎🅶🤖🌐 | Custom callout content. Falls back to `title`/`description` bubble when omitted |
 | `calloutOptions` | `CalloutOptions` | `{ bubbled: true }` | 🍎🅶🤖🌐 | `bubbled: false` renders the content as a live, interactive view without native chrome. `offset: Point` nudges a non-bubbled callout from its default centered-above position (positive `y` moves down) |
 | `name` | `string` | — | 🍎🅶🤖 | Debug label for native logs |
