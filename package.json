@@ -101,7 +101,8 @@
     "typescript": "^5.9.2"
   },
   "resolutions": {
-    "@lodev09/react-native-true-sheet": "4.0.0-beta.20"
+    "@lodev09/react-native-true-sheet": "4.1.0",
+    "react-native-screens": "~4.30.1"
   },
   "peerDependencies": {
     "@vis.gl/react-google-maps": ">=1.0.0",

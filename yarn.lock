@@ -4155,9 +4155,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lodev09/react-native-true-sheet@npm:4.0.0-beta.20":
-  version: 4.0.0-beta.20
-  resolution: "@lodev09/react-native-true-sheet@npm:4.0.0-beta.20"
+"@lodev09/react-native-true-sheet@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@lodev09/react-native-true-sheet@npm:4.1.0"
   peerDependencies:
     "@radix-ui/react-dialog": ">=1"
     "@radix-ui/react-presence": ">=1"
@@ -4166,8 +4166,8 @@ __metadata:
     react: "*"
     react-dom: "*"
     react-native: ">=0.82.0"
-    react-native-reanimated: ">=4"
-    react-native-worklets: "*"
+    react-native-reanimated: ">=4.1.0"
+    react-native-worklets: ">=0.5.0"
     standard-navigation: ">=0.0.9"
   peerDependenciesMeta:
     "@radix-ui/react-dialog":
@@ -4186,7 +4186,7 @@ __metadata:
       optional: true
     standard-navigation:
       optional: true
-  checksum: 10c0/23cf16ccb2f0947542abb254fc0f70e085f9786e08fe79d740361b5e8fe5fa5256c1b7c11dbef83b9b4005080052012289103ac64f85f2332488377b4854975e
+  checksum: 10c0/a7b09ec610eb1eea116454ab23dae9e601381f65809a368fa1f095c9f9678383e5fb261462b1e2b2d7316e62984fee1ab935f62bc14ca125e16fe51840764f3c
   languageName: node
   linkType: hard
 
@@ -4197,7 +4197,7 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@lodev09/react-native-true-sheet": "npm:4.0.0-beta.20"
+    "@lodev09/react-native-true-sheet": "npm:4.1.0"
     "@lugg/maps": "workspace:*"
     "@lugg/shared-example": "workspace:*"
     "@react-native-community/cli": "npm:20.2.0"
@@ -4213,7 +4213,7 @@ __metadata:
     react: "npm:19.3.0"
     react-native: "npm:0.88.1"
     react-native-builder-bob: "npm:^0.40.13"
-    react-native-config: "npm:^1.6.1"
+    react-native-config: "npm:^1.7.2"
     react-native-monorepo-config: "npm:^0.3.1"
     react-native-reanimated: "npm:4.7.1"
     react-native-safe-area-context: "npm:^5.11.1"
@@ -4251,7 +4251,7 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.29.7"
     "@gorhom/bottom-sheet": "npm:^5.2.8"
-    "@lodev09/react-native-true-sheet": "npm:4.0.0-beta.20"
+    "@lodev09/react-native-true-sheet": "npm:4.1.0"
     "@lugg/maps": "workspace:*"
     "@lugg/shared-example": "workspace:*"
     "@types/react": "npm:~19.3.0"
@@ -4273,6 +4273,7 @@ __metadata:
     react-native-monorepo-config: "npm:^0.3.1"
     react-native-reanimated: "npm:4.7.1"
     react-native-safe-area-context: "npm:~5.11.1"
+    react-native-screens: "npm:~4.30.1"
     react-native-svg: "npm:15.16.0"
     react-native-web: "npm:~0.21.4"
     react-native-worklets: "npm:0.13.0"
@@ -17482,9 +17483,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-config@npm:^1.6.1":
-  version: 1.6.1
-  resolution: "react-native-config@npm:1.6.1"
+"react-native-config@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "react-native-config@npm:1.7.2"
   peerDependencies:
     react: "*"
     react-native: "*"
@@ -17492,7 +17493,7 @@ __metadata:
   peerDependenciesMeta:
     react-native-windows:
       optional: true
-  checksum: 10c0/9e2bbb7fb04bac878471f7b06132d84233c482952fc7dd0b651669a62cd35c35428302c7502a92898402505ec9b8d7997848122356b42de5c072dcce549d5813
+  checksum: 10c0/2c414826632e465e080b426b64e20dd540dd639597cb81ff58d840e715b3cee25998c3a392bd37023f0353e036de343f26c31255cc3f17f7733d7d1821de6d13
   languageName: node
   linkType: hard
 
@@ -17582,7 +17583,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-screens@npm:^4.30.1":
+"react-native-screens@npm:~4.30.1":
   version: 4.30.1
   resolution: "react-native-screens@npm:4.30.1"
   dependencies:
@@ -17592,19 +17593,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/e5ded425ece1819d56fa84dacffa30178a9b9af1e9350ae99f3b78a9cb21795886c6f74ca1fe1b89e7bb65a56733246c40bf57d5b470d9d7bbf10ad0fa117690
-  languageName: node
-  linkType: hard
-
-"react-native-screens@npm:^4.30.1 || ^5.0.0-alpha.3":
-  version: 5.0.0-beta.1
-  resolution: "react-native-screens@npm:5.0.0-beta.1"
-  dependencies:
-    react-freeze: "npm:^1.0.0"
-    warn-once: "npm:^0.1.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/5f42f5324e575a43e33933f7eff4a98a207f0c59278254ccd7c5ad3cccf49c213baeb82578a22ff657ea2794d96f566970ff48ea8fa0bfe006cc95bacbd89064
   languageName: node
   linkType: hard
 
