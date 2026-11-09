@@ -34,7 +34,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { CrewMarker } from './CrewMarker';
+import { CrewMarker, type CrewMotion } from './CrewMarker';
+import { TrackedMarker } from './TrackedMarker';
 import { MarkerIcon } from './MarkerIcon';
 import { MarkerText } from './MarkerText';
 import { MarkerImage } from './MarkerImage';
@@ -55,6 +56,11 @@ interface MapProps extends MapViewProps {
   markers: MarkerData[];
   geojson?: GeoJSON | null;
   animatedPosition?: SharedValue<number>;
+  crewMotion?: CrewMotion;
+  /** Extra trucks on copies of the route, to compare motion at scale */
+  fleetSize?: number;
+  /** Show a marker that follows simulated GPS fixes */
+  tracking?: boolean;
   onPolygonPress?: () => void;
   onCirclePress?: () => void;
   onGroundOverlayPress?: () => void;
@@ -263,6 +269,9 @@ export const Map = memo(
         provider,
         edgeInsets,
         animatedPosition,
+        crewMotion = 'path',
+        fleetSize = 0,
+        tracking = false,
         onCameraIdle,
         onCameraMove,
         onPress,
@@ -309,6 +318,20 @@ export const Map = memo(
       const smoothedRoute = useMemo(
         () => smoothCoordinates(markers.map((m) => m.coordinate)),
         [markers]
+      );
+
+      // Copies of the route spread over the map, so the fleet doesn't share one road
+      const fleetRoutes = useMemo(
+        () =>
+          Array.from({ length: fleetSize }, (_, i) => {
+            const dLat = (((i * 7) % 11) - 5) * 0.002;
+            const dLng = (((i * 5) % 13) - 6) * 0.002;
+            return smoothedRoute.map((c) => ({
+              latitude: c.latitude + dLat,
+              longitude: c.longitude + dLng,
+            }));
+          }),
+        [smoothedRoute, fleetSize]
       );
 
       const [truckIndex, setTruckIndex] = useState(0);
@@ -364,8 +387,20 @@ export const Map = memo(
             <CrewMarker
               route={smoothedRoute}
               zoom={zoom}
+              motion={crewMotion}
               onSegment={setTruckIndex}
             />
+            {fleetRoutes.map((route, i) => (
+              <CrewMarker
+                key={`fleet-${i}`}
+                route={route}
+                zoom={zoom}
+                motion={crewMotion}
+                phase={(i % 10) / 10}
+                speed={0.75 + (i % 4) * 0.25}
+              />
+            ))}
+            {tracking && <TrackedMarker route={smoothedRoute} />}
             <Polygon
               coordinates={CIRCLE_COORDS}
               holes={CIRCLE_HOLES}
