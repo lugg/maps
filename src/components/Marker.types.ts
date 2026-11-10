@@ -144,12 +144,13 @@ export interface MarkerProps {
   /**
    * Moves the marker along a route natively, so a moving marker costs no React work per frame.
    * While set, `coordinate` is ignored, and so is `rotate` when the path rotates the marker.
-   * Pass the same object across renders: a new one restarts the path.
+   * Restarts when a field changes. Arrays compare by reference, so keep them stable across renders.
    */
   path?: MarkerPath;
   /**
    * Turns the marker to face its direction of travel, along a `path` or a `transitionDuration`
-   * move. Turns take the short way and settle quickly at each keyframe.
+   * move. Turns take the short way and settle quickly at each keyframe. `transitionDuration` moves
+   * shorter than 5 m keep the heading.
    * @default false
    */
   rotateAlongPath?: boolean;

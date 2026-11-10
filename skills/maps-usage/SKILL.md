@@ -267,7 +267,7 @@ const path = useMemo(() => ({ coordinates: route, duration: 60_000, loop: true }
 </Marker>
 ```
 
-Linear between keyframes, so add keyframes through corners. `times` instead of `duration` for exact timing, `rotations` for custom headings. Keep the `path` object stable: a new one restarts it. `startTime` (default: when set) syncs markers or starts partway. `transitionDuration` ignores Reanimated `animatedProps` updates. `idleFrameRate="power-save"` redraws a still map at 15 fps on Google iOS.
+Linear between keyframes, so add keyframes through corners. `times` instead of `duration` for exact timing, `rotations` for custom headings. It restarts when a field changes; arrays compare by reference, so keep `coordinates`/`times`/`rotations` stable (inline object is fine). `MarkerPath` is a `duration | times` union: use `satisfies MarkerPath` to read `times` back. `rotateAlongPath` with `transitionDuration` ignores moves < 5 m (GPS drift). `startTime` (default: when set) syncs markers or starts partway. `transitionDuration` ignores Reanimated `animatedProps` updates. `idleFrameRate="power-save"` redraws a still map at 15 fps on Google iOS.
 
 ## Rules That Save Debugging Time
 

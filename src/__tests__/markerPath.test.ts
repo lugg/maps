@@ -76,14 +76,22 @@ describe('MarkerMotion', () => {
     expect(resolved.rotations).toBeUndefined();
   });
 
-  it('keeps the keyframes for the same path object', () => {
+  it('keeps the keyframes until a field changes', () => {
     const motion = new MarkerMotion();
     const path: MarkerPath = { coordinates: route, duration: 3000 };
     const first = motion.resolve({ coordinate, path }, 0);
     expect(motion.resolve({ coordinate, path }, 1000)).toBe(first);
+    expect(motion.resolve({ coordinate, path: { ...path } }, 1000)).toBe(first);
     expect(
-      motion.resolve({ coordinate, path: { ...path } }, 1000)?.startTime
+      motion.resolve({ coordinate, path: { ...path, loop: true } }, 1000)
+        ?.startTime
     ).toBe(1000);
+    expect(
+      motion.resolve(
+        { coordinate, path: { ...path, coordinates: [...route] } },
+        2000
+      )?.startTime
+    ).toBe(2000);
   });
 
   it('faces each segment, settling turns after the corner', () => {
@@ -116,6 +124,18 @@ describe('MarkerMotion', () => {
     expect(second.coordinates[0]).toEqual({ latitude: 0.5, longitude: 0 });
     expect(second.startTime).toBe(500);
     expect(second.rotations![1]).toBeCloseTo(90);
+  });
+
+  it('keeps the heading through GPS drift', () => {
+    const motion = new MarkerMotion();
+    const props = { transitionDuration: 1000, rotateAlongPath: true };
+    motion.resolve({ ...props, coordinate }, 0);
+    const north = { latitude: 0.001, longitude: 0 };
+    motion.resolve({ ...props, coordinate: north }, 0);
+    // About 2 m east, after the first move ends
+    const drift = { latitude: 0.001, longitude: 0.00002 };
+    const resolved = motion.resolve({ ...props, coordinate: drift }, 1000)!;
+    expect(resolved.rotations![1]).toBeCloseTo(0);
   });
 
   it('jumps without transitionDuration', () => {

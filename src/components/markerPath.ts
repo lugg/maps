@@ -36,6 +36,10 @@ export interface MarkerPathPosition {
 
 // How long `rotateAlongPath` takes to turn onto a segment
 const TURN_DURATION = 300;
+// Shorter `transitionDuration` moves keep their heading, so GPS drift doesn't
+// spin a parked marker
+const MIN_TURN_METERS = 5;
+const METERS_PER_DEGREE = 111_320;
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
@@ -60,12 +64,12 @@ const bearing = (from: Coordinate, to: Coordinate) => {
   return ((Math.atan2(Δλ, Δψ) * 180) / Math.PI + 360) % 360;
 };
 
-// Proportional to distance, which is all keyframe timing needs
-const span = (from: Coordinate, to: Coordinate) => {
+// Equirectangular approximation, close enough at street scale
+const distance = (from: Coordinate, to: Coordinate) => {
   const x =
     (to.longitude - from.longitude) *
     Math.cos(toRadians((from.latitude + to.latitude) / 2));
-  return Math.hypot(x, to.latitude - from.latitude);
+  return Math.hypot(x, to.latitude - from.latitude) * METERS_PER_DEGREE;
 };
 
 const lerp = (from: Coordinate, to: Coordinate, f: number): Coordinate => ({
@@ -74,7 +78,9 @@ const lerp = (from: Coordinate, to: Coordinate, f: number): Coordinate => ({
 });
 
 const spreadByDistance = (coordinates: Coordinate[], duration: number) => {
-  const spans = coordinates.slice(1).map((c, i) => span(coordinates[i]!, c));
+  const spans = coordinates
+    .slice(1)
+    .map((c, i) => distance(coordinates[i]!, c));
   const total = spans.reduce((sum, s) => sum + s, 0);
   const times = [0];
   spans.forEach((s, i) =>
@@ -127,6 +133,15 @@ const alongPath = (
   );
   return path;
 };
+
+const samePath = (a: MarkerPath, b?: MarkerPath) =>
+  !!b &&
+  a.coordinates === b.coordinates &&
+  a.times === b.times &&
+  a.duration === b.duration &&
+  a.rotations === b.rotations &&
+  a.startTime === b.startTime &&
+  a.loop === b.loop;
 
 const resolvePath = (
   path: MarkerPath,
@@ -220,7 +235,10 @@ export class MarkerMotion {
     now = Date.now()
   ): NativeMarkerPath | undefined {
     if (path) {
-      if (path !== this.source || rotateAlongPath !== this.rotateAlongPath) {
+      if (
+        !samePath(path, this.source) ||
+        rotateAlongPath !== this.rotateAlongPath
+      ) {
         this.source = path;
         this.rotateAlongPath = rotateAlongPath;
         this.path = resolvePath(path, rotateAlongPath, now);
@@ -253,10 +271,9 @@ export class MarkerMotion {
     };
     const fromRotation = at?.rotation ?? last.rotate;
     const to = { latitude, longitude };
-    const moved = from.latitude !== latitude || from.longitude !== longitude;
     const toRotation = !rotateAlongPath
       ? rotate
-      : moved
+      : distance(from, to) >= MIN_TURN_METERS
       ? bearing(from, to)
       : fromRotation;
     this.path = {

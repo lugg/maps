@@ -124,7 +124,7 @@ const path = useMemo<MarkerPath>(
 - The marker moves in a straight line between keyframes, so add keyframes through curves and corners.
 - `rotateAlongPath` faces each segment and settles each turn quickly after the corner. For custom headings, pass `rotations` instead.
 - For exact timing, pass `times` instead of `duration`.
-- Pass the same `path` object across renders. A new object restarts the path.
+- The path restarts when one of its fields changes. Arrays compare by reference, so keep `coordinates`, `times` and `rotations` stable across renders (for example with `useMemo`). An inline `path` object is fine.
 - The path starts when it's set. Set `startTime` to keep several markers or devices in sync, or to start partway: `startTime: Date.now() - 0.5 * duration` starts halfway.
 - Presses report where the marker is on its path, and `centerOnPress` centers there.
 - To redraw the map less often while markers move and the camera is still, set the `MapView`'s [`idleFrameRate`](./map-view.mdx#mapidleframerate).
@@ -144,7 +144,7 @@ For positions that arrive over time, such as GPS fixes, set `transitionDuration`
 </Marker>
 ```
 
-- Pass `rotateAlongPath` instead of `rotate` to face each move, when fixes have no course.
+- Pass `rotateAlongPath` instead of `rotate` to face each move, when fixes have no course. Moves shorter than 5 m keep the heading, so GPS drift doesn't spin a parked marker.
 - It applies to `coordinate` changes from renders. Reanimated `animatedProps` updates bypass it.
 
 ### MarkerPath
@@ -157,6 +157,8 @@ For positions that arrive over time, such as GPS fixes, set `transitionDuration`
 | `rotations` | `number[]` | - | Degrees clockwise from north for each keyframe. Each segment turns the short way. Overrides `rotateAlongPath` |
 | `startTime` | `number` | when set | Wall-clock time in milliseconds, as from `Date.now()`, at which the marker is at the first keyframe |
 | `loop` | `boolean` | `false` | Repeat the path. Otherwise the marker waits at the first keyframe until `startTime` and stays at the last one after the path ends |
+
+`MarkerPath` takes either `duration` or `times`, so `path.times` is typed `number[] | undefined`. To read it back from a helper, build the path with `satisfies MarkerPath` instead of a `MarkerPath` return type.
 
 ## Custom Markers
 
