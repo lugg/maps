@@ -6,6 +6,8 @@ export { MarkerIcon } from './MarkerIcon';
 export { MarkerText } from './MarkerText';
 export { MarkerImage } from './MarkerImage';
 export { CrewMarker } from './CrewMarker';
+export type { CrewMotion } from './CrewMarker';
+export { TrackedMarker } from './TrackedMarker';
 export { PickupIcon } from './PickupIcon';
 export { MapTypeButton } from './MapTypeButton';
 

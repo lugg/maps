@@ -202,6 +202,11 @@ class LuggMapViewManager :
     view.setInsetAdjustment(value ?: "never")
   }
 
+  @ReactProp(name = "idleFrameRate")
+  override fun setIdleFrameRate(view: LuggMapView, value: String?) {
+    view.setIdleFrameRate(value ?: "maximum")
+  }
+
   @ReactProp(name = "edgeInsets")
   override fun setEdgeInsets(view: LuggMapView, value: ReadableMap?) {
     value?.let {

@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import {
   MapProvider,
+  type MapIdleFrameRate,
   type MapProviderType,
   type MapType,
   type MapCameraEvent,
@@ -18,6 +19,7 @@ import { ReanimatedTrueSheetProvider } from '@lodev09/react-native-true-sheet/re
 
 import {
   Map,
+  type CrewMotion,
   type MapRef,
   type MarkerData,
   MapTypeButton,
@@ -44,6 +46,13 @@ interface HomeProps {
   onMarkerPress?: (e: MarkerPressEvent, marker: MarkerData) => void;
   onShowStaticMaps?: () => void;
 }
+
+const FLEET_SIZES = [0, 10, 50];
+const IDLE_FRAME_RATES: MapIdleFrameRate[] = [
+  'maximum',
+  'conservative',
+  'power-save',
+];
 
 export const HomeScreen = ({ onMarkerPress, onShowStaticMaps }: HomeProps) => {
   const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -80,6 +89,11 @@ const HomeContent = ({
   const [showMap, setShowMap] = useState(true);
   const [status, setStatus] = useState({ text: 'Loading...', error: false });
   const [geojson, setGeojson] = useState<GeoJSON | null>(null);
+  const [fleetSize, setFleetSize] = useState(0);
+  const [crewMotion, setCrewMotion] = useState<CrewMotion>('path');
+  const [idleFrameRate, setIdleFrameRate] =
+    useState<MapIdleFrameRate>('maximum');
+  const [tracking, setTracking] = useState(false);
   const statusLockRef = useRef(false);
 
   const lockStatus = useCallback(() => {
@@ -250,6 +264,10 @@ const HomeContent = ({
           markers={markers}
           geojson={geojson}
           animatedPosition={controlSheetRef.current?.animatedPosition}
+          crewMotion={crewMotion}
+          fleetSize={fleetSize}
+          tracking={tracking}
+          idleFrameRate={idleFrameRate}
           userLocationEnabled={locationPermission}
           compassEnabled={false}
           onReady={handleMapReady}
@@ -276,6 +294,10 @@ const HomeContent = ({
         showMap={showMap}
         provider={provider}
         hasGeojson={!!geojson}
+        fleetSize={fleetSize}
+        crewMotion={crewMotion}
+        idleFrameRate={idleFrameRate}
+        tracking={tracking}
         onAddMarker={() => addMarker()}
         onRemoveMarker={removeRandom}
         onClearMarkers={clear}
@@ -288,6 +310,18 @@ const HomeContent = ({
         }
         onLoadGeojson={() => geojsonSheetRef.current?.present()}
         onShowStaticMaps={onShowStaticMaps}
+        onCycleFleet={() =>
+          setFleetSize((n) => FLEET_SIZES[(FLEET_SIZES.indexOf(n) + 1) % 3]!)
+        }
+        onToggleMotion={() =>
+          setCrewMotion((m) => (m === 'path' ? 'reanimated' : 'path'))
+        }
+        onCycleIdleFrameRate={() =>
+          setIdleFrameRate(
+            (r) => IDLE_FRAME_RATES[(IDLE_FRAME_RATES.indexOf(r) + 1) % 3]!
+          )
+        }
+        onToggleTracking={() => setTracking((t) => !t)}
         onDidPresent={handleSheetEvent}
         onDetentChange={handleSheetEvent}
       />

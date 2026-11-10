@@ -63,6 +63,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
+  LuggMapViewIdleFrameRate _idleFrameRate;
   BOOL _poiEnabled;
   LuggMapViewPoiFilterMode _poiFilterMode;
   NSArray<NSString *> *_poiFilterCategories;
@@ -98,6 +99,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     _poiFilterCategories = @[];
     _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
+    _idleFrameRate = LuggMapViewIdleFrameRate::Maximum;
     _edgeInsets = UIEdgeInsetsZero;
     _insetAdjustment = LuggMapViewInsetAdjustment::Never;
   }
@@ -457,6 +459,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
   [_provider setTheme:_theme];
+  [_provider setIdleFrameRate:_idleFrameRate];
   [_provider setPoiEnabled:_poiEnabled];
   [_provider setPoiFilterMode:_poiFilterMode];
   [_provider setPoiFilterCategories:_poiFilterCategories];
@@ -541,6 +544,10 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (newViewProps.theme != prevViewProps.theme) {
     _theme = newViewProps.theme;
     [_provider setTheme:_theme];
+  }
+  if (newViewProps.idleFrameRate != prevViewProps.idleFrameRate) {
+    _idleFrameRate = newViewProps.idleFrameRate;
+    [_provider setIdleFrameRate:_idleFrameRate];
   }
   if (newViewProps.insetAdjustment != prevViewProps.insetAdjustment) {
     _insetAdjustment = newViewProps.insetAdjustment;

@@ -6,6 +6,11 @@ import LuggMarkerViewNativeComponent, {
 import LuggCalloutViewNativeComponent from '../fabric/LuggCalloutViewNativeComponent';
 import type { MarkerProps, MarkerRef } from './Marker.types';
 import type { Point } from '../types';
+import {
+  MarkerMotion,
+  PathProgress,
+  type NativeMarkerPath,
+} from './markerPath';
 
 export type {
   CalloutOptions,
@@ -13,6 +18,8 @@ export type {
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
+  MarkerPath,
+  MarkerPathProgressEvent,
 } from './Marker.types';
 
 const DEFAULT_ANCHOR: Point = { x: 0.5, y: 1 };
@@ -22,6 +29,31 @@ export class Marker
   implements MarkerRef
 {
   private nativeRef = React.createRef<any>();
+  private motion = new MarkerMotion();
+  private progress = new PathProgress();
+  private nativePath?: NativeMarkerPath;
+
+  componentDidMount() {
+    this.updateProgress();
+  }
+
+  componentDidUpdate() {
+    this.updateProgress();
+  }
+
+  componentWillUnmount() {
+    this.progress.stop();
+  }
+
+  private updateProgress() {
+    this.progress.update(
+      this.nativePath,
+      this.props.onPathProgress ? this.emitProgress : undefined
+    );
+  }
+
+  private emitProgress = (index: number) =>
+    this.props.onPathProgress?.({ nativeEvent: { index } });
 
   showCallout() {
     const ref = this.nativeRef.current;
@@ -74,6 +106,8 @@ export class Marker
         ? callout
         : React.createElement(callout)
       : null;
+    const path = this.motion.resolve(this.props);
+    this.nativePath = path;
     const calloutBubbled = calloutOptions?.bubbled ?? true;
     const calloutOffset = calloutOptions?.offset;
 
@@ -91,6 +125,11 @@ export class Marker
         rasterize={rasterize}
         centerOnPress={centerOnPress}
         draggable={draggable}
+        pathCoordinates={path?.coordinates}
+        pathTimes={path?.times}
+        pathRotations={path?.rotations}
+        pathStartTime={path?.startTime}
+        pathLoop={path?.loop}
         onMarkerPress={onPress}
         onMarkerDragStart={onDragStart}
         onMarkerDragChange={onDragChange}

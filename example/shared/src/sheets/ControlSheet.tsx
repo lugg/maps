@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import type { MapProviderType } from '@lugg/maps';
+import type { MapIdleFrameRate, MapProviderType } from '@lugg/maps';
 import {
   ReanimatedTrueSheet,
   useReanimatedTrueSheet,
@@ -10,7 +10,7 @@ import {
   type DetentChangeEvent,
 } from '@lodev09/react-native-true-sheet';
 
-import { Button, ThemedText } from '../components';
+import { Button, ThemedText, type CrewMotion } from '../components';
 import { sizes, useTheme } from '../theme';
 
 interface StatusInfo {
@@ -24,6 +24,10 @@ interface ControlSheetProps {
   showMap: boolean;
   provider: MapProviderType;
   hasGeojson: boolean;
+  fleetSize: number;
+  crewMotion: CrewMotion;
+  idleFrameRate: MapIdleFrameRate;
+  tracking: boolean;
   onAddMarker: () => void;
   onRemoveMarker: () => void;
   onClearMarkers: () => void;
@@ -34,6 +38,10 @@ interface ControlSheetProps {
   onToggleProvider: () => void;
   onLoadGeojson: () => void;
   onShowStaticMaps?: () => void;
+  onCycleFleet: () => void;
+  onToggleMotion: () => void;
+  onCycleIdleFrameRate: () => void;
+  onToggleTracking: () => void;
   onDidPresent?: (event: DetentChangeEvent) => void;
   onDetentChange?: (event: DetentChangeEvent) => void;
 }
@@ -52,6 +60,10 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
       showMap,
       provider,
       hasGeojson,
+      fleetSize,
+      crewMotion,
+      idleFrameRate,
+      tracking,
       onAddMarker,
       onRemoveMarker,
       onClearMarkers,
@@ -62,6 +74,10 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
       onToggleProvider,
       onLoadGeojson,
       onShowStaticMaps,
+      onCycleFleet,
+      onToggleMotion,
+      onCycleIdleFrameRate,
+      onToggleTracking,
       onDidPresent,
       onDetentChange,
     },
@@ -152,11 +168,39 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
             disabled={!onShowStaticMaps}
             onPress={() => onShowStaticMaps?.()}
           />
+          <Button
+            style={styles.sheetButton}
+            title={`Fleet (${fleetSize})`}
+            onPress={onCycleFleet}
+          />
+          <Button
+            style={styles.sheetButton}
+            title={
+              crewMotion === 'path' ? 'Motion: Path' : 'Motion: Reanimated'
+            }
+            onPress={onToggleMotion}
+          />
+          <Button
+            style={styles.sheetButton}
+            title={`Idle: ${IDLE_FRAME_RATE_LABELS[idleFrameRate]}`}
+            onPress={onCycleIdleFrameRate}
+          />
+          <Button
+            style={styles.sheetButton}
+            title={tracking ? 'Tracking: On' : 'Tracking: Off'}
+            onPress={onToggleTracking}
+          />
         </View>
       </ReanimatedTrueSheet>
     );
   }
 );
+
+const IDLE_FRAME_RATE_LABELS: Record<MapIdleFrameRate, string> = {
+  'maximum': 'Max fps',
+  'conservative': '30 fps',
+  'power-save': '15 fps',
+};
 
 const styles = StyleSheet.create({
   sheet: {

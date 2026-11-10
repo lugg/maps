@@ -2,7 +2,12 @@ export { Marker } from './Marker.web';
 export { Polygon } from './Polygon.web';
 export { Circle } from './Circle.web';
 export { Polyline } from './Polyline.web';
-export type { CalloutOptions, MarkerProps } from './Marker.types';
+export type {
+  CalloutOptions,
+  MarkerProps,
+  MarkerPath,
+  MarkerPathProgressEvent,
+} from './Marker.types';
 export type { PolygonProps } from './Polygon.types';
 export type { CircleProps } from './Circle.types';
 export type { PolylineProps } from './Polyline.types';

@@ -1,6 +1,7 @@
 package com.luggmaps
 
 import android.util.Log
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.uimanager.ThemedReactContext
@@ -100,6 +101,44 @@ class LuggMarkerViewManager :
   @ReactProp(name = "draggable", defaultBoolean = false)
   override fun setDraggable(view: LuggMarkerView, value: Boolean) {
     view.setDraggable(value)
+  }
+
+  @ReactProp(name = "pathCoordinates")
+  override fun setPathCoordinates(view: LuggMarkerView, value: ReadableArray?) {
+    val size = value?.size() ?: 0
+    val latitudes = DoubleArray(size)
+    val longitudes = DoubleArray(size)
+    for (i in 0 until size) {
+      val coordinate = value?.getMap(i)
+      latitudes[i] = coordinate?.getDouble("latitude") ?: 0.0
+      longitudes[i] = coordinate?.getDouble("longitude") ?: 0.0
+    }
+    view.setPathCoordinates(latitudes, longitudes)
+  }
+
+  @ReactProp(name = "pathTimes")
+  override fun setPathTimes(view: LuggMarkerView, value: ReadableArray?) {
+    view.setPathTimes(value.toDoubleArray())
+  }
+
+  @ReactProp(name = "pathRotations")
+  override fun setPathRotations(view: LuggMarkerView, value: ReadableArray?) {
+    view.setPathRotations(value.toDoubleArray())
+  }
+
+  @ReactProp(name = "pathStartTime")
+  override fun setPathStartTime(view: LuggMarkerView, value: Double) {
+    view.setPathStartTime(value)
+  }
+
+  @ReactProp(name = "pathLoop", defaultBoolean = false)
+  override fun setPathLoop(view: LuggMarkerView, value: Boolean) {
+    view.setPathLoop(value)
+  }
+
+  private fun ReadableArray?.toDoubleArray(): DoubleArray {
+    val array = this ?: return DoubleArray(0)
+    return DoubleArray(array.size()) { array.getDouble(it) }
   }
 
   override fun showCallout(view: LuggMarkerView) {

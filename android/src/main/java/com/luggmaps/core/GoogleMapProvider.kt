@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.os.SystemClock
+import android.view.Choreographer
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.ImageView
@@ -76,7 +77,8 @@ class GoogleMapProvider(private val context: Context) :
   GoogleMap.OnGroundOverlayClickListener,
   GoogleMap.OnMarkerClickListener,
   GoogleMap.OnMarkerDragListener,
-  GoogleMap.InfoWindowAdapter {
+  GoogleMap.InfoWindowAdapter,
+  Choreographer.FrameCallback {
 
   override var delegate: MapProviderDelegate? = null
   override val isMapReady: Boolean get() = _isMapReady
@@ -105,6 +107,12 @@ class GoogleMapProvider(private val context: Context) :
   private val groundOverlayToViewMap = mutableMapOf<GroundOverlay, LuggGroundOverlayView>()
   private val markerToViewMap = mutableMapOf<Marker, LuggMarkerView>()
   private val liveMarkerViews = mutableSetOf<LuggMarkerView>()
+  private val pathMarkerViews = mutableSetOf<LuggMarkerView>()
+  private val choreographer = Choreographer.getInstance()
+  private var isPathTickerRunning = false
+  private var animationsPaused = false
+  private var pathFrameIntervalNanos = 0L
+  private var lastPathFrameNanos = 0L
   private var staticProjectionReady = false
   private var isLiteMode = false
   private var activeNonBubbledMarker: Marker? = null
@@ -204,6 +212,8 @@ class GoogleMapProvider(private val context: Context) :
       markerView.onUpdate = null
     }
     liveMarkerViews.clear()
+    pathMarkerViews.clear()
+    updatePathTicker()
     pendingMarkerViews.clear()
     pendingPolylineViews.clear()
     pendingPolygonViews.clear()
@@ -644,6 +654,15 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun setPoiFilterCategories(categories: List<String>) {}
 
+  // Android has no map frame rate setting, so this only paces path markers
+  override fun setIdleFrameRate(value: String) {
+    pathFrameIntervalNanos = when (value) {
+      "conservative" -> CONSERVATIVE_FRAME_INTERVAL_NANOS
+      "power-save" -> POWER_SAVE_FRAME_INTERVAL_NANOS
+      else -> 0L
+    }
+  }
+
   // endregion
 
   // region MarkerViewDelegate
@@ -747,6 +766,7 @@ class GoogleMapProvider(private val context: Context) :
     markerView.marker?.let { markerToViewMap.remove(it) }
     markerView.marker?.remove()
     markerView.marker = null
+    updatePathMarker(markerView)
   }
 
   private fun syncMarkerView(markerView: LuggMarkerView) {
@@ -761,17 +781,22 @@ class GoogleMapProvider(private val context: Context) :
       return
     }
 
+    markerView.updatePathPosition(System.currentTimeMillis().toDouble())
+    // Each Marker setter calls into the Maps SDK, so only changed values are set
     markerView.marker?.apply {
-      if (!markerView.isDragging) {
-        position = LatLng(markerView.latitude, markerView.longitude)
+      if (!markerView.isDragging &&
+        (position.latitude != markerView.displayLatitude || position.longitude != markerView.displayLongitude)
+      ) {
+        position = LatLng(markerView.displayLatitude, markerView.displayLongitude)
       }
-      title = markerView.title
-      snippet = markerView.description
+      if (title != markerView.title) title = markerView.title
+      if (snippet != markerView.description) snippet = markerView.description
       setAnchor(markerView.anchorX, markerView.anchorY)
-      zIndex = markerView.zIndex
-      rotation = markerView.rotate
-      isDraggable = markerView.draggable
+      if (zIndex != markerView.zIndex) zIndex = markerView.zIndex
+      if (rotation != markerView.displayRotation) rotation = markerView.displayRotation
+      if (isDraggable != markerView.draggable) isDraggable = markerView.draggable
     }
+    updatePathMarker(markerView)
 
     if (markerView.hasCustomView) {
       if (markerView.scaleChanged) {
@@ -797,7 +822,8 @@ class GoogleMapProvider(private val context: Context) :
   private fun addMarkerViewToMap(markerView: LuggMarkerView) {
     val map = googleMap ?: return
 
-    val position = LatLng(markerView.latitude, markerView.longitude)
+    markerView.updatePathPosition(System.currentTimeMillis().toDouble())
+    val position = LatLng(markerView.displayLatitude, markerView.displayLongitude)
     val options = MarkerOptions()
       .position(position)
       .title(markerView.title)
@@ -806,11 +832,12 @@ class GoogleMapProvider(private val context: Context) :
     val marker = map.addMarker(options) ?: return
     marker.setAnchor(markerView.anchorX, markerView.anchorY)
     marker.zIndex = markerView.zIndex
-    marker.rotation = markerView.rotate
+    marker.rotation = markerView.displayRotation
     marker.isDraggable = markerView.draggable
 
     markerView.marker = marker
     markerToViewMap[marker] = markerView
+    updatePathMarker(markerView)
 
     if (markerView.hasCustomView) {
       if (markerView.rasterize) {
@@ -870,10 +897,64 @@ class GoogleMapProvider(private val context: Context) :
     val map = googleMap ?: return
     if (staticMode && !staticProjectionReady) return
     val contentView = markerView.contentView
-    val point = map.projection.toScreenLocation(LatLng(markerView.latitude, markerView.longitude))
+    val point = map.projection.toScreenLocation(LatLng(markerView.displayLatitude, markerView.displayLongitude))
     contentView.translationX = point.x - contentView.width * markerView.anchorX
     contentView.translationY = point.y - contentView.height * markerView.anchorY
     contentView.visibility = View.VISIBLE
+  }
+
+  // endregion
+
+  // region Marker Paths
+
+  private fun updatePathMarker(markerView: LuggMarkerView) {
+    if (markerView.hasPath && markerView.marker != null) {
+      pathMarkerViews.add(markerView)
+    } else {
+      pathMarkerViews.remove(markerView)
+    }
+    updatePathTicker()
+  }
+
+  // Static maps render once, so their path markers stay put like animated polylines do
+  private fun updatePathTicker() {
+    val shouldRun = pathMarkerViews.isNotEmpty() && !animationsPaused && !staticMode
+    if (shouldRun == isPathTickerRunning) return
+    isPathTickerRunning = shouldRun
+    if (shouldRun) {
+      lastPathFrameNanos = 0L
+      choreographer.postFrameCallback(this)
+    } else {
+      choreographer.removeFrameCallback(this)
+    }
+  }
+
+  // One callback moves every path marker, so the map redraws once per tick
+  override fun doFrame(frameTimeNanos: Long) {
+    choreographer.postFrameCallback(this)
+    if (frameTimeNanos - lastPathFrameNanos < pathFrameIntervalNanos) return
+    lastPathFrameNanos = frameTimeNanos
+
+    val now = System.currentTimeMillis().toDouble()
+    var moved = false
+    for (markerView in pathMarkerViews) {
+      val marker = markerView.marker ?: continue
+      if (markerView.isDragging) continue
+      val latitude = markerView.pathLatitude
+      val longitude = markerView.pathLongitude
+      val rotation = markerView.pathRotation
+      markerView.updatePathPosition(now)
+      // Parked markers skip the setters, so a parked fleet doesn't redraw the map
+      if (markerView.pathLatitude != latitude || markerView.pathLongitude != longitude) {
+        marker.position = LatLng(markerView.pathLatitude, markerView.pathLongitude)
+        if (markerView.hasCustomView && !markerView.rasterize) positionLiveMarker(markerView)
+        moved = true
+      }
+      if (markerView.pathRotation != rotation) {
+        marker.rotation = markerView.pathRotation
+      }
+    }
+    if (moved) positionNonBubbledCallout()
   }
 
   // endregion
@@ -1250,10 +1331,14 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun pauseAnimations() {
     polylineAnimators.values.forEach { it.pause() }
+    animationsPaused = true
+    updatePathTicker()
   }
 
   override fun resumeAnimations() {
     polylineAnimators.values.forEach { it.resume() }
+    animationsPaused = false
+    updatePathTicker()
   }
 
   // endregion
@@ -1653,5 +1738,9 @@ class GoogleMapProvider(private val context: Context) :
         "light" -> false
         else -> (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
       }
+
+    // Just under 1/30 s and 1/15 s, so vsync jitter can't push a tick to the next frame
+    private const val CONSERVATIVE_FRAME_INTERVAL_NANOS = 32_000_000L
+    private const val POWER_SAVE_FRAME_INTERVAL_NANOS = 64_000_000L
   }
 }

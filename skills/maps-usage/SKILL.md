@@ -250,6 +250,25 @@ const animatedProps = useAnimatedProps(() => ({
 
 Works on every platform. Web markers round to whole pixels, so pass `rasterize={Platform.OS !== 'web'}` to make a marker moved every frame glide there. Full example in [Advanced Patterns](./references/advanced-patterns.md#animated-marker-along-a-route).
 
+### Moving markers natively (`path`, `transitionDuration`)
+
+Prefer these over animating `coordinate` with Reanimated: native code moves the marker with no JS work per frame, so it stays smooth while JS is busy (e.g. during map drags).
+
+```tsx
+// Known route: constant speed, faces each segment
+const path = useMemo(() => ({ coordinates: route, duration: 60_000, loop: true }), [route]);
+<Marker coordinate={route[0]} path={path} rotateAlongPath onPathProgress={(e) => setLeg(e.nativeEvent.index)} anchor={{ x: 0.5, y: 0.5 }}>
+  <TruckIcon />
+</Marker>
+
+// Live GPS: glide to each fix over the fix interval
+<Marker coordinate={fix.coordinate} rotate={fix.course} transitionDuration={3000} anchor={{ x: 0.5, y: 0.5 }}>
+  <TruckIcon />
+</Marker>
+```
+
+Linear between keyframes, so add keyframes through corners. `times` instead of `duration` for exact timing, `rotations` for custom headings. It restarts when a field changes; arrays compare by reference, so keep `coordinates`/`times`/`rotations` stable (inline object is fine). `MarkerPath` is a `duration | times` union: use `satisfies MarkerPath` to read `times` back. `rotateAlongPath` with `transitionDuration` ignores moves < 5 m (GPS drift). `startTime` (default: when set) syncs markers or starts partway. `transitionDuration` ignores Reanimated `animatedProps` updates. `idleFrameRate="power-save"` redraws a still map at 15 fps on Google iOS.
+
 ## Rules That Save Debugging Time
 
 1. **Size the map.** `MapView` renders nothing without `flex: 1`, a fixed height, or `absoluteFill`.
@@ -290,6 +309,8 @@ Works on every platform. Web markers round to whole pixels, so pass `rasterize={
 | Non-bubbled callout | Live view | Live view | Live view | Styled InfoWindow |
 | Marker `rasterize` | Yes | Yes | Yes | `false` = overlay positioned between pixels |
 | Reanimated `animatedProps` on `Marker` | Yes | Yes | Yes | Yes |
+| Marker `path` | Frame timer | Core Animation (image markers), frame timer (`rasterize={false}`) | Frame timer | `requestAnimationFrame` |
+| `MapView` `idleFrameRate` | Path timer rate | Map frame rate at rest | Path timer rate | No |
 | `Polyline` gradient + `animated` | Yes | Yes | Yes | Yes (JS) |
 | `GroundOverlay.bearing` | No | Yes | Yes | No |
 | `TileOverlay.onPress` | No | No | No | Yes |

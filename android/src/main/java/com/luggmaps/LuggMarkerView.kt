@@ -68,6 +68,32 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
 
   var isDragging: Boolean = false
 
+  private var pathLatitudes = DoubleArray(0)
+  private var pathLongitudes = DoubleArray(0)
+  private var pathTimes = DoubleArray(0)
+  private var pathRotations = DoubleArray(0)
+  private var pathStartTime = 0.0
+  private var pathLoop = false
+
+  // The path position at the last updatePathPosition
+  var pathLatitude: Double = 0.0
+    private set
+  var pathLongitude: Double = 0.0
+    private set
+  var pathRotation: Float = 0f
+    private set
+
+  val hasPath: Boolean
+    get() = pathTimes.size >= 2 && pathTimes.size == pathLatitudes.size
+
+  // A path overrides coordinate, and rotate when the path has rotations
+  val displayLatitude: Double
+    get() = if (hasPath) pathLatitude else latitude
+  val displayLongitude: Double
+    get() = if (hasPath) pathLongitude else longitude
+  val displayRotation: Float
+    get() = if (hasPath) pathRotation else rotate
+
   var didLayout: Boolean = false
     private set
 
@@ -290,8 +316,67 @@ class LuggMarkerView(context: Context) : ReactViewGroup(context) {
     this.draggable = draggable
   }
 
+  fun setPathCoordinates(latitudes: DoubleArray, longitudes: DoubleArray) {
+    pathLatitudes = latitudes
+    pathLongitudes = longitudes
+  }
+
+  fun setPathTimes(times: DoubleArray) {
+    pathTimes = times
+  }
+
+  // Unwrapped so each segment turns the short way (350 then 10 is +20, not -340)
+  fun setPathRotations(rotations: DoubleArray) {
+    pathRotations = rotations.copyOf()
+    for (i in 1 until pathRotations.size) {
+      val previous = pathRotations[i - 1]
+      pathRotations[i] = previous + ((((rotations[i] - previous) % 360) + 540) % 360) - 180
+    }
+  }
+
+  fun setPathStartTime(startTime: Double) {
+    pathStartTime = startTime
+  }
+
+  fun setPathLoop(loop: Boolean) {
+    pathLoop = loop
+  }
+
+  // `now` is wall-clock epoch ms, the same clock as pathStartTime
+  fun updatePathPosition(now: Double) {
+    if (!hasPath) return
+    val times = pathTimes
+    val last = times.size - 1
+    val duration = times[last] - times[0]
+    val elapsed = now - pathStartTime
+    val phase = if (pathLoop && duration > 0) {
+      ((elapsed % duration) + duration) % duration
+    } else {
+      // Not coerceIn: it throws when unsorted times make the duration negative
+      maxOf(0.0, minOf(elapsed, duration))
+    }
+    val time = times[0] + phase
+
+    var index = 0
+    var high = last - 1
+    while (index < high) {
+      val mid = (index + high + 1) ushr 1
+      if (times[mid] <= time) index = mid else high = mid - 1
+    }
+    val span = times[index + 1] - times[index]
+    val fraction = if (span > 0) (time - times[index]) / span else 0.0
+
+    pathLatitude = pathLatitudes[index] + (pathLatitudes[index + 1] - pathLatitudes[index]) * fraction
+    pathLongitude = pathLongitudes[index] + (pathLongitudes[index + 1] - pathLongitudes[index]) * fraction
+    pathRotation = if (pathRotations.size == times.size) {
+      (pathRotations[index] + (pathRotations[index + 1] - pathRotations[index]) * fraction).toFloat()
+    } else {
+      rotate
+    }
+  }
+
   fun emitPressEvent(x: Float, y: Float) {
-    dispatchEvent(MarkerPressEvent(this, latitude, longitude, x, y))
+    dispatchEvent(MarkerPressEvent(this, displayLatitude, displayLongitude, x, y))
   }
 
   fun emitDragStartEvent(x: Float, y: Float) {

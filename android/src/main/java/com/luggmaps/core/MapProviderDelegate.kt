@@ -43,6 +43,7 @@ interface MapProvider {
   fun setPoiEnabled(enabled: Boolean)
   fun setPoiFilterMode(mode: String)
   fun setPoiFilterCategories(categories: List<String>)
+  fun setIdleFrameRate(value: String)
 
   // Children
   fun addMarkerView(markerView: LuggMarkerView)

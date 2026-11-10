@@ -5,6 +5,8 @@ export type {
   MarkerProps,
   MarkerPressEvent,
   MarkerDragEvent,
+  MarkerPath,
+  MarkerPathProgressEvent,
 } from './Marker.types';
 export { Polygon } from './Polygon';
 export type { PolygonProps } from './Polygon.types';
