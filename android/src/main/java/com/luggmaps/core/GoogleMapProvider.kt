@@ -776,7 +776,10 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     if (markerView.marker == null) {
-      if (markerView.hasCustomView) return
+      // Custom views wait for their first layout. Fabric moves a laid-out
+      // marker (e.g. on a zIndex change) by removing and re-adding it, and no
+      // new layout follows, so it's added back here.
+      if (markerView.hasCustomView && !markerView.didLayout) return
       addMarkerViewToMap(markerView)
       return
     }

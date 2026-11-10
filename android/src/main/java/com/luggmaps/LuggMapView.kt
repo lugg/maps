@@ -79,8 +79,14 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
   // region View Lifecycle
 
+  // Children whose removal from the map waits a loop, in case they come back
+  private val pendingRemovals = mutableSetOf<View>()
+
   override fun addView(child: View?, index: Int) {
     super.addView(child, index)
+    // Fabric moves a child (e.g. on a zIndex change) by removing and
+    // re-inserting it. Its map object is still there, so it's kept as is.
+    if (pendingRemovals.remove(child)) return
     when (child) {
       is LuggMapWrapperView -> mapWrapperView = child
       is LuggMarkerView -> provider?.addMarkerView(child)
@@ -94,6 +100,15 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
 
   override fun removeViewAt(index: Int) {
     val view = getChildAt(index)
+    super.removeViewAt(index)
+    if (view == null || view is LuggMapWrapperView) return
+    pendingRemovals.add(view)
+    post {
+      if (pendingRemovals.remove(view)) removeFromProvider(view)
+    }
+  }
+
+  private fun removeFromProvider(view: View) {
     when (view) {
       is LuggMarkerView -> provider?.removeMarkerView(view)
       is LuggPolylineView -> provider?.removePolylineView(view)
@@ -102,7 +117,6 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
       is LuggGroundOverlayView -> provider?.removeGroundOverlayView(view)
       is LuggTileOverlayView -> provider?.removeTileOverlayView(view)
     }
-    super.removeViewAt(index)
   }
 
   override fun onAttachedToWindow() {
