@@ -94,7 +94,8 @@ android/generated
 nitrogen/
 
 # Agents
-.claude
+.claude/*
+!.claude/skills
 
 # Environment
 .env
