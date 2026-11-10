@@ -23,36 +23,60 @@ export interface CalloutOptions {
   offset?: Point;
 }
 
-/**
- * A timed route that a marker follows natively, with no React renders or prop updates per frame.
- */
-export interface MarkerPath {
+interface MarkerPathBase {
   /**
    * Keyframe positions. The marker moves in a straight line between consecutive keyframes.
    */
   coordinates: Coordinate[];
   /**
-   * Milliseconds from the start of the path for each keyframe, in increasing order.
-   * Same length as `coordinates`.
-   */
-  times: number[];
-  /**
-   * Rotation for each keyframe, in degrees clockwise from north. Each segment
-   * turns the short way. Without it, the marker keeps `rotate`.
+   * Rotation for each keyframe, in degrees clockwise from north. Each segment turns the short
+   * way. Overrides `rotateAlongPath`. Without either, the marker keeps `rotate`.
    */
   rotations?: number[];
   /**
    * Wall-clock time in milliseconds, as from `Date.now()`, at which the marker is at the first
-   * keyframe.
+   * keyframe. Set it to keep markers or devices in sync.
+   * @default when the path is set
    */
-  startTime: number;
+  startTime?: number;
   /**
-   * Repeat the path. A lap runs from the first time to the last.
-   * Without it, the marker waits at the first keyframe until `startTime` and stays at the last
-   * one after the path ends.
+   * Repeat the path. Without it, the marker waits at the first keyframe until `startTime` and
+   * stays at the last one after the path ends.
    * @default false
    */
   loop?: boolean;
+}
+
+/**
+ * A route that a marker follows natively, with no React renders or prop updates per frame.
+ * Time it with `duration`, or with `times` for exact timing.
+ */
+export type MarkerPath = MarkerPathBase &
+  (
+    | {
+        /**
+         * Milliseconds to travel the whole path, at a constant speed.
+         */
+        duration: number;
+        times?: never;
+      }
+    | {
+        /**
+         * Milliseconds from the start of the path for each keyframe, in increasing order.
+         * Same length as `coordinates`.
+         */
+        times: number[];
+        duration?: never;
+      }
+  );
+
+export interface MarkerPathProgressEvent {
+  nativeEvent: {
+    /**
+     * Index in `coordinates` of the last keyframe the marker passed, within the current lap.
+     */
+    index: number;
+  };
 }
 
 export interface MarkerRef {
@@ -118,11 +142,29 @@ export interface MarkerProps {
    */
   draggable?: boolean;
   /**
-   * Moves the marker along a timed path natively, so a moving marker costs no React work per
-   * frame. While set, `coordinate` is ignored, and so is `rotate` when the path has `rotations`.
-   * Pass the same object across renders: a new one is sent to native again.
+   * Moves the marker along a route natively, so a moving marker costs no React work per frame.
+   * While set, `coordinate` is ignored, and so is `rotate` when the path rotates the marker.
+   * Pass the same object across renders: a new one restarts the path.
    */
   path?: MarkerPath;
+  /**
+   * Turns the marker to face its direction of travel, along a `path` or a `transitionDuration`
+   * move. Turns take the short way and settle quickly at each keyframe.
+   * @default false
+   */
+  rotateAlongPath?: boolean;
+  /**
+   * Milliseconds over which the marker glides to a new `coordinate` and turns to a new `rotate`,
+   * natively, from where it is. One update per GPS fix gives continuous motion. Applies to
+   * `coordinate` changes from renders, not from Reanimated `animatedProps`. `0` jumps. Ignored
+   * while `path` is set.
+   * @default 0
+   */
+  transitionDuration?: number;
+  /**
+   * Called when the marker passes a keyframe of its `path`, and once when the path starts.
+   */
+  onPathProgress?: (event: MarkerPathProgressEvent) => void;
   /**
    * Called when the marker is pressed
    */

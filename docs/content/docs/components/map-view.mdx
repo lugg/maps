@@ -171,13 +171,13 @@ Notes:
 
 ### MapIdleFrameRate
 
-How often the map redraws while the camera is still, for markers that move along a [`path`](./marker.mdx#moving-along-a-path). The map redraws at full rate while the camera moves.
+How often the map redraws while the camera is still, for markers that move along a [`path`](./marker.mdx#moving-markers). The map redraws at full rate while the camera moves.
 
 | Value | Google Maps (iOS) | Android and Apple Maps | Web |
 |-------|-------------------|------------------------|-----|
 | `'maximum'` | Full frame rate | Path markers move every frame | Ignored |
 | `'conservative'` | 30 fps | Path markers move 30 times a second | Ignored |
-| `'powerSave'` | 15 fps | Path markers move 15 times a second | Ignored |
+| `'power-save'` | 15 fps | Path markers move 15 times a second | Ignored |
 
 On Google Maps for iOS this is the whole map's frame rate at rest, so it also slows other animations, such as an animated `Polyline`, while the camera is still.
 

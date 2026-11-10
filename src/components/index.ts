@@ -1,6 +1,4 @@
 export { Marker } from './Marker';
-export { pathPositionAt } from './markerPath';
-export type { MarkerPathPosition } from './markerPath';
 export type {
   CalloutOptions,
   MarkerRef,
@@ -8,6 +6,7 @@ export type {
   MarkerPressEvent,
   MarkerDragEvent,
   MarkerPath,
+  MarkerPathProgressEvent,
 } from './Marker.types';
 export { Polygon } from './Polygon';
 export type { PolygonProps } from './Polygon.types';

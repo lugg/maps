@@ -658,7 +658,7 @@ class GoogleMapProvider(private val context: Context) :
   override fun setIdleFrameRate(value: String) {
     pathFrameIntervalNanos = when (value) {
       "conservative" -> CONSERVATIVE_FRAME_INTERVAL_NANOS
-      "powerSave" -> POWER_SAVE_FRAME_INTERVAL_NANOS
+      "power-save" -> POWER_SAVE_FRAME_INTERVAL_NANOS
       else -> 0L
     }
   }
@@ -782,16 +782,19 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     markerView.updatePathPosition(System.currentTimeMillis().toDouble())
+    // Each Marker setter calls into the Maps SDK, so only changed values are set
     markerView.marker?.apply {
-      if (!markerView.isDragging) {
+      if (!markerView.isDragging &&
+        (position.latitude != markerView.displayLatitude || position.longitude != markerView.displayLongitude)
+      ) {
         position = LatLng(markerView.displayLatitude, markerView.displayLongitude)
       }
-      title = markerView.title
-      snippet = markerView.description
+      if (title != markerView.title) title = markerView.title
+      if (snippet != markerView.description) snippet = markerView.description
       setAnchor(markerView.anchorX, markerView.anchorY)
-      zIndex = markerView.zIndex
-      rotation = markerView.displayRotation
-      isDraggable = markerView.draggable
+      if (zIndex != markerView.zIndex) zIndex = markerView.zIndex
+      if (rotation != markerView.displayRotation) rotation = markerView.displayRotation
+      if (isDraggable != markerView.draggable) isDraggable = markerView.draggable
     }
     updatePathMarker(markerView)
 

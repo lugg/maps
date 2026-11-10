@@ -42,7 +42,10 @@ import { MapView, Marker } from '@lugg/maps';
 | `rasterize` | `boolean` | `true` | Rasterize custom marker view to bitmap (iOS/Android). On web, `false` positions the custom view between pixels so markers moved every frame glide. Markers with `title`, `callout` or `draggable` keep whole-pixel positioning |
 | `centerOnPress` | `boolean` | `true` | Whether the map centers on the marker when pressed |
 | `draggable` | `boolean` | `false` | Whether the marker can be dragged by the user |
-| `path` | [`MarkerPath`](#markerpath) | - | Moves the marker along a timed path natively. While set, `coordinate` is ignored, and so is `rotate` when the path has `rotations` |
+| `path` | [`MarkerPath`](#markerpath) | - | Moves the marker along a route natively. While set, `coordinate` is ignored, and so is `rotate` when the path rotates the marker |
+| `rotateAlongPath` | `boolean` | `false` | Turns the marker to face its direction of travel, along a `path` or a `transitionDuration` move |
+| `transitionDuration` | `number` | `0` | Milliseconds over which the marker glides natively to a new `coordinate` and `rotate`, from where it is. `0` jumps. Ignored while `path` is set |
+| `onPathProgress` | `(event: MarkerPathProgressEvent) => void` | - | Called when the marker passes a keyframe of its `path`, and once when the path starts. Event includes `index` in `coordinates` |
 | `onPress` | `(event: MarkerPressEvent) => void` | - | Called when the marker is pressed. Event includes `coordinate` and `point` |
 | `onDragStart` | `(event: MarkerDragEvent) => void` | - | Called when marker drag starts. Event includes `coordinate` and `point` |
 | `onDragChange` | `(event: MarkerDragEvent) => void` | - | Called continuously as the marker is dragged. Event includes `coordinate` and `point` |
@@ -93,55 +96,67 @@ Set `draggable` to enable marker dragging. Use the drag event callbacks to track
 />
 ```
 
-## Moving Along a Path
+## Moving Markers
 
-Give a marker a timed `path` and native code moves it, so React doesn't render or send props while it moves. Google Maps on iOS animates it with Core Animation, Android and Apple Maps move it on a frame timer, and web moves it every animation frame. The map draws it, so it stays in place through pans and zooms.
+Native code moves the marker, so React doesn't render or send props while it moves. Google Maps on iOS animates it with Core Animation, Android and Apple Maps move it on a frame timer, and web moves it every animation frame. The map draws it, so it stays in place through pans and zooms.
+
+### Along a route
+
+Give a marker a `path` and a `duration`. It travels the route at a constant speed.
 
 ```tsx
 const path = useMemo<MarkerPath>(
-  () => ({
-    coordinates: route,                      // keyframe positions
-    times: route.map((_, i) => i * 4000),    // ms after the first keyframe
-    rotations: headings,                     // optional, degrees
-    startTime: lapStart,                     // Date.now() at the first keyframe
-    loop: true,
-  }),
-  [route, headings, lapStart]
+  () => ({ coordinates: route, duration: 60_000, loop: true }),
+  [route]
 );
 
-<Marker coordinate={route[0]} path={path} anchor={{ x: 0.5, y: 0.5 }}>
+<Marker
+  coordinate={route[0]}
+  path={path}
+  rotateAlongPath
+  onPathProgress={(e) => setLeg(e.nativeEvent.index)}
+  anchor={{ x: 0.5, y: 0.5 }}
+>
   <VanIcon />
 </Marker>
 ```
 
-- The marker moves in a straight line between keyframes, so add keyframes through curves and corners. Each segment turns the short way.
-- Positions follow the wall clock: every device shows a marker at the same place at the same time, and a new path with the same timing continues where the marker is.
-- Pass the same `path` object across renders. A new object is sent to native again.
+- The marker moves in a straight line between keyframes, so add keyframes through curves and corners.
+- `rotateAlongPath` faces each segment and settles each turn quickly after the corner. For custom headings, pass `rotations` instead.
+- For exact timing, pass `times` instead of `duration`.
+- Pass the same `path` object across renders. A new object restarts the path.
+- The path starts when it's set. Set `startTime` to keep several markers or devices in sync, or to start partway: `startTime: Date.now() - 0.5 * duration` starts halfway.
 - Presses report where the marker is on its path, and `centerOnPress` centers there.
-- `pathPositionAt(path, time)` returns where a marker is at any moment, with the same math as native, so JavaScript can follow progress without events. For example, trim a route behind a vehicle from a timer at its keyframe times.
 - To redraw the map less often while markers move and the camera is still, set the `MapView`'s [`idleFrameRate`](./map-view.mdx#mapidleframerate).
+
+### Live coordinates
+
+For positions that arrive over time, such as GPS fixes, set `transitionDuration` to the update interval. Each new `coordinate` glides the marker there from where it is, so fixes chain into continuous motion.
+
+```tsx
+<Marker
+  coordinate={fix.coordinate}
+  rotate={fix.course}
+  transitionDuration={3000}
+  anchor={{ x: 0.5, y: 0.5 }}
+>
+  <VanIcon />
+</Marker>
+```
+
+- Pass `rotateAlongPath` instead of `rotate` to face each move, when fixes have no course.
+- It applies to `coordinate` changes from renders. Reanimated `animatedProps` updates bypass it.
 
 ### MarkerPath
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `coordinates` | `Coordinate[]` | **required** | Keyframe positions |
-| `times` | `number[]` | **required** | Milliseconds from the start of the path for each keyframe, in increasing order |
-| `rotations` | `number[]` | - | Degrees clockwise from north for each keyframe. Each segment turns the short way |
-| `startTime` | `number` | **required** | Wall-clock time in milliseconds, as from `Date.now()`, at which the marker is at the first keyframe |
+| `duration` | `number` | - | Milliseconds to travel the whole path, at a constant speed. Pass this or `times` |
+| `times` | `number[]` | - | Milliseconds from the start of the path for each keyframe, in increasing order. Pass this or `duration` |
+| `rotations` | `number[]` | - | Degrees clockwise from north for each keyframe. Each segment turns the short way. Overrides `rotateAlongPath` |
+| `startTime` | `number` | when set | Wall-clock time in milliseconds, as from `Date.now()`, at which the marker is at the first keyframe |
 | `loop` | `boolean` | `false` | Repeat the path. Otherwise the marker waits at the first keyframe until `startTime` and stays at the last one after the path ends |
-
-### pathPositionAt
-
-```ts
-pathPositionAt(path: MarkerPath, time: number): {
-  coordinate: Coordinate;
-  rotation?: number; // [0, 360), when the path has rotations
-  index: number;     // last keyframe passed, within the current lap
-} | null
-```
-
-Returns `null` unless the path has at least two keyframes and a time for each.
 
 ## Custom Markers
 

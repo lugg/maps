@@ -18,7 +18,7 @@ export type MapTheme = 'light' | 'dark' | 'system';
 
 export type InsetAdjustment = 'automatic' | 'never';
 
-export type MapIdleFrameRate = 'maximum' | 'conservative' | 'powerSave';
+export type MapIdleFrameRate = 'maximum' | 'conservative' | 'power-save';
 
 export type PoiCategory =
   | 'airport'

@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Platform } from 'react-native';
-import {
-  Marker,
-  pathPositionAt,
-  type Coordinate,
-  type MarkerPath,
-} from '@lugg/maps';
+import { Marker, type Coordinate, type MarkerPath } from '@lugg/maps';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -21,8 +16,6 @@ const AnimatedMarker = Animated.createAnimatedComponent(Marker);
 
 const DEFAULT_ANCHOR = { x: 0.5, y: 0.5 };
 const SEGMENT_DURATION = 2000;
-// How long the truck takes to turn onto the next segment
-const TURN_DURATION = 300;
 
 /**
  * `path` hands the route to native code as keyframes. `reanimated` animates
@@ -78,49 +71,6 @@ const useZoomScale = (zoom: number) => {
   return scale;
 };
 
-// Two keyframes per segment: the start, and a point TURN_DURATION in where the
-// truck has turned onto the segment's bearing. Native code interpolates the
-// rest, so JS only runs for `onSegment`, once per segment.
-const createCrewPath = (
-  route: Coordinate[],
-  speed: number,
-  phase: number
-): MarkerPath | null => {
-  if (route.length < 2) return null;
-
-  const segment = SEGMENT_DURATION / speed;
-  const turn = Math.min(TURN_DURATION, segment / 2) / segment;
-  const coordinates: Coordinate[] = [];
-  const times: number[] = [];
-  const rotations: number[] = [];
-  let bearing = getRhumbLineBearing(route[0]!, route[1]!);
-
-  for (let i = 0; i < route.length - 1; i++) {
-    const from = route[i]!;
-    const to = route[i + 1]!;
-    const next = getRhumbLineBearing(from, to);
-    coordinates.push(from, {
-      latitude: from.latitude + (to.latitude - from.latitude) * turn,
-      longitude: from.longitude + (to.longitude - from.longitude) * turn,
-    });
-    times.push(i * segment, (i + turn) * segment);
-    rotations.push(bearing, next);
-    bearing = next;
-  }
-  coordinates.push(route[route.length - 1]!);
-  times.push((route.length - 1) * segment);
-  rotations.push(bearing);
-
-  const lap = times[times.length - 1]!;
-  return {
-    coordinates,
-    times,
-    rotations,
-    startTime: Date.now() - phase * lap,
-    loop: true,
-  };
-};
-
 export const CrewMarker = ({ motion = 'path', ...props }: CrewMarkerProps) =>
   motion === 'path' ? (
     <PathCrewMarker {...props} />
@@ -136,37 +86,21 @@ const PathCrewMarker = ({
   phase = 0,
   onSegment,
 }: Omit<CrewMarkerProps, 'motion'>) => {
-  const onSegmentRef = useRef(onSegment);
-  onSegmentRef.current = onSegment;
   const scaleValue = useZoomScale(zoom);
-  const path = useMemo(
-    () => createCrewPath(route, speed, phase),
-    [route, speed, phase]
-  );
-
   const animatedProps = useAnimatedProps(() => ({
     scale: scaleValue.value,
   }));
-
-  // The path is a function of the clock, so a timer at each segment boundary
-  // is enough to report progress
-  const hasOnSegment = !!onSegment;
-  useEffect(() => {
-    if (!path || !hasOnSegment) return;
-    const segment = SEGMENT_DURATION / speed;
-    let timer: ReturnType<typeof setTimeout>;
-    const tick = () => {
-      const now = Date.now();
-      const position = pathPositionAt(path, now);
-      if (position) onSegmentRef.current?.(Math.floor(position.index / 2));
-      timer = setTimeout(
-        tick,
-        segment - ((now - path.startTime) % segment) + 1
-      );
+  const path = useMemo<MarkerPath | null>(() => {
+    if (route.length < 2) return null;
+    const duration = ((route.length - 1) * SEGMENT_DURATION) / speed;
+    return {
+      coordinates: route,
+      duration,
+      // Start partway round, so a fleet spreads out
+      startTime: Date.now() - phase * duration,
+      loop: true,
     };
-    tick();
-    return () => clearTimeout(timer);
-  }, [path, speed, hasOnSegment]);
+  }, [route, speed, phase]);
 
   if (!path || !route[0]) return null;
 
@@ -174,6 +108,10 @@ const PathCrewMarker = ({
     <AnimatedMarker
       coordinate={route[0]}
       path={path}
+      rotateAlongPath
+      onPathProgress={
+        onSegment ? (e) => onSegment(e.nativeEvent.index) : undefined
+      }
       anchor={DEFAULT_ANCHOR}
       rasterize={Platform.OS !== 'web'}
       animatedProps={animatedProps}

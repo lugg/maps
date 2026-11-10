@@ -11,7 +11,8 @@ static inline double LuggWallClockMilliseconds(void) {
   return (CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970) * 1000;
 }
 
-// A timed path from the `path*` props. Immutable: a new object means a new path.
+// A timed path from the `path*` props. Immutable: a new object means a new
+// path.
 @interface LuggMarkerPath : NSObject
 
 @property(nonatomic, readonly) NSUInteger count;
@@ -26,9 +27,11 @@ static inline double LuggWallClockMilliseconds(void) {
 @property(nonatomic, readonly) double duration;
 @property(nonatomic, readonly) BOOL loop;
 
-// Milliseconds into the path at wall-clock `now`, wrapped into a lap when looping.
+// Milliseconds into the path at wall-clock `now`, wrapped into a lap when
+// looping.
 - (double)progressAt:(double)now;
-// Position at wall-clock `now`. Sets `rotation` only when the path has rotations.
+// Position at wall-clock `now`. Sets `rotation` only when the path has
+// rotations.
 - (CLLocationCoordinate2D)coordinateAt:(double)now
                               rotation:(nullable CLLocationDegrees *)rotation;
 
@@ -55,6 +58,9 @@ static inline double LuggWallClockMilliseconds(void) {
 @property(nonatomic, readonly) BOOL rasterize;
 @property(nonatomic, readonly) BOOL centerOnPress;
 @property(nonatomic, readonly) BOOL draggable;
+// Whether the last props update changed how the icon is drawn, beyond its
+// position and rotation
+@property(nonatomic, readonly) BOOL styleChanged;
 @property(nonatomic, readonly, nullable) LuggMarkerPath *path;
 @property(nonatomic, readonly) BOOL hasCustomView;
 @property(nonatomic, readonly) BOOL didLayout;

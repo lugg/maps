@@ -1,11 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import {
-  Marker,
-  pathPositionAt,
-  type Coordinate,
-  type MarkerPath,
-} from '@lugg/maps';
+import { Marker, type Coordinate } from '@lugg/maps';
 import { getRhumbLineBearing } from 'geolib';
 
 import { PickupIcon } from './PickupIcon';
@@ -22,64 +17,57 @@ interface TrackedMarkerProps {
   route: Coordinate[];
 }
 
+interface Fix {
+  coordinate: Coordinate;
+  course: number;
+}
+
+// Simulates a GPS fix: where the vehicle is on its route, with noise, and its
+// course
+const sampleFix = (route: Coordinate[], elapsed: number): Fix => {
+  const progress = (elapsed / SEGMENT_DURATION) % (route.length - 1);
+  const index = Math.floor(progress);
+  const from = route[index]!;
+  const to = route[index + 1]!;
+  const f = progress - index;
+  return {
+    coordinate: {
+      latitude:
+        from.latitude +
+        (to.latitude - from.latitude) * f +
+        (Math.random() - 0.5) * NOISE_DEGREES,
+      longitude:
+        from.longitude +
+        (to.longitude - from.longitude) * f +
+        (Math.random() - 0.5) * NOISE_DEGREES,
+    },
+    course: getRhumbLineBearing(from, to),
+  };
+};
+
 /**
- * Live tracking: each GPS fix becomes a short path from where the marker is to
- * the fix, so the marker glides there natively until the next fix arrives.
+ * Live tracking: each GPS fix is the marker's new `coordinate`, and
+ * `transitionDuration` glides it there natively until the next fix arrives.
  */
 export const TrackedMarker = ({ route }: TrackedMarkerProps) => {
-  // Where the vehicle really is, sampled with noise to simulate fixes
-  const actual = useMemo<MarkerPath | null>(
-    () =>
-      route.length < 2
-        ? null
-        : {
-            coordinates: route,
-            times: route.map((_, i) => i * SEGMENT_DURATION),
-            startTime: Date.now(),
-            loop: true,
-          },
-    [route]
-  );
-  const [path, setPath] = useState<MarkerPath | null>(null);
+  const [fix, setFix] = useState<Fix | null>(null);
 
   useEffect(() => {
-    if (!actual) return;
-    let current: MarkerPath | null = null;
-
-    const receiveFix = () => {
-      const now = Date.now();
-      const sample = pathPositionAt(actual, now)!.coordinate;
-      const fix = {
-        latitude: sample.latitude + (Math.random() - 0.5) * NOISE_DEGREES,
-        longitude: sample.longitude + (Math.random() - 0.5) * NOISE_DEGREES,
-      };
-      const from = current ? pathPositionAt(current, now) : null;
-      // A fix reports the course too, so turn to it rather than toward the
-      // noisy fix
-      const course = getRhumbLineBearing(
-        sample,
-        pathPositionAt(actual, now + 1000)!.coordinate
-      );
-      current = {
-        coordinates: [from?.coordinate ?? fix, fix],
-        times: [0, FIX_INTERVAL],
-        rotations: [from?.rotation ?? course, course],
-        startTime: now,
-      };
-      setPath(current);
-    };
-
+    if (route.length < 2) return;
+    const start = Date.now();
+    const receiveFix = () => setFix(sampleFix(route, Date.now() - start));
     receiveFix();
     const interval = setInterval(receiveFix, FIX_INTERVAL);
     return () => clearInterval(interval);
-  }, [actual]);
+  }, [route]);
 
-  if (!path) return null;
+  if (!fix) return null;
 
   return (
     <Marker
-      coordinate={path.coordinates[0]!}
-      path={path}
+      coordinate={fix.coordinate}
+      rotate={fix.course}
+      transitionDuration={FIX_INTERVAL}
       anchor={ANCHOR}
       rasterize={Platform.OS !== 'web'}
       zIndex={1}

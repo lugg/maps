@@ -72,6 +72,7 @@ All handlers receive a `NativeSyntheticEvent`; read data from `e.nativeEvent`.
 | `onDragStart` | `(e: MarkerDragEvent) => void` | Drag began (`draggable` only) |
 | `onDragChange` | `(e: MarkerDragEvent) => void` | Continuous during drag |
 | `onDragEnd` | `(e: MarkerDragEvent) => void` | Drag finished — persist `e.nativeEvent.coordinate` to state here |
+| `onPathProgress` | `(e: MarkerPathProgressEvent) => void` | Passed a `path` keyframe (and once at start). `e.nativeEvent.index` indexes `path.coordinates`. JS timer, no per-frame events |
 
 The marker's `coordinate` prop is not mutated by dragging; if you don't write it back on `onDragEnd`, the next re-render snaps the marker back.
 

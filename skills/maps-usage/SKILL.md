@@ -250,21 +250,24 @@ const animatedProps = useAnimatedProps(() => ({
 
 Works on every platform. Web markers round to whole pixels, so pass `rasterize={Platform.OS !== 'web'}` to make a marker moved every frame glide there. Full example in [Advanced Patterns](./references/advanced-patterns.md#animated-marker-along-a-route).
 
-### Marker on a known route (`path`)
+### Moving markers natively (`path`, `transitionDuration`)
 
-When the route and timing are known ahead, hand the marker a `path` instead of animating `coordinate`: native code moves it with no React work per frame.
+Prefer these over animating `coordinate` with Reanimated: native code moves the marker with no JS work per frame, so it stays smooth while JS is busy (e.g. during map drags).
 
 ```tsx
-const path = useMemo(() => ({ coordinates, times, rotations, startTime, loop: true }), [coordinates, times, rotations, startTime]);
+// Known route: constant speed, faces each segment
+const path = useMemo(() => ({ coordinates: route, duration: 60_000, loop: true }), [route]);
+<Marker coordinate={route[0]} path={path} rotateAlongPath onPathProgress={(e) => setLeg(e.nativeEvent.index)} anchor={{ x: 0.5, y: 0.5 }}>
+  <TruckIcon />
+</Marker>
 
-<MapView idleFrameRate="powerSave">
-  <Marker coordinate={coordinates[0]} path={path} anchor={{ x: 0.5, y: 0.5 }}>
-    <TruckIcon />
-  </Marker>
-</MapView>
+// Live GPS: glide to each fix over the fix interval
+<Marker coordinate={fix.coordinate} rotate={fix.course} transitionDuration={3000} anchor={{ x: 0.5, y: 0.5 }}>
+  <TruckIcon />
+</Marker>
 ```
 
-`times` are ms after the first keyframe, `startTime` is `Date.now()` at the first keyframe, and each segment of `rotations` turns the short way. Moves are linear between keyframes, so add keyframes through corners. `pathPositionAt(path, Date.now())` gives the position and keyframe index in JS (no events). `idleFrameRate="powerSave"` redraws a still map at 15 fps on Google iOS.
+Linear between keyframes, so add keyframes through corners. `times` instead of `duration` for exact timing, `rotations` for custom headings. Keep the `path` object stable: a new one restarts it. `startTime` (default: when set) syncs markers or starts partway. `transitionDuration` ignores Reanimated `animatedProps` updates. `idleFrameRate="power-save"` redraws a still map at 15 fps on Google iOS.
 
 ## Rules That Save Debugging Time
 

@@ -5,7 +5,8 @@
 - (void)fire;
 @end
 
-// The display link retains its target; the proxy keeps that from retaining the ticker.
+// The display link retains its target; the proxy keeps that from retaining the
+// ticker.
 @interface MarkerPathTickerProxy : NSObject
 @property(nonatomic, weak) MarkerPathTicker *ticker;
 @end
@@ -43,10 +44,12 @@
   }
   MarkerPathTickerProxy *proxy = [[MarkerPathTickerProxy alloc] init];
   proxy.ticker = self;
-  _displayLink = [CADisplayLink displayLinkWithTarget:proxy selector:@selector(fire:)];
+  _displayLink = [CADisplayLink displayLinkWithTarget:proxy
+                                             selector:@selector(fire:)];
   [self applyFrameRate];
   _displayLink.paused = _paused;
-  [_displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+  [_displayLink addToRunLoop:[NSRunLoop mainRunLoop]
+                     forMode:NSRunLoopCommonModes];
 }
 
 - (void)stop {
@@ -67,7 +70,8 @@
 - (void)applyFrameRate {
   _displayLink.preferredFrameRateRange =
       _framesPerSecond > 0
-          ? CAFrameRateRangeMake(_framesPerSecond, _framesPerSecond, _framesPerSecond)
+          ? CAFrameRateRangeMake(_framesPerSecond, _framesPerSecond,
+                                 _framesPerSecond)
           : CAFrameRateRangeDefault;
 }
 

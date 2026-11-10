@@ -197,9 +197,9 @@ export const ControlSheet = forwardRef<ControlSheetRef, ControlSheetProps>(
 );
 
 const IDLE_FRAME_RATE_LABELS: Record<MapIdleFrameRate, string> = {
-  maximum: 'Max fps',
-  conservative: '30 fps',
-  powerSave: '15 fps',
+  'maximum': 'Max fps',
+  'conservative': '30 fps',
+  'power-save': '15 fps',
 };
 
 const styles = StyleSheet.create({

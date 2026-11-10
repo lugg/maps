@@ -85,7 +85,7 @@ export interface NativeProps extends ViewProps {
   theme?: CodegenTypes.WithDefault<'system' | 'light' | 'dark', 'system'>;
   insetAdjustment?: CodegenTypes.WithDefault<'never' | 'automatic', 'never'>;
   idleFrameRate?: CodegenTypes.WithDefault<
-    'maximum' | 'conservative' | 'powerSave',
+    'maximum' | 'conservative' | 'power-save',
     'maximum'
   >;
   onMapPress?: CodegenTypes.DirectEventHandler<PressEvent>;

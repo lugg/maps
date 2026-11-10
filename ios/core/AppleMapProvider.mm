@@ -1197,6 +1197,10 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 }
 
 - (void)markerViewDidUpdate:(LuggMarkerView *)markerView {
+  [self syncMarkerView:markerView restyle:markerView.styleChanged];
+}
+
+- (void)syncMarkerView:(LuggMarkerView *)markerView restyle:(BOOL)restyle {
   AppleMarkerAnnotation *annotation =
       (AppleMarkerAnnotation *)markerView.marker;
 
@@ -1205,7 +1209,8 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 
   LuggMarkerPath *path = markerView.path;
   if (path) {
-    annotation.coordinate = [path coordinateAt:LuggWallClockMilliseconds() rotation:NULL];
+    annotation.coordinate = [path coordinateAt:LuggWallClockMilliseconds()
+                                      rotation:NULL];
     [_pathAnnotations addObject:annotation];
   } else {
     annotation.coordinate = markerView.coordinate;
@@ -1223,7 +1228,13 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     [self applyCalloutView:markerView annotationView:annotationView];
   }
 
-  [self updateAnnotationViewFrame:annotation];
+  // Restyling re-rasterizes the icon, so position and rotation updates skip it
+  if (restyle) {
+    [self updateAnnotationViewFrame:annotation];
+  } else {
+    annotationView.transform = CGAffineTransformMakeRotation(
+        LuggMarkerRotation(markerView) * M_PI / 180.0);
+  }
 }
 
 #pragma mark - PolylineViewDelegate
@@ -1269,7 +1280,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
     [_mapView addAnnotation:annotation];
   }
 
-  [self markerViewDidUpdate:markerView];
+  [self syncMarkerView:markerView];
 }
 
 - (void)removeMarkerView:(LuggMarkerView *)markerView {
@@ -1295,7 +1306,7 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
 }
 
 - (void)syncMarkerView:(LuggMarkerView *)markerView {
-  [self markerViewDidUpdate:markerView];
+  [self syncMarkerView:markerView restyle:YES];
 }
 
 - (void)applyMarkerStyle:(LuggMarkerView *)markerView
@@ -1344,8 +1355,8 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
   annotationView.bounds = CGRectMake(0, 0, scaledWidth, scaledHeight);
   annotationView.centerOffset = CGPointMake(scaledWidth * (0.5 - anchor.x),
                                             scaledHeight * (0.5 - anchor.y));
-  annotationView.transform =
-      CGAffineTransformMakeRotation(LuggMarkerRotation(markerView) * M_PI / 180.0);
+  annotationView.transform = CGAffineTransformMakeRotation(
+      LuggMarkerRotation(markerView) * M_PI / 180.0);
 
   // Debounce: rasterize once updates settle
   if (markerView.rasterize) {
@@ -1388,7 +1399,8 @@ MKMapType LuggMKMapTypeFromMapType(LuggMapViewMapType mapType) {
       continue;
     }
     CLLocationDegrees rotation = markerView.rotate;
-    CLLocationCoordinate2D coordinate = [path coordinateAt:now rotation:&rotation];
+    CLLocationCoordinate2D coordinate = [path coordinateAt:now
+                                                  rotation:&rotation];
     if (coordinate.latitude != annotation.coordinate.latitude ||
         coordinate.longitude != annotation.coordinate.longitude) {
       annotation.coordinate = coordinate;

@@ -40,18 +40,21 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
     _coordinateValues.reserve(count);
     _timeValues.reserve(count);
     for (size_t i = 0; i < count; i++) {
-      _coordinateValues.push_back(CLLocationCoordinate2DMake(
-          props.pathCoordinates[i].latitude, props.pathCoordinates[i].longitude));
+      _coordinateValues.push_back(
+          CLLocationCoordinate2DMake(props.pathCoordinates[i].latitude,
+                                     props.pathCoordinates[i].longitude));
       _timeValues.push_back(props.pathTimes[i] - first);
     }
     if (props.pathRotations.size() == count) {
-      // Unwrapped so each segment turns the short way (350 then 10 is +20, not -340).
+      // Unwrapped so each segment turns the short way (350 then 10 is +20, not
+      // -340).
       _rotationProps = props.pathRotations;
       _rotationValues.reserve(count);
       double rotation = props.pathRotations[0];
       _rotationValues.push_back(rotation);
       for (size_t i = 1; i < count; i++) {
-        rotation += fmod(fmod(props.pathRotations[i] - rotation, 360) + 540, 360) - 180;
+        rotation +=
+            fmod(fmod(props.pathRotations[i] - rotation, 360) + 540, 360) - 180;
         _rotationValues.push_back(rotation);
       }
     }
@@ -64,8 +67,9 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
 
 - (BOOL)matchesProps:(const LuggMarkerViewProps &)props {
   size_t count = _coordinateValues.size();
-  if (props.pathCoordinates.size() != count || props.pathTimes.size() != count ||
-      props.pathStartTime != _startTime || props.pathLoop != _loop ||
+  if (props.pathCoordinates.size() != count ||
+      props.pathTimes.size() != count || props.pathStartTime != _startTime ||
+      props.pathLoop != _loop ||
       (props.pathRotations.size() == count) == _rotationValues.empty()) {
     return NO;
   }
@@ -120,12 +124,14 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
   double span = _timeValues[hi] - _timeValues[lo];
   double f = span > 0 ? (t - _timeValues[lo]) / span : 0;
   if (rotation && !_rotationValues.empty()) {
-    *rotation = _rotationValues[lo] + (_rotationValues[hi] - _rotationValues[lo]) * f;
+    *rotation =
+        _rotationValues[lo] + (_rotationValues[hi] - _rotationValues[lo]) * f;
   }
   const CLLocationCoordinate2D &a = _coordinateValues[lo];
   const CLLocationCoordinate2D &b = _coordinateValues[hi];
   return CLLocationCoordinate2DMake(a.latitude + (b.latitude - a.latitude) * f,
-                                    a.longitude + (b.longitude - a.longitude) * f);
+                                    a.longitude +
+                                        (b.longitude - a.longitude) * f);
 }
 
 @end
@@ -145,6 +151,8 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
   BOOL _rasterize;
   BOOL _centerOnPress;
   BOOL _draggable;
+  BOOL _didUpdateProps;
+  BOOL _styleChanged;
   LuggMarkerPath *_path;
   BOOL _didLayout;
   UIView *_iconView;
@@ -202,7 +210,12 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
   _title = [NSString stringWithUTF8String:newViewProps.title.c_str()];
   _markerDescription =
       [NSString stringWithUTF8String:newViewProps.description.c_str()];
-  _anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  CGPoint anchor = CGPointMake(newViewProps.anchor.x, newViewProps.anchor.y);
+  _styleChanged = !_didUpdateProps || !CGPointEqualToPoint(anchor, _anchor) ||
+                  newViewProps.scale != _scale ||
+                  newViewProps.rasterize != _rasterize;
+  _didUpdateProps = YES;
+  _anchor = anchor;
   _zIndex = newViewProps.zIndex.value_or(0);
   _rotate = newViewProps.rotate;
   _scale = newViewProps.scale;
@@ -316,6 +329,10 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
 
 - (BOOL)centerOnPress {
   return _centerOnPress;
+}
+
+- (BOOL)styleChanged {
+  return _styleChanged;
 }
 
 - (BOOL)draggable {
@@ -450,6 +467,7 @@ static BOOL LuggMarkerPathPropsActive(const LuggMarkerViewProps &props) {
 
 - (void)prepareForRecycle {
   [super prepareForRecycle];
+  _didUpdateProps = NO;
   _didLayout = NO;
   _calloutView = nil;
   self.marker = nil;

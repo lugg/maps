@@ -51,7 +51,7 @@ const FLEET_SIZES = [0, 10, 50];
 const IDLE_FRAME_RATES: MapIdleFrameRate[] = [
   'maximum',
   'conservative',
-  'powerSave',
+  'power-save',
 ];
 
 export const HomeScreen = ({ onMarkerPress, onShowStaticMaps }: HomeProps) => {

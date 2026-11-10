@@ -1,7 +1,7 @@
 export { MapView } from './MapView';
 export { MapProvider } from './MapProvider';
 export type { MapProviderProps } from './MapProvider.types';
-export { Marker, pathPositionAt } from './components';
+export { Marker } from './components';
 export type {
   CalloutOptions,
   MarkerRef,
@@ -9,7 +9,7 @@ export type {
   MarkerPressEvent,
   MarkerDragEvent,
   MarkerPath,
-  MarkerPathPosition,
+  MarkerPathProgressEvent,
 } from './components';
 export { Polygon } from './components';
 export type { PolygonProps } from './components';

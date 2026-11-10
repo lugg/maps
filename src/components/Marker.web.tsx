@@ -19,8 +19,18 @@ import {
 } from '@vis.gl/react-google-maps';
 import { useMapContext } from '../MapProvider.web';
 import type { Coordinate, Point } from '../types';
-import type { MarkerPath, MarkerProps, MarkerRef } from './Marker.types';
-import { pathPositionAt } from './markerPath';
+import type { MarkerProps, MarkerRef } from './Marker.types';
+import {
+  MarkerMotion,
+  PathProgress,
+  pathPositionAt,
+  type NativeMarkerPath,
+} from './markerPath';
+
+// The inner markers get the keyframes `MarkerMotion` resolved
+type InnerMarkerProps = Omit<MarkerProps, 'path'> & {
+  path?: NativeMarkerPath;
+};
 
 const CALLOUT_ARROW_HEIGHT = 12;
 const UNBUBBLED_CLASS = 'rnm-callout-unbubbled';
@@ -75,24 +85,16 @@ const createEvent = (
     },
   } as any);
 
-const followsPath = (path: MarkerPath | undefined): path is MarkerPath =>
-  !!path &&
-  path.coordinates.length >= 2 &&
-  path.times.length === path.coordinates.length;
-
 /**
  * Moves a marker along `path` on every animation frame, calling `apply` only
  * when its position or rotation changes.
  */
 function usePathAnimation(
-  path: MarkerPath | undefined,
+  path: NativeMarkerPath | undefined,
   apply: (coordinate: Coordinate, rotation?: number) => void
 ) {
-  const { coordinates, times, rotations, startTime = 0, loop } = path ?? {};
   useEffect(() => {
-    if (!coordinates || !times) return;
-    const current = { coordinates, times, rotations, startTime, loop };
-    if (!followsPath(current)) return;
+    if (!path) return;
     let frame = 0;
     let last = {
       latitude: NaN,
@@ -100,7 +102,7 @@ function usePathAnimation(
       rotation: NaN as number | undefined,
     };
     const tick = () => {
-      const { coordinate, rotation } = pathPositionAt(current, Date.now())!;
+      const { coordinate, rotation } = pathPositionAt(path, Date.now());
       if (
         coordinate.latitude !== last.latitude ||
         coordinate.longitude !== last.longitude ||
@@ -113,7 +115,7 @@ function usePathAnimation(
     };
     tick();
     return () => cancelAnimationFrame(frame);
-  }, [coordinates, times, rotations, startTime, loop, apply]);
+  }, [path, apply]);
 }
 
 /**
@@ -128,7 +130,7 @@ interface WebMarkerRef extends MarkerRef {
   setNativeProps(props: AnimatableProps): void;
 }
 
-const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
+const DefaultMarker = forwardRef<MarkerRef, InnerMarkerProps>(
   (
     {
       coordinate,
@@ -199,7 +201,7 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
     const setNativeProps = useCallback(
       (props: AnimatableProps) => {
         const following = pathRef.current;
-        if (!followsPath(following)) return applyNativeProps(props);
+        if (!following) return applyNativeProps(props);
         const rest = { ...props };
         delete rest.coordinate;
         if (following.rotations) delete rest.rotate;
@@ -224,11 +226,11 @@ const DefaultMarker = forwardRef<MarkerRef, MarkerProps>(
     // A path overrides them, like Reanimated's updates.
     const { latitude, longitude } = coordinate;
     useEffect(() => {
-      if (followsPath(pathRef.current)) return;
+      if (pathRef.current) return;
       latest.current.coordinate = { latitude, longitude };
     }, [latitude, longitude]);
     useEffect(() => {
-      if (pathRef.current?.rotations && followsPath(pathRef.current)) return;
+      if (pathRef.current?.rotations && pathRef.current) return;
       latest.current.rotate = rotate;
     }, [rotate]);
     useEffect(() => {
@@ -419,7 +421,7 @@ function createLiveElement() {
  * pixels, so a marker moved every frame steps instead of gliding.
  * It shares the `AdvancedMarker` pane, so `zIndex` orders both kinds.
  */
-const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
+const LiveMarker = forwardRef<MarkerRef, InnerMarkerProps>(
   (
     {
       coordinate,
@@ -513,12 +515,12 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
     // A path overrides them, like Reanimated's updates.
     const { latitude, longitude } = coordinate;
     useLayoutEffect(() => {
-      if (followsPath(pathRef.current)) return;
+      if (pathRef.current) return;
       latest.current.coordinate = { latitude, longitude };
       place();
     }, [latitude, longitude, place]);
     useLayoutEffect(() => {
-      if (pathRef.current?.rotations && followsPath(pathRef.current)) return;
+      if (pathRef.current?.rotations && pathRef.current) return;
       latest.current.rotate = rotate ?? 0;
       place();
     }, [rotate, place]);
@@ -545,7 +547,7 @@ const LiveMarker = forwardRef<MarkerRef, MarkerProps>(
         setNativeProps(props) {
           const current = latest.current;
           const following = pathRef.current;
-          const onPath = followsPath(following);
+          const onPath = !!following;
           if (props.coordinate && !onPath) {
             current.coordinate = props.coordinate;
           }
@@ -579,7 +581,7 @@ const isLive = ({
   title,
   callout,
   draggable,
-}: MarkerProps) =>
+}: InnerMarkerProps) =>
   rasterize === false &&
   Children.count(children) > 0 &&
   !title &&
@@ -587,11 +589,27 @@ const isLive = ({
   !draggable;
 
 export const Marker = memo(
-  forwardRef<MarkerRef, MarkerProps>((props, ref) =>
-    isLive(props) ? (
-      <LiveMarker {...props} ref={ref} />
+  forwardRef<MarkerRef, MarkerProps>((props, ref) => {
+    const [motion] = useState(() => new MarkerMotion());
+    const [progress] = useState(() => new PathProgress());
+    const path = motion.resolve(props);
+    const innerProps = { ...props, path };
+
+    const { onPathProgress } = props;
+    useEffect(() => {
+      progress.update(
+        path,
+        onPathProgress
+          ? (index) => onPathProgress({ nativeEvent: { index } })
+          : undefined
+      );
+    }, [progress, path, onPathProgress]);
+    useEffect(() => () => progress.stop(), [progress]);
+
+    return isLive(innerProps) ? (
+      <LiveMarker {...innerProps} ref={ref} />
     ) : (
-      <DefaultMarker {...props} ref={ref} />
-    )
-  )
+      <DefaultMarker {...innerProps} ref={ref} />
+    );
+  })
 );
