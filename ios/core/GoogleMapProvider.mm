@@ -83,6 +83,7 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   GMSMapView *_mapView;
   BOOL _isMapReady;
   BOOL _isDragging;
+  BOOL _didRenderTiles;
   LuggMapViewTheme _theme;
   UIEdgeInsets _edgeInsets;
   NSMutableArray<LuggMarkerView *> *_pendingMarkerViews;
@@ -453,6 +454,21 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
                             longitude:position.target.longitude
                                  zoom:position.zoom
                               gesture:wasDragging];
+}
+
+// The SDK can drop marker icons set before any map in the process has finished
+// rendering, as on a cold start straight into a screen with markers. Set them
+// again once this map first renders.
+- (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
+  if (_didRenderTiles)
+    return;
+  _didRenderTiles = YES;
+  for (GMSMarker *marker in _markerToViewMap) {
+    LuggMarkerView *markerView = [_markerToViewMap objectForKey:marker];
+    if (markerView) {
+      [self applyMarkerStyle:markerView marker:(GMSAdvancedMarker *)marker];
+    }
+  }
 }
 
 - (void)mapView:(GMSMapView *)mapView
