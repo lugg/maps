@@ -839,6 +839,11 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   if (markerView.hasCustomView && !markerView.didLayout)
     return;
 
+  // With implicit actions on, the SDK animates the new marker's position, so
+  // an icon view would slide in from the map's origin.
+  [CATransaction begin];
+  [CATransaction setDisableActions:YES];
+
   GMSAdvancedMarker *marker = [[GMSAdvancedMarker alloc] init];
   marker.position = markerView.coordinate;
   marker.title = markerView.title.length > 0 ? markerView.title : nil;
@@ -854,6 +859,8 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   markerView.marker = marker;
   [_markerToViewMap setObject:markerView forKey:marker];
   [self applyPathForMarkerView:markerView marker:marker];
+
+  [CATransaction commit];
 }
 
 - (void)applyMarkerStyle:(LuggMarkerView *)markerView
