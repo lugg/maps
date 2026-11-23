@@ -1644,6 +1644,7 @@ class GoogleMapProvider(private val context: Context) :
         .translationX(targetX)
         .start()
     } else {
+      watermark.animate().cancel()
       watermark.translationY = targetY
       watermark.translationX = targetX
     }
