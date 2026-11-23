@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.os.SystemClock
 import android.view.Choreographer
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.ImageView
 import androidx.core.graphics.createBitmap
@@ -1613,9 +1614,14 @@ class GoogleMapProvider(private val context: Context) :
     }
     if (current == null) return
 
+    // Layout may still carry padding from an earlier pass (the renderer pads the
+    // watermark's container, but its position only updates on the next layout,
+    // e.g. after a rotation). Translate by the remainder from where layout put
+    // it to the current insets plus the renderer's own margin.
+    val margins = watermark.layoutParams as? ViewGroup.MarginLayoutParams
     val bottomGap = view.height - (top + watermark.height)
-    val targetY = if (bottomGap >= insets.bottom) 0f else -insets.bottom.toFloat()
-    val targetX = if (left >= insets.left) 0f else insets.left.toFloat()
+    val targetY = (bottomGap - insets.bottom - (margins?.bottomMargin ?: 0)).toFloat()
+    val targetX = (insets.left + (margins?.leftMargin ?: 0) - left).toFloat()
 
     // Skip when already applied (or animating) toward this target so layout
     // passes don't snap an in-flight animation
@@ -1638,6 +1644,7 @@ class GoogleMapProvider(private val context: Context) :
         .translationX(targetX)
         .start()
     } else {
+      watermark.animate().cancel()
       watermark.translationY = targetY
       watermark.translationX = targetX
     }
