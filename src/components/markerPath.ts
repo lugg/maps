@@ -96,7 +96,8 @@ const spreadByDistance = (coordinates: Coordinate[], duration: number) => {
 // has no bearing, so it keeps the heading
 const alongPath = (
   coordinates: Coordinate[],
-  times: number[]
+  times: number[],
+  loop: boolean
 ): Pick<
   NativeMarkerPath,
   'coordinates' | 'times' | 'rotations' | 'sources'
@@ -113,9 +114,20 @@ const alongPath = (
     path.rotations.push(r);
     path.sources.push(source);
   };
-  const moving = coordinates.findIndex(
+  let moving = coordinates.findIndex(
     (c, i) => i > 0 && distance(coordinates[i - 1]!, c) > 0
   );
+  const last = coordinates.length - 1;
+  if (
+    loop &&
+    moving > 1 &&
+    distance(coordinates[last]!, coordinates[0]!) === 0
+  ) {
+    moving = last;
+    while (distance(coordinates[moving - 1]!, coordinates[moving]!) === 0) {
+      moving--;
+    }
+  }
   let heading =
     moving > 0 ? bearing(coordinates[moving - 1]!, coordinates[moving]!) : 0;
   for (let i = 0; i < coordinates.length - 1; i++) {
@@ -130,12 +142,7 @@ const alongPath = (
     }
     heading = next;
   }
-  add(
-    coordinates[coordinates.length - 1]!,
-    times[times.length - 1]!,
-    heading,
-    coordinates.length - 1
-  );
+  add(coordinates[last]!, times[times.length - 1]!, heading, last);
   return path;
 };
 
@@ -158,7 +165,7 @@ const resolvePath = (
   const times = path.times ?? spreadByDistance(coordinates, path.duration);
   if (times.length !== coordinates.length) return undefined;
   if (rotateAlongPath && !rotations) {
-    return { ...alongPath(coordinates, times), startTime, loop };
+    return { ...alongPath(coordinates, times, loop ?? false), startTime, loop };
   }
   return {
     coordinates,

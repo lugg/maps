@@ -124,6 +124,23 @@ describe('MarkerMotion', () => {
     resolved.rotations!.forEach((r) => expect(r).toBeCloseTo(90));
   });
 
+  it('holds the arrival heading through an opening stop on each lap', () => {
+    const east = { latitude: 0, longitude: 0.001 };
+    const path: MarkerPath = {
+      coordinates: [coordinate, coordinate, east, coordinate, coordinate],
+      times: [0, 1000, 2000, 3000, 4000],
+      loop: true,
+    };
+    const resolved = new MarkerMotion().resolve(
+      { coordinate, path, rotateAlongPath: true },
+      0
+    )!;
+    for (const time of [3999, 4000, 4500, 5000]) {
+      expect(pathPositionAt(resolved, time).rotation).toBeCloseTo(270);
+    }
+    expect(pathPositionAt(resolved, 5300).rotation).toBeCloseTo(90);
+  });
+
   it('glides from where the marker is to each new coordinate', () => {
     const motion = new MarkerMotion();
     const props = { transitionDuration: 1000, rotateAlongPath: true };
