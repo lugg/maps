@@ -108,6 +108,22 @@ describe('MarkerMotion', () => {
     expect(resolved.rotations![3]).toBeCloseTo(90);
   });
 
+  it('keeps the heading through a stop on the path', () => {
+    // East, with a stop at the start and one partway
+    const east = (longitude: number) => ({ latitude: 0, longitude });
+    const path: MarkerPath = {
+      coordinates: [east(0), east(0), east(0.001), east(0.001), east(0.002)],
+      times: [0, 2000, 3000, 6000, 7000],
+    };
+    const resolved = new MarkerMotion().resolve(
+      { coordinate, path, rotateAlongPath: true },
+      0
+    )!;
+    expect(resolved.times).toEqual(path.times);
+    expect(resolved.sources).toEqual([0, 1, 2, 3, 4]);
+    resolved.rotations!.forEach((r) => expect(r).toBeCloseTo(90));
+  });
+
   it('glides from where the marker is to each new coordinate', () => {
     const motion = new MarkerMotion();
     const props = { transitionDuration: 1000, rotateAlongPath: true };

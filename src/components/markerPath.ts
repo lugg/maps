@@ -92,7 +92,8 @@ const spreadByDistance = (coordinates: Coordinate[], duration: number) => {
 };
 
 // Faces each segment, turning onto it over TURN_DURATION from its first
-// keyframe, so the marker drives straight between turns
+// keyframe, so the marker drives straight between turns. A repeated coordinate
+// has no bearing, so it keeps the heading
 const alongPath = (
   coordinates: Coordinate[],
   times: number[]
@@ -112,11 +113,15 @@ const alongPath = (
     path.rotations.push(r);
     path.sources.push(source);
   };
-  let heading = bearing(coordinates[0]!, coordinates[1]!);
+  const moving = coordinates.findIndex(
+    (c, i) => i > 0 && distance(coordinates[i - 1]!, c) > 0
+  );
+  let heading =
+    moving > 0 ? bearing(coordinates[moving - 1]!, coordinates[moving]!) : 0;
   for (let i = 0; i < coordinates.length - 1; i++) {
     const from = coordinates[i]!;
     const to = coordinates[i + 1]!;
-    const next = bearing(from, to);
+    const next = distance(from, to) > 0 ? bearing(from, to) : heading;
     add(from, times[i]!, heading, i);
     const segment = times[i + 1]! - times[i]!;
     if (next !== heading && segment > 0) {
