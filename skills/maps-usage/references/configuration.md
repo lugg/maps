@@ -197,7 +197,7 @@ Static-mode behavior notes:
 | `centerOnPress` | `boolean` | `true` | 🍎🅶🤖🌐 | Center the map on the marker when tapped |
 | `draggable` | `boolean` | `false` | 🍎🅶🤖🌐 | Long-press-and-drag. Update `coordinate` from `onDragEnd` |
 | `path` | `MarkerPath` | — | 🍎🅶🤖🌐 | `{ coordinates, duration \| times, rotations?, startTime?, loop? }`. Native code moves the marker, linear between keyframes, following the wall clock. `duration` = constant speed; `startTime` defaults to when set. Ignores `coordinate`, and `rotate` when the path rotates. Presses report the on-path position. Restarts when a field changes; keep its arrays stable (inline object is fine) |
-| `rotateAlongPath` | `boolean` | `false` | 🍎🅶🤖🌐 | Face the direction of travel along `path` or `transitionDuration` moves; turns settle quickly after each corner; `transitionDuration` moves < 5 m keep the heading |
+| `rotateAlongPath` | `boolean` | `false` | 🍎🅶🤖🌐 | Face the direction of travel along `path` or `transitionDuration` moves; turns settle quickly after each corner; repeated `path` coordinates keep the heading, including across laps when a closed loop starts with a stop; `transitionDuration` moves < 5 m keep the heading |
 | `transitionDuration` | `number` | `0` | 🍎🅶🤖🌐 | ms to glide natively to a new `coordinate`/`rotate` from the current position. For GPS fixes, set to the fix interval. Not applied to `animatedProps` updates |
 | `onPathProgress` | `(e) => void` | — | 🍎🅶🤖🌐 | `e.nativeEvent.index`: last `path` keyframe passed (and once at start) |
 | `callout` | `ReactElement \| ComponentType` | — | 🍎🅶🤖🌐 | Custom callout content. Falls back to `title`/`description` bubble when omitted |

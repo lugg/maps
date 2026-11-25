@@ -122,7 +122,7 @@ const path = useMemo<MarkerPath>(
 ```
 
 - The marker moves in a straight line between keyframes, so add keyframes through curves and corners.
-- `rotateAlongPath` faces each segment and settles each turn quickly after the corner. For custom headings, pass `rotations` instead.
+- `rotateAlongPath` faces each segment and settles each turn quickly after the corner. A repeated coordinate (a stop) keeps the heading. If a closed loop starts with a stop, the marker holds its arrival heading until it moves again. For custom headings, pass `rotations` instead.
 - For exact timing, pass `times` instead of `duration`.
 - The path restarts when one of its fields changes. Arrays compare by reference, so keep `coordinates`, `times` and `rotations` stable across renders (for example with `useMemo`). An inline `path` object is fine.
 - The path starts when it's set. Set `startTime` to keep several markers or devices in sync, or to start partway: `startTime: Date.now() - 0.5 * duration` starts halfway.
