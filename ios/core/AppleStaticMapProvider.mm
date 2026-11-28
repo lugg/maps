@@ -231,15 +231,24 @@ static MKMapRect LuggStaticFittedMapRect(CLLocationCoordinate2D center,
 #pragma mark - Props
 
 - (void)setPoiEnabled:(BOOL)enabled {
+  if (_poiEnabled == enabled)
+    return;
   _poiEnabled = enabled;
+  [self rerenderBaseMap];
 }
 
 - (void)setPoiFilterMode:(LuggMapViewPoiFilterMode)mode {
+  if (_poiFilterMode == mode)
+    return;
   _poiFilterMode = mode;
+  [self rerenderBaseMap];
 }
 
 - (void)setPoiFilterCategories:(NSArray<NSString *> *)categories {
+  if ([_poiFilterCategories isEqualToArray:categories])
+    return;
   _poiFilterCategories = categories;
+  [self rerenderBaseMap];
 }
 
 @end

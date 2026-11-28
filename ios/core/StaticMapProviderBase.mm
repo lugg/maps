@@ -232,6 +232,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 @implementation StaticMapProviderBase {
   BOOL _isMapReady;
   BOOL _overlaysRevealed;
+  BOOL _baseRenderScheduled;
 
   UIImageView *_baseImageView;
   LuggStaticShapeOverlayView *_shapeOverlayView;
@@ -289,9 +290,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 
   // Start after the current mount pass so map settings props applied right
   // after this call shape the base render
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
-  });
+  [self scheduleBaseRender];
 }
 
 - (void)destroy {
@@ -398,10 +397,22 @@ static NSInteger shapeZIndex(UIView *shape) {
     return;
 
   [self updateProjection];
+  [self scheduleBaseRender];
+}
+
+// Coalesces the setting changes of one update pass into a single render
+- (void)scheduleBaseRender {
+  if (_baseRenderScheduled)
+    return;
+  _baseRenderScheduled = YES;
 
   __weak StaticMapProviderBase *weakSelf = self;
   dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
+    StaticMapProviderBase *strongSelf = weakSelf;
+    if (!strongSelf)
+      return;
+    strongSelf->_baseRenderScheduled = NO;
+    [strongSelf renderBaseMapIfNeeded];
   });
 }
 

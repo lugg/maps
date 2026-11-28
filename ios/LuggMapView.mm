@@ -30,17 +30,24 @@ using namespace facebook::react;
 using namespace luggmaps::events;
 
 // Static snapshots cached across view recycling, keyed by the user-provided
-// staticKey plus the map settings that affect appearance.
+// staticKey plus the map settings that affect appearance. Bounded by bytes
+// only: mounted rows hold their images anyway, so the limit has to cover a
+// list's mounted maps plus the ones scrolled away (a 407x140pt @3x image is
+// ~2 MB, so ~60 of them). NSCache also evicts under memory pressure.
 static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   static NSCache<NSString *, UIImage *> *cache;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     cache = [[NSCache alloc] init];
-    cache.countLimit = 100;
-    cache.totalCostLimit = 64 * 1024 * 1024; // bytes
+    cache.totalCostLimit = 128 * 1024 * 1024; // bytes
   });
   return cache;
 }
+
+// How long an unfinished static map survives off-window. Transitions (e.g.
+// a screen push) move maps out of the window and back in; tearing them down
+// right away rebuilt every map mid-render.
+static const NSTimeInterval kOffWindowTeardownDelay = 0.5;
 
 @interface LuggMapView () <RCTLuggMapViewViewProtocol, MapProviderDelegate>
 @end
@@ -60,6 +67,8 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _indoorEnabled;
   BOOL _staticMode;
   NSString *_staticKey;
+  // Appearance the static map renders for with the 'system' theme
+  UIUserInterfaceStyle _staticStyle;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -193,6 +202,12 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 
 - (void)didMoveToWindow {
   [super didMoveToWindow];
+  [NSObject
+      cancelPreviousPerformRequestsWithTarget:self
+                                     selector:
+                                         @selector(
+                                             teardownOffWindowStaticContent)
+                                       object:nil];
   if (self.window) {
     if (!_provider && _mapWrapperView) {
       if (_staticMode) {
@@ -201,18 +216,63 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
         [self initializeProvider];
       }
     }
+    [self updateStaticAppearance];
     [_provider resumeAnimations];
   } else {
-    // A static map mid-warmup may hold an expensive live map view. Destroy
-    // it off-window and re-render on return instead of letting paused maps
-    // pile up across screen switches and all resume at once
+    [_provider pauseAnimations];
     if ([_provider isKindOfClass:[StaticMapProviderBase class]] &&
         !((StaticMapProviderBase *)_provider).baseRenderDone) {
-      [_provider destroy];
-      _provider = nil;
-      _initialized = NO;
+      [self performSelector:@selector(teardownOffWindowStaticContent)
+                 withObject:nil
+                 afterDelay:kOffWindowTeardownDelay];
     }
-    [_provider pauseAnimations];
+  }
+}
+
+// A static map mid-warmup may hold an expensive live map view. Destroy it
+// once it stays off-window and re-render on return, instead of letting
+// paused maps pile up across screen switches and all resume at once
+- (void)teardownOffWindowStaticContent {
+  if (self.window || ![_provider isKindOfClass:[StaticMapProviderBase class]] ||
+      ((StaticMapProviderBase *)_provider).baseRenderDone)
+    return;
+  [_provider destroy];
+  _provider = nil;
+  _initialized = NO;
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+  [super traitCollectionDidChange:previousTraitCollection];
+  if (!_staticMode || self.traitCollection.userInterfaceStyle ==
+                          previousTraitCollection.userInterfaceStyle)
+    return;
+
+  // App switcher snapshots flip the appearance and restore it in the same
+  // pass; only a change that sticks re-renders
+  __weak LuggMapView *weakSelf = self;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [weakSelf updateStaticAppearance];
+  });
+}
+
+// A 'system' theme static map shows the appearance it rendered with, so a
+// change renders it again (or reuses the snapshot cached for the new one)
+- (void)updateStaticAppearance {
+  UIUserInterfaceStyle style = self.traitCollection.userInterfaceStyle;
+  if (!_staticMode || !self.window || style == _staticStyle)
+    return;
+  _staticStyle = style;
+
+  if (_theme != LuggMapViewTheme::System ||
+      ![_provider isKindOfClass:[StaticMapProviderBase class]])
+    return;
+
+  StaticMapProviderBase *staticProvider = (StaticMapProviderBase *)_provider;
+  [staticProvider rerenderBaseMap];
+  NSString *cacheKey = [self staticSnapshotCacheKey];
+  if (cacheKey) {
+    staticProvider.cachedBaseImage =
+        [StaticSnapshotCache() objectForKey:cacheKey];
   }
 }
 
@@ -248,10 +308,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (size.width <= 0 || size.height <= 0)
     return nil;
 
-  // 'system' theme snapshots depend on the current appearance
-  NSInteger style = _theme == LuggMapViewTheme::System
-                        ? (NSInteger)self.traitCollection.userInterfaceStyle
-                        : -(NSInteger)_theme;
+  // 'system' theme snapshots depend on the appearance they render with
+  NSInteger style = _theme == LuggMapViewTheme::System ? (NSInteger)_staticStyle
+                                                       : -(NSInteger)_theme;
 
   // Camera is part of the key so a reused staticKey with a different
   // location/zoom can't serve a stale snapshot. The provider's camera (when
@@ -269,17 +328,25 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     zoom = staticProvider.zoom;
   }
 
-  // Only Google renders indoor maps; Apple also serves provider="google"
-  // when the Google SDK is excluded
-  BOOL indoorEnabled =
-      _indoorEnabled &&
-      ![_provider isKindOfClass:[AppleStaticMapProvider class]];
+  // Only Google renders indoor maps and only Apple filters POIs; Apple also
+  // serves provider="google" when the Google SDK is excluded
+  BOOL isApple = [_provider isKindOfClass:[AppleStaticMapProvider class]];
+  BOOL indoorEnabled = _indoorEnabled && !isApple;
+  NSString *poiFilter = @"";
+  if (isApple) {
+    poiFilter =
+        _poiEnabled
+            ? [NSString stringWithFormat:@"%d:%@", (int)_poiFilterMode,
+                                         [_poiFilterCategories
+                                             componentsJoinedByString:@","]]
+            : @"off";
+  }
 
   return [NSString
-      stringWithFormat:@"%@|%d|%@|%d|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
+      stringWithFormat:@"%@|%d|%@|%d|%d|%@|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
                        _staticKey, (int)_providerType, _mapId, (int)_mapType,
-                       (int)indoorEnabled, (long)style, size.width, size.height,
-                       latitude, longitude, zoom,
+                       (int)indoorEnabled, poiFilter, (long)style, size.width,
+                       size.height, latitude, longitude, zoom,
                        NSStringFromUIEdgeInsets(_edgeInsets)];
 }
 
@@ -378,6 +445,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   // and after the props so later setting changes drop the pending image;
   // the base render is async and picks up the cached image
   if (_staticMode) {
+    _staticStyle = self.traitCollection.userInterfaceStyle;
     NSString *cacheKey = [self staticSnapshotCacheKey];
     if (cacheKey) {
       ((StaticMapProviderBase *)_provider).cachedBaseImage =
@@ -412,10 +480,17 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 }
 
 - (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
+  // The appearance changed during the render and a re-render is pending;
+  // the image may show either one
+  if (_theme == LuggMapViewTheme::System &&
+      self.traitCollection.userInterfaceStyle != _staticStyle)
+    return;
+
   NSString *key = [self staticSnapshotCacheKey];
   if (key) {
-    NSUInteger cost = (NSUInteger)(image.size.width * image.scale *
-                                   image.size.height * image.scale * 4);
+    CGImageRef cgImage = image.CGImage;
+    NSUInteger cost =
+        CGImageGetBytesPerRow(cgImage) * CGImageGetHeight(cgImage);
     [StaticSnapshotCache() setObject:image forKey:key cost:cost];
   }
 }

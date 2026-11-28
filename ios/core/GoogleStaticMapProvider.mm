@@ -47,6 +47,55 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   [views addObject:mapView];
 }
 
+// A setting change (or a list mounting) re-renders every static map at
+// once. Warmups beyond the limit wait in FIFO order; at the pool capacity
+// each finished warmup returns its map view to the pool for the next one.
+static const NSUInteger kMaxConcurrentWarmups = kStaticMapViewPoolCapacity;
+static NSUInteger ActiveWarmupCount = 0;
+
+static NSPointerArray *PendingWarmups(void) {
+  static NSPointerArray *pending;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    pending = [NSPointerArray weakObjectsPointerArray];
+  });
+  return pending;
+}
+
+@interface GoogleStaticMapProvider ()
+- (void)startPendingWarmup;
+@end
+
+static void RemovePendingWarmup(GoogleStaticMapProvider *provider) {
+  NSPointerArray *pending = PendingWarmups();
+  for (NSInteger i = (NSInteger)pending.count - 1; i >= 0; i--) {
+    void *pointer = [pending pointerAtIndex:i];
+    // Released providers leave NULL entries behind
+    if (!pointer || pointer == (__bridge void *)provider) {
+      [pending removePointerAtIndex:i];
+    }
+  }
+}
+
+// Deferred so a settings change that cancels warmups mid-update doesn't
+// start pending maps that are about to get the same change
+static void SchedulePendingWarmups(void) {
+  static BOOL scheduled = NO;
+  if (scheduled)
+    return;
+  scheduled = YES;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    scheduled = NO;
+    NSPointerArray *pending = PendingWarmups();
+    while (ActiveWarmupCount < kMaxConcurrentWarmups && pending.count > 0) {
+      GoogleStaticMapProvider *provider =
+          (__bridge GoogleStaticMapProvider *)[pending pointerAtIndex:0];
+      [pending removePointerAtIndex:0];
+      [provider startPendingWarmup];
+    }
+  });
+}
+
 @implementation GoogleStaticMapProvider {
   GMSMapView *_warmupMapView;
   BOOL _snapshotReady;
@@ -101,10 +150,18 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
     [self scheduleSwap];
     return;
   }
-  [self startWarmup];
+  RemovePendingWarmup(self);
+  [PendingWarmups() addPointer:(__bridge void *)self];
+  SchedulePendingWarmups();
 }
 
 - (void)cancelBaseRender {
+  RemovePendingWarmup(self);
+  [self destroyWarmupMapView];
+}
+
+// Releases the warmup slot of a provider dropped without destroy
+- (void)dealloc {
   [self destroyWarmupMapView];
 }
 
@@ -158,7 +215,16 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 
   _warmupMapView = mapView;
+  ActiveWarmupCount++;
   [wrapperView insertSubview:mapView atIndex:0];
+}
+
+// The map may have left the window or rendered from another path while it
+// waited; resumeAnimations queues it again on return
+- (void)startPendingWarmup {
+  if (_warmupMapView || self.baseRenderDone || !self.wrapperView.window)
+    return;
+  [self startWarmup];
 }
 
 - (void)destroyWarmupMapView {
@@ -168,6 +234,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   [_warmupMapView removeFromSuperview];
   EnqueueStaticMapView([self poolKey], _warmupMapView);
   _warmupMapView = nil;
+  ActiveWarmupCount--;
+  SchedulePendingWarmups();
 }
 
 // Once the map is stable, swap the live map with its image and release the

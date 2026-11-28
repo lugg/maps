@@ -22,6 +22,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 - [Static map row shows a stale or missing image](#static-map-row-shows-a-stale-or-missing-image)
 - [Static list map taps don't fire](#static-list-map-taps-dont-fire)
 - [`mapType` / `mapId` ignored on Android list maps](#maptype--mapid-ignored-on-android-list-maps)
+- [Indoor floor plans missing on an Android map](#indoor-floor-plans-missing-on-an-android-map)
 - [GeoJSON renders in the wrong place](#geojson-renders-in-the-wrong-place)
 - [GeoJSON key warnings or flicker](#geojson-key-warnings-or-flicker)
 - [Polyline `onPress` doesn't exist](#polyline-onpress-doesnt-exist)
@@ -145,7 +146,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 ## Static maps in a list are slow or crash the app
 
-**Cause:** Too many rows mounted at once — every mounted static map holds a bitmap, and iOS Google warms up a live map per row.
+**Cause:** Too many rows mounted at once — every mounted static map holds a bitmap. iOS Google warms up a few live maps at a time, so long lists also load slower.
 
 **Fix:** Bound the list: `windowSize={5}`, `initialNumToRender={4}`, `maxToRenderPerBatch={4}`, `removeClippedSubviews`. Keep row maps small (≈140 pt). Set `staticKey` so iOS reuses images when rows recycle.
 
@@ -171,6 +172,14 @@ Common issues with `@lugg/maps`, organized by symptom.
 **Fix:** Accept the default style for lite maps, or render a small live map with all gestures disabled (`zoomEnabled={false} scrollEnabled={false} rotateEnabled={false} pitchEnabled={false}`) when styling matters more than memory.
 
 `theme` still works on lite maps: dark uses a built-in JSON style approximating Google's dark scheme (lite mode ignores the color scheme).
+
+## Indoor floor plans missing on an Android map
+
+**Symptom:** One Google map shows floor plans and the floor picker, another doesn't. Logcat: `LuggMaps: indoorEnabled: another map already shows indoor maps`.
+
+**Cause:** Google allows indoor maps on one Android map at a time. The first map to enable them keeps them until it turns them off or unmounts.
+
+**Fix:** Set `indoorEnabled={false}` on maps that don't need floor plans (e.g. a map on a screen under the current one).
 
 ## GeoJSON renders in the wrong place
 

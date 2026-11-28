@@ -9,8 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
  * the overlays, then is swapped with a rendered image and the map view is
  * pooled for reuse. Markers and shapes are overlay views (shared with
  * Apple static maps) that reveal with the base map, so the warmup map
- * never renders its own markers. Warmup cost scales with how many static
- * maps mount at once - bound that with list props (windowSize etc.).
+ * never renders its own markers. A few warmups run at a time; the rest
+ * wait their turn, so a long list loads gradually.
  */
 @interface GoogleStaticMapProvider : StaticMapProviderBase <GMSMapViewDelegate>
 
