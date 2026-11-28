@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol MapProviderDelegate <NSObject>
 - (void)mapProviderDidReady;
-- (void)mapProviderDidFinishStaticSnapshot;
 - (void)mapProviderDidCaptureStaticImage:(UIImage *)image;
 - (void)mapProviderDidMoveCamera:(double)latitude
                        longitude:(double)longitude

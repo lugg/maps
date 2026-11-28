@@ -231,7 +231,6 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 @implementation StaticMapProviderBase {
   BOOL _isMapReady;
-  BOOL _baseRenderDone;
   BOOL _overlaysRevealed;
 
   UIImageView *_baseImageView;
@@ -249,7 +248,6 @@ static NSInteger shapeZIndex(UIView *shape) {
     _defaultMarkerOverlays = [NSMapTable weakToStrongObjectsMapTable];
     _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
-    _indoorEnabled = YES;
   }
   return self;
 }
@@ -388,8 +386,8 @@ static NSInteger shapeZIndex(UIView *shape) {
   [self renderBaseMapIfNeeded];
 }
 
-// Camera commands invalidate any cached, displayed or in-flight base
-// render and re-render at the new camera
+// Camera commands and map-setting changes invalidate any cached, displayed
+// or in-flight base render and re-render with the new state
 - (void)rerenderBaseMap {
   [self cancelBaseRender];
   _baseRenderDone = NO;
@@ -407,25 +405,6 @@ static NSInteger shapeZIndex(UIView *shape) {
   });
 }
 
-// Any in-flight or completed base render shows the old camera framing or
-// map settings, and a capture would be cached under the new key. The
-// initial prop set lands before the first render, so the cached image
-// (keyed on those props) stays valid.
-- (void)restartBaseRender {
-  if (!_projectionReady)
-    return;
-
-  [self cancelBaseRender];
-  if (_baseRenderDone) {
-    _baseRenderDone = NO;
-    self.cachedBaseImage = nil;
-  }
-  __weak StaticMapProviderBase *weakSelf = self;
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
-  });
-}
-
 - (void)renderBaseMapIfNeeded {
   if (_baseRenderDone || !_projectionReady || !_wrapperView)
     return;
@@ -434,6 +413,11 @@ static NSInteger shapeZIndex(UIView *shape) {
     [self displayBaseImage:self.cachedBaseImage fromCache:YES];
     return;
   }
+
+  // Off-window renders are wasted (Google's warmup can't even swap);
+  // resumeAnimations retries on reattach
+  if (!_wrapperView.window)
+    return;
 
   [self renderBaseMap];
 }
@@ -452,7 +436,6 @@ static NSInteger shapeZIndex(UIView *shape) {
   if (!fromCache) {
     [_delegate mapProviderDidCaptureStaticImage:image];
   }
-  [_delegate mapProviderDidFinishStaticSnapshot];
   [_delegate mapProviderDidReady];
 }
 
@@ -492,21 +475,17 @@ static NSInteger shapeZIndex(UIView *shape) {
   if (_mapType == mapType)
     return;
   _mapType = mapType;
-  [self restartBaseRender];
+  [self rerenderBaseMap];
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
   if (_theme == theme)
     return;
   _theme = theme;
-  [self restartBaseRender];
+  [self rerenderBaseMap];
 }
 
 - (void)setIndoorEnabled:(BOOL)enabled {
-  if (_indoorEnabled == enabled)
-    return;
-  _indoorEnabled = enabled;
-  [self restartBaseRender];
 }
 
 - (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
@@ -542,12 +521,7 @@ static NSInteger shapeZIndex(UIView *shape) {
   if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, edgeInsets))
     return;
   _edgeInsets = edgeInsets;
-
-  if (!_projectionReady)
-    return;
-
-  [self updateProjection];
-  [self restartBaseRender];
+  [self rerenderBaseMap];
 }
 
 // Static maps don't animate; apply the final insets directly
