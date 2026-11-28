@@ -232,8 +232,11 @@ static NSInteger shapeZIndex(UIView *shape) {
 @implementation StaticMapProviderBase {
   BOOL _isMapReady;
   BOOL _overlaysRevealed;
+  BOOL _baseRenderScheduled;
 
   UIImageView *_baseImageView;
+  // The projection the displayed base image was rendered for
+  MKMapRect _baseImageMapRect;
   LuggStaticShapeOverlayView *_shapeOverlayView;
   NSMutableArray<LuggMarkerView *> *_markerViews;
   NSMapTable<LuggMarkerView *, UIView *> *_defaultMarkerOverlays;
@@ -289,9 +292,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 
   // Start after the current mount pass so map settings props applied right
   // after this call shape the base render
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
-  });
+  [self scheduleBaseRender];
 }
 
 - (void)destroy {
@@ -380,6 +381,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 
   // Any in-flight or completed base render targets the old size
   [self cancelBaseRender];
+  [self hideOverlaysOverPlaceholder];
   _baseRenderDone = NO;
   self.cachedBaseImage = nil;
 
@@ -390,6 +392,7 @@ static NSInteger shapeZIndex(UIView *shape) {
 // or in-flight base render and re-render with the new state
 - (void)rerenderBaseMap {
   [self cancelBaseRender];
+  [self hideOverlaysOverPlaceholder];
   _baseRenderDone = NO;
   self.cachedBaseImage = nil;
 
@@ -398,10 +401,22 @@ static NSInteger shapeZIndex(UIView *shape) {
     return;
 
   [self updateProjection];
+  [self scheduleBaseRender];
+}
+
+// Coalesces the setting changes of one update pass into a single render
+- (void)scheduleBaseRender {
+  if (_baseRenderScheduled)
+    return;
+  _baseRenderScheduled = YES;
 
   __weak StaticMapProviderBase *weakSelf = self;
   dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
+    StaticMapProviderBase *strongSelf = weakSelf;
+    if (!strongSelf)
+      return;
+    strongSelf->_baseRenderScheduled = NO;
+    [strongSelf renderBaseMapIfNeeded];
   });
 }
 
@@ -430,6 +445,7 @@ static NSInteger shapeZIndex(UIView *shape) {
     [_wrapperView insertSubview:_baseImageView atIndex:0];
   }
   _baseImageView.image = image;
+  _baseImageMapRect = _mapRect;
   _baseRenderDone = YES;
   [self revealOverlays];
 
@@ -447,6 +463,30 @@ static NSInteger shapeZIndex(UIView *shape) {
   for (LuggMarkerView *markerView in _markerViews) {
     [self positionMarkerOverlay:markerView];
   }
+}
+
+// Overlays stay hidden over the placeholder; a displayed base image keeps
+// them up
+- (void)hideOverlaysOverPlaceholder {
+  if (!_overlaysRevealed || _baseImageView.image)
+    return;
+  _overlaysRevealed = NO;
+  _shapeOverlayView.hidden = YES;
+  for (LuggMarkerView *markerView in _markerViews) {
+    [self positionMarkerOverlay:markerView];
+  }
+}
+
+- (void)abandonBaseRender {
+  [self cancelBaseRender];
+  // An image from before a camera, inset or size change no longer lines up
+  // with the overlays, which already moved to the new projection
+  if (_baseImageView.image &&
+      !MKMapRectEqualToRect(_baseImageMapRect, _mapRect)) {
+    [_baseImageView removeFromSuperview];
+    _baseImageView = nil;
+  }
+  [self hideOverlaysOverPlaceholder];
 }
 
 #pragma mark - Subclass hooks

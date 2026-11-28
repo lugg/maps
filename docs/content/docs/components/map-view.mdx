@@ -34,7 +34,7 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
-| `indoorEnabled` | `boolean` | `true` | Show indoor floor plans and the floor picker (Google Maps on iOS and Android). Android shows them on only one map at a time |
+| `indoorEnabled` | `boolean` | `true` | Show indoor floor plans and the floor picker (Google Maps on iOS and Android) |
 | `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
 | `staticKey` | `string` | - | Stable identity for the static snapshot cache (iOS). See [Static Maps](#static-maps) |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
@@ -64,6 +64,8 @@ mounting many live maps is expensive:
   full-screen maps) fall back to a full map with all gestures disabled.
   Lite mode also ignores `indoorEnabled`, so floor plans in its tiles stay
   visible.
+  Lite mode renders whole zoom levels only, so a fractional zoom rounds to
+  the nearest level (`fitCoordinates` rounds down so the coordinates fit).
 - **iOS (Apple)** - `MKMapSnapshotter` renders the base map off the main
   thread, so static maps keep loading while scrolling. With nonzero
   `edgeInsets`, a temporary `MKMapView` renders the image to keep Apple Maps
@@ -75,9 +77,10 @@ mounting many live maps is expensive:
   exactly like Apple static maps. Only the base map needs the SDK (which
   has no async snapshotter): a live, tiles-only map warms up briefly under
   the overlays and is replaced with a rendered image once tiles finish
-  loading, releasing the map's rendering resources. Warmup work scales
-  with how many rows mount at once - bound it with your list's
-  `windowSize` / `initialNumToRender` / `maxToRenderPerBatch`.
+  loading, releasing the map's rendering resources. Only a few maps warm
+  up at a time; the rest wait their turn, so a long list loads gradually.
+  A map whose tiles fail (e.g. offline) gives way to waiting maps after a
+  few seconds.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
   events are disabled; the map itself stays live.
 
@@ -103,8 +106,9 @@ Notes:
 - Ref methods (`moveCamera`, `fitCoordinates`, `setEdgeInsets`) work like on
   a live map, minus animation - `duration` is ignored and the map re-renders
   at the final camera (iOS) or re-centers (Android). On iOS, `mapType`,
-  `theme` and `indoorEnabled` updates re-render the base map; other
-  map-setting props (e.g. `poiFilter`) are ignored after the snapshot.
+  `theme`, `indoorEnabled`, `poiEnabled` and `poiFilter` updates re-render
+  the base map, and so does a system appearance change with
+  `theme="system"`.
 - Static maps never show the indoor floor picker.
 - `edgeInsets` shift the visible center like on a live map, so the
   coordinate centers in the inset viewport without changing the zoom.
@@ -128,11 +132,12 @@ Notes:
   re-render from props). The camera and map settings are part of the
   cache key automatically. Changing `staticKey` discards the current
   image and re-renders, and insets set with `setEdgeInsets` give way to
-  the `edgeInsets` prop. The cache is bounded by count and total memory.
+  the `edgeInsets` prop. The cache is bounded by total memory (128 MB).
 - On iOS (Google), the base map is only captured and cached once the SDK
   reports the map stable with all tiles loaded. If tiles fail (e.g.
-  offline), the live warmup map stays in place instead and renders again
-  the next time the row appears, so a bad render can't get stuck behind
+  offline), the live warmup map stays in place instead (or the
+  placeholder, once a waiting map takes its turn) and renders again the
+  next time the row appears, so a bad render can't get stuck behind
   `staticKey`. To force it, call `reload()` on the ref.
 - Alternatively, keeping rows mounted (larger `windowSize` with
   `removeClippedSubviews`) avoids re-rendering entirely at the cost of

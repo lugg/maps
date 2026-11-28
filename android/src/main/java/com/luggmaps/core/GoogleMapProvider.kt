@@ -53,9 +53,11 @@ import com.luggmaps.LuggTileOverlayViewDelegate
 import com.luggmaps.extensions.findViewByTag
 import java.net.URL
 import kotlin.math.atan
+import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.log2
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sinh
 
@@ -234,14 +236,16 @@ class GoogleMapProvider(private val context: Context) :
     // view in it
     mapView?.let { wrapperView?.removeView(it) }
     wrapperView = null
-    googleMap?.setOnCameraMoveStartedListener(null)
-    googleMap?.setOnCameraMoveListener(null)
-    googleMap?.setOnCameraIdleListener(null)
+    if (!isLiteMode) {
+      googleMap?.setOnCameraMoveStartedListener(null)
+      googleMap?.setOnCameraMoveListener(null)
+      googleMap?.setOnCameraIdleListener(null)
+      googleMap?.setOnGroundOverlayClickListener(null)
+    }
     googleMap?.setOnMapClickListener(null)
     googleMap?.setOnMapLongClickListener(null)
     googleMap?.setOnPolygonClickListener(null)
     googleMap?.setOnCircleClickListener(null)
-    googleMap?.setOnGroundOverlayClickListener(null)
     googleMap?.setOnMarkerClickListener(null)
     googleMap?.setOnMarkerDragListener(null)
     googleMap?.setInfoWindowAdapter(null)
@@ -274,16 +278,21 @@ class GoogleMapProvider(private val context: Context) :
     applyEdgeInsets()
 
     val position = if (staticMode) staticCameraTarget() else LatLng(initialLatitude, initialLongitude)
-    map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, initialZoom))
+    map.moveCamera(CameraUpdateFactory.newLatLngZoom(position, renderZoom))
 
-    map.setOnCameraMoveStartedListener(this)
-    map.setOnCameraMoveListener(this)
-    map.setOnCameraIdleListener(this)
+    // Lite mode doesn't support these listeners and logs a warning on the
+    // call; its camera never moves on its own and its overlays aren't
+    // clickable
+    if (!isLiteMode) {
+      map.setOnCameraMoveStartedListener(this)
+      map.setOnCameraMoveListener(this)
+      map.setOnCameraIdleListener(this)
+      map.setOnGroundOverlayClickListener(this)
+    }
     map.setOnMapClickListener(this)
     map.setOnMapLongClickListener(this)
     map.setOnPolygonClickListener(this)
     map.setOnCircleClickListener(this)
-    map.setOnGroundOverlayClickListener(this)
     map.setOnMarkerClickListener(this)
     map.setOnMarkerDragListener(this)
     map.setInfoWindowAdapter(this)
@@ -1363,7 +1372,7 @@ class GoogleMapProvider(private val context: Context) :
       initialLongitude = longitude
       if (zoom > 0) initialZoom = zoom.toFloat()
       val map = googleMap ?: return
-      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), renderZoom))
       positionLiveMarkers()
       return
     }
@@ -1524,17 +1533,23 @@ class GoogleMapProvider(private val context: Context) :
 
     val map = googleMap
     if (map != null && oldInsets != edgeInsets) {
-      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), renderZoom))
       positionLiveMarkers()
     }
   }
+
+  // Lite mode rounds the zoom to the nearest integer and logs a warning for
+  // a fractional one. Round it here so the inset and fit math uses the zoom
+  // the map renders.
+  private val renderZoom: Float
+    get() = if (isLiteMode) initialZoom.roundToInt().toFloat() else initialZoom
 
   private fun staticCameraTarget(): LatLng {
     val offsetX = (edgeInsets.left - edgeInsets.right) / 2.0
     val offsetY = (edgeInsets.top - edgeInsets.bottom) / 2.0
     if (offsetX == 0.0 && offsetY == 0.0) return LatLng(initialLatitude, initialLongitude)
 
-    val worldSize = mercatorWorldSize(initialZoom)
+    val worldSize = mercatorWorldSize(renderZoom)
     return latLngFromMercator(
       mercatorX(initialLongitude) - offsetX / worldSize,
       mercatorY(initialLatitude) - offsetY / worldSize
@@ -1576,12 +1591,14 @@ class GoogleMapProvider(private val context: Context) :
     // infinite for coincident coordinates - keep the current zoom then
     val fitWorldSize = minOf(availWidth / (maxX - minX), availHeight / (maxY - minY))
     if (fitWorldSize.isFinite()) {
-      initialZoom = log2(fitWorldSize / 256f.dpToPx())
+      val fitZoom = log2(fitWorldSize / 256f.dpToPx())
         .toFloat()
         .coerceIn(map.minZoomLevel, map.maxZoomLevel)
+      // Round down on lite maps so the bounds still fit
+      initialZoom = if (isLiteMode) floor(fitZoom) else fitZoom
     }
 
-    val worldSize = mercatorWorldSize(initialZoom)
+    val worldSize = mercatorWorldSize(renderZoom)
     val center = latLngFromMercator(
       (minX + maxX) / 2.0 - (left - right) / 2.0 / worldSize,
       (minY + maxY) / 2.0 - (top - bottom) / 2.0 / worldSize
@@ -1589,7 +1606,7 @@ class GoogleMapProvider(private val context: Context) :
     initialLatitude = center.latitude
     initialLongitude = center.longitude
 
-    map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), initialZoom))
+    map.moveCamera(CameraUpdateFactory.newLatLngZoom(staticCameraTarget(), renderZoom))
     positionLiveMarkers()
   }
 

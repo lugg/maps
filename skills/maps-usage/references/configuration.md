@@ -125,7 +125,7 @@ export function App() {
 | `poiEnabled` | `boolean` | `true` | 🍎 | Show points of interest. `false` hides all POIs regardless of `poiFilter` |
 | `poiFilter` | `PoiFilter` | — | 🍎 | `{ mode?: 'including' \| 'excluding', categories: PoiCategory[] }`. Only when `poiEnabled` |
 | `compassEnabled` | `boolean` | `true` | 🍎🅶🤖🌐 | Compass. On web toggles the rotate control |
-| `indoorEnabled` | `boolean` | `true` | 🅶🤖 | Indoor floor plans and the floor picker. `false` turns off both. Android: one map at a time; lite static maps ignore it. Static maps never show the picker |
+| `indoorEnabled` | `boolean` | `true` | 🅶🤖 | Indoor floor plans and the floor picker. `false` turns off both. Android lite static maps ignore it. Static maps never show the picker |
 | `poiClickEnabled` | `boolean` | `true` | 🌐 | `false` stops place-label clicks from opening Google's place card. Static maps never open it |
 
 ### Camera
@@ -159,11 +159,12 @@ export function App() {
 Static-mode behavior notes:
 
 - Ref methods work without animation (`duration` ignored). iOS re-renders at the final camera; Android re-centers.
-- iOS: `mapType`, `theme` and `indoorEnabled` updates re-render the base map; other map-setting props (e.g. `poiFilter`) are ignored after the snapshot.
+- Android lite maps render whole zoom levels: fractional zoom rounds to the nearest level, `fitCoordinates` rounds down.
+- iOS: `mapType`, `theme`, `indoorEnabled`, `poiEnabled` and `poiFilter` updates re-render the base map, as does a system appearance change with `theme="system"`.
 - `animated` polylines render complete. Tile overlays are not supported on iOS static maps.
 - Markers stay live views over the base image on iOS; marker prop updates still apply.
 - A theme-aware placeholder shows while loading; set `style.backgroundColor` to override.
-- iOS Google: the base map is captured once tiles finish loading. If tiles fail (offline), the live warm-up map stays and retries next time the row appears. `reload()` forces it.
+- iOS Google: the base map is captured once tiles finish loading. If tiles fail (offline), the live warm-up map stays (or the placeholder, once a waiting row takes its turn) and retries next time the row appears. `reload()` forces it.
 
 ### Location
 

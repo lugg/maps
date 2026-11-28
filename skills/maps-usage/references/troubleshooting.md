@@ -145,7 +145,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 ## Static maps in a list are slow or crash the app
 
-**Cause:** Too many rows mounted at once — every mounted static map holds a bitmap, and iOS Google warms up a live map per row.
+**Cause:** Too many rows mounted at once — every mounted static map holds a bitmap. iOS Google warms up a few live maps at a time, so long lists also load slower.
 
 **Fix:** Bound the list: `windowSize={5}`, `initialNumToRender={4}`, `maxToRenderPerBatch={4}`, `removeClippedSubviews`. Keep row maps small (≈140 pt). Set `staticKey` so iOS reuses images when rows recycle.
 

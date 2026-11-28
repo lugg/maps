@@ -47,11 +47,108 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   [views addObject:mapView];
 }
 
+// A setting change (or a list mounting) re-renders every static map at
+// once. Warmups beyond the limit wait in FIFO order; at the pool capacity
+// each finished warmup returns its map view to the pool for the next one.
+static const NSUInteger kMaxConcurrentWarmups = kStaticMapViewPoolCapacity;
+
+// A warmup whose tiles failed (e.g. offline) never becomes stable and would
+// hold its slot until it leaves the window. After this grace period, a
+// waiting map takes its slot; one still loading tiles keeps it.
+static const NSTimeInterval kWarmupTimeout = 5.0;
+// A successful tile render turns stable shortly after it finishes
+static const NSTimeInterval kStableGrace = 1.0;
+
+static NSPointerArray *PendingWarmups(void) {
+  static NSPointerArray *pending;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    pending = [NSPointerArray weakObjectsPointerArray];
+  });
+  return pending;
+}
+
+// Oldest first
+static NSPointerArray *ActiveWarmups(void) {
+  static NSPointerArray *active;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    active = [NSPointerArray weakObjectsPointerArray];
+  });
+  return active;
+}
+
+@interface GoogleStaticMapProvider ()
+@property(nonatomic, readonly) BOOL needsWarmup;
+@property(nonatomic, readonly) BOOL warmupStalled;
+- (void)startWarmup;
+- (void)destroyWarmupMapView;
+@end
+
+static void RemoveWarmup(NSPointerArray *warmups,
+                         GoogleStaticMapProvider *provider) {
+  for (NSInteger i = (NSInteger)warmups.count - 1; i >= 0; i--) {
+    void *pointer = [warmups pointerAtIndex:i];
+    // Released providers leave NULL entries behind
+    if (!pointer || pointer == (__bridge void *)provider) {
+      [warmups removePointerAtIndex:i];
+    }
+  }
+}
+
+// The reclaimed map shows the placeholder and retries when it returns to
+// the window or on reload(), not right away: requeueing would cycle failing
+// maps through the slots for as long as the list is offline
+static BOOL ReclaimStalledWarmup(void) {
+  NSPointerArray *active = ActiveWarmups();
+  for (NSUInteger i = 0; i < active.count; i++) {
+    GoogleStaticMapProvider *provider =
+        (__bridge GoogleStaticMapProvider *)[active pointerAtIndex:i];
+    if (provider.warmupStalled) {
+      [provider abandonBaseRender];
+      return YES;
+    }
+  }
+  return NO;
+}
+
+// Deferred so a settings change that cancels warmups mid-update doesn't
+// start pending maps that are about to get the same change
+static void SchedulePendingWarmups(void) {
+  static BOOL scheduled = NO;
+  if (scheduled)
+    return;
+  scheduled = YES;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    scheduled = NO;
+    NSPointerArray *pending = PendingWarmups();
+    while (pending.count > 0) {
+      GoogleStaticMapProvider *provider =
+          (__bridge GoogleStaticMapProvider *)[pending pointerAtIndex:0];
+      // Left the window or rendered from another path while it waited;
+      // resumeAnimations queues it again on return
+      if (!provider.needsWarmup) {
+        [pending removePointerAtIndex:0];
+        continue;
+      }
+      if (ActiveWarmups().count >= kMaxConcurrentWarmups &&
+          !ReclaimStalledWarmup())
+        break;
+      [pending removePointerAtIndex:0];
+      [provider startWarmup];
+    }
+  });
+}
+
 @implementation GoogleStaticMapProvider {
   GMSMapView *_warmupMapView;
   BOOL _snapshotReady;
   BOOL _swapScheduled;
   BOOL _indoorEnabled;
+  BOOL _tilesRendering;
+  CFTimeInterval _tilesFinishedTime;
+  BOOL _warmupTimedOut;
+  NSUInteger _warmupGeneration;
 }
 
 - (instancetype)init {
@@ -101,10 +198,18 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
     [self scheduleSwap];
     return;
   }
-  [self startWarmup];
+  RemoveWarmup(PendingWarmups(), self);
+  [PendingWarmups() addPointer:(__bridge void *)self];
+  SchedulePendingWarmups();
 }
 
 - (void)cancelBaseRender {
+  RemoveWarmup(PendingWarmups(), self);
+  [self destroyWarmupMapView];
+}
+
+// Frees the warmup slot of a provider dropped without destroy
+- (void)dealloc {
   [self destroyWarmupMapView];
 }
 
@@ -122,6 +227,9 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
     return;
 
   _snapshotReady = NO;
+  _tilesRendering = NO;
+  _tilesFinishedTime = 0;
+  _warmupTimedOut = NO;
 
   GMSMapView *mapView = DequeueStaticMapView([self poolKey]);
   if (mapView) {
@@ -158,7 +266,39 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 
   _warmupMapView = mapView;
+  [ActiveWarmups() addPointer:(__bridge void *)self];
   [wrapperView insertSubview:mapView atIndex:0];
+
+  NSUInteger generation = ++_warmupGeneration;
+  __weak GoogleStaticMapProvider *weakSelf = self;
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                               (int64_t)(kWarmupTimeout * NSEC_PER_SEC)),
+                 dispatch_get_main_queue(), ^{
+                   GoogleStaticMapProvider *strongSelf = weakSelf;
+                   if (strongSelf &&
+                       strongSelf->_warmupGeneration == generation) {
+                     [strongSelf warmupDidTimeOut];
+                   }
+                 });
+}
+
+- (void)warmupDidTimeOut {
+  if (!_warmupMapView)
+    return;
+  _warmupTimedOut = YES;
+  SchedulePendingWarmups();
+}
+
+- (BOOL)needsWarmup {
+  return !_warmupMapView && !self.baseRenderDone && self.wrapperView.window;
+}
+
+// Checked whenever a waiting map needs a slot, so a warmup that renders
+// again (e.g. tiles invalidated before its swap) can still give way later
+- (BOOL)warmupStalled {
+  return _warmupMapView && _warmupTimedOut && !_tilesRendering &&
+         !_snapshotReady &&
+         CACurrentMediaTime() - _tilesFinishedTime >= kStableGrace;
 }
 
 - (void)destroyWarmupMapView {
@@ -168,6 +308,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   [_warmupMapView removeFromSuperview];
   EnqueueStaticMapView([self poolKey], _warmupMapView);
   _warmupMapView = nil;
+  RemoveWarmup(ActiveWarmups(), self);
+  SchedulePendingWarmups();
 }
 
 // Once the map is stable, swap the live map with its image and release the
@@ -211,6 +353,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 
 - (void)mapViewDidStartTileRendering:(GMSMapView *)mapView {
   _snapshotReady = NO;
+  _tilesRendering = YES;
 }
 
 // Fires for tiles that failed permanently too, so it can't gate the swap:
@@ -219,13 +362,23 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
 // overlays now instead of waiting for the swap, which is deferred while
 // scrolling
 - (void)mapViewDidFinishTileRendering:(GMSMapView *)mapView {
+  _tilesRendering = NO;
+  _tilesFinishedTime = CACurrentMediaTime();
   [self revealOverlays];
+  // Still not stable after the grace (and past the timeout) means tiles
+  // failed; a waiting map can take over
+  dispatch_after(
+      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kStableGrace * NSEC_PER_SEC)),
+      dispatch_get_main_queue(), ^{
+        SchedulePendingWarmups();
+      });
 }
 
 // Stable per the SDK: tiles loaded, labels and overlays rendered. The only
 // signal that the render is complete, so the only one that captures and
 // caches. Without it (e.g. offline) the live map stays until the view
-// leaves the window, and a fresh warmup runs on return.
+// leaves the window or a waiting map takes its slot, and a fresh warmup
+// runs on return.
 - (void)mapViewSnapshotReady:(GMSMapView *)mapView {
   _snapshotReady = YES;
   [self revealOverlays];
