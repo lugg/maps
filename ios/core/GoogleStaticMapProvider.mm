@@ -51,6 +51,21 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   GMSMapView *_warmupMapView;
   BOOL _snapshotReady;
   BOOL _swapScheduled;
+  BOOL _indoorEnabled;
+}
+
+- (instancetype)init {
+  if (self = [super init]) {
+    _indoorEnabled = YES;
+  }
+  return self;
+}
+
+- (void)setIndoorEnabled:(BOOL)enabled {
+  if (_indoorEnabled == enabled)
+    return;
+  _indoorEnabled = enabled;
+  [self rerenderBaseMap];
 }
 
 #pragma mark - StaticMapProviderBase
@@ -137,6 +152,9 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   // padding on pooled views)
   mapView.padding = self.edgeInsets;
   mapView.mapType = LuggGMSMapTypeFromMapType(self.mapType);
+  mapView.indoorEnabled = _indoorEnabled;
+  // The snapshot would bake in a dead floor picker
+  mapView.settings.indoorPicker = NO;
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 
   _warmupMapView = mapView;

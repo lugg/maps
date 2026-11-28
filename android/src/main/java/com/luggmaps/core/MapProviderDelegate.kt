@@ -31,6 +31,7 @@ interface MapProvider {
   fun setRotateEnabled(enabled: Boolean)
   fun setPitchEnabled(enabled: Boolean)
   fun setCompassEnabled(enabled: Boolean)
+  fun setIndoorEnabled(enabled: Boolean)
   fun setUserLocationEnabled(enabled: Boolean)
   fun setUserLocationButtonEnabled(enabled: Boolean)
   fun setMapType(value: String)

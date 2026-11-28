@@ -112,6 +112,7 @@ export const MapView = memo(
       scrollEnabled = true,
       pitchEnabled = true,
       compassEnabled = true,
+      poiClickEnabled = true,
       staticMode = false,
       edgeInsets,
       userLocationEnabled,
@@ -516,7 +517,7 @@ export const MapView = memo(
             colorScheme={colorScheme}
             disableDefaultUI
             rotateControl={staticMode ? false : compassEnabled}
-            clickableIcons={!staticMode}
+            clickableIcons={!staticMode && poiClickEnabled}
             keyboardShortcuts={!staticMode}
             isFractionalZoomEnabled
             tilt={pitchEnabled === false ? 0 : undefined}

@@ -57,9 +57,9 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
+  BOOL _indoorEnabled;
   BOOL _staticMode;
   NSString *_staticKey;
-  BOOL _staticSnapshotDone;
   BOOL _userLocationEnabled;
   LuggMapViewMapType _mapType;
   LuggMapViewTheme _theme;
@@ -91,6 +91,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _compassEnabled = YES;
+    _indoorEnabled = YES;
     _staticMode = NO;
     _staticKey = @"";
     _userLocationEnabled = NO;
@@ -205,7 +206,8 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     // A static map mid-warmup may hold an expensive live map view. Destroy
     // it off-window and re-render on return instead of letting paused maps
     // pile up across screen switches and all resume at once
-    if (_staticMode && _provider && !_staticSnapshotDone) {
+    if ([_provider isKindOfClass:[StaticMapProviderBase class]] &&
+        !((StaticMapProviderBase *)_provider).baseRenderDone) {
       [_provider destroy];
       _provider = nil;
       _initialized = NO;
@@ -267,11 +269,18 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     zoom = staticProvider.zoom;
   }
 
+  // Only Google renders indoor maps; Apple also serves provider="google"
+  // when the Google SDK is excluded
+  BOOL indoorEnabled =
+      _indoorEnabled &&
+      ![_provider isKindOfClass:[AppleStaticMapProvider class]];
+
   return [NSString
-      stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
+      stringWithFormat:@"%@|%d|%@|%d|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
                        _staticKey, (int)_providerType, _mapId, (int)_mapType,
-                       (long)style, size.width, size.height, latitude,
-                       longitude, zoom, NSStringFromUIEdgeInsets(_edgeInsets)];
+                       (int)indoorEnabled, (long)style, size.width, size.height,
+                       latitude, longitude, zoom,
+                       NSStringFromUIEdgeInsets(_edgeInsets)];
 }
 
 - (void)startStaticContent {
@@ -289,7 +298,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 // warmup caches the old item's map under the new key. Insets from the
 // setEdgeInsets command belong to the old item, so the prop insets return.
 - (void)resetStaticContent {
-  _staticSnapshotDone = NO;
   _edgeInsets = _edgeInsetsProp;
 
   if (_provider) {
@@ -306,7 +314,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 - (void)prepareForRecycle {
   [super prepareForRecycle];
 
-  _staticSnapshotDone = NO;
   _edgeInsets = UIEdgeInsetsZero;
   _edgeInsetsProp = UIEdgeInsetsZero;
 
@@ -363,7 +370,12 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
                initialCoordinate:coordinate
                      initialZoom:zoom];
 
-  // After initializeMapInView so the cache key reads the provider's camera;
+  // Apply cached props after map view is created
+  [self applyProps];
+  [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:UIEdgeInsetsZero];
+
+  // After initializeMapInView so the cache key reads the provider's camera,
+  // and after the props so later setting changes drop the pending image;
   // the base render is async and picks up the cached image
   if (_staticMode) {
     NSString *cacheKey = [self staticSnapshotCacheKey];
@@ -372,10 +384,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
           [StaticSnapshotCache() objectForKey:cacheKey];
     }
   }
-
-  // Apply cached props after map view is created
-  [self applyProps];
-  [_provider setEdgeInsets:_edgeInsets oldEdgeInsets:UIEdgeInsetsZero];
 
   _initialized = YES;
 
@@ -401,10 +409,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 
 - (void)mapProviderDidReady {
   ReadyEvent::emit<LuggMapViewEventEmitter>(_eventEmitter);
-}
-
-- (void)mapProviderDidFinishStaticSnapshot {
-  _staticSnapshotDone = YES;
 }
 
 - (void)mapProviderDidCaptureStaticImage:(UIImage *)image {
@@ -456,6 +460,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [_provider setRotateEnabled:_rotateEnabled];
   [_provider setPitchEnabled:_pitchEnabled];
   [_provider setCompassEnabled:_compassEnabled];
+  [_provider setIndoorEnabled:_indoorEnabled];
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
   [_provider setTheme:_theme];
@@ -508,6 +513,10 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (newViewProps.compassEnabled != prevViewProps.compassEnabled) {
     _compassEnabled = newViewProps.compassEnabled;
     [_provider setCompassEnabled:_compassEnabled];
+  }
+  if (newViewProps.indoorEnabled != prevViewProps.indoorEnabled) {
+    _indoorEnabled = newViewProps.indoorEnabled;
+    [_provider setIndoorEnabled:_indoorEnabled];
   }
   if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
     _userLocationEnabled = newViewProps.userLocationEnabled;
@@ -621,7 +630,6 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
 // reset) with children re-added.
 - (void)reload {
   if (_staticMode) {
-    _staticSnapshotDone = NO;
     NSString *cacheKey = [self staticSnapshotCacheKey];
     if (cacheKey) {
       [StaticSnapshotCache() removeObjectForKey:cacheKey];

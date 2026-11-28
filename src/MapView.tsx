@@ -26,6 +26,7 @@ export class MapView
     rotateEnabled: true,
     pitchEnabled: true,
     compassEnabled: true,
+    indoorEnabled: true,
     poiEnabled: true,
     theme: 'system',
   };
@@ -101,6 +102,7 @@ export class MapView
       rotateEnabled,
       pitchEnabled,
       compassEnabled,
+      indoorEnabled,
       staticMode,
       staticKey,
       edgeInsets,
@@ -108,6 +110,8 @@ export class MapView
       userLocationButtonEnabled,
       poiEnabled,
       poiFilter,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- web only, kept off the native view
+      poiClickEnabled,
       theme,
       insetAdjustment,
       idleFrameRate,
@@ -136,6 +140,7 @@ export class MapView
         rotateEnabled={rotateEnabled}
         pitchEnabled={pitchEnabled}
         compassEnabled={compassEnabled}
+        indoorEnabled={indoorEnabled}
         staticMode={staticMode}
         staticKey={staticKey}
         edgeInsets={edgeInsets}

@@ -231,7 +231,6 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 @implementation StaticMapProviderBase {
   BOOL _isMapReady;
-  BOOL _baseRenderDone;
   BOOL _overlaysRevealed;
 
   UIImageView *_baseImageView;
@@ -387,8 +386,8 @@ static NSInteger shapeZIndex(UIView *shape) {
   [self renderBaseMapIfNeeded];
 }
 
-// Camera commands invalidate any cached, displayed or in-flight base
-// render and re-render at the new camera
+// Camera commands and map-setting changes invalidate any cached, displayed
+// or in-flight base render and re-render with the new state
 - (void)rerenderBaseMap {
   [self cancelBaseRender];
   _baseRenderDone = NO;
@@ -415,6 +414,11 @@ static NSInteger shapeZIndex(UIView *shape) {
     return;
   }
 
+  // Off-window renders are wasted (Google's warmup can't even swap);
+  // resumeAnimations retries on reattach
+  if (!_wrapperView.window)
+    return;
+
   [self renderBaseMap];
 }
 
@@ -432,7 +436,6 @@ static NSInteger shapeZIndex(UIView *shape) {
   if (!fromCache) {
     [_delegate mapProviderDidCaptureStaticImage:image];
   }
-  [_delegate mapProviderDidFinishStaticSnapshot];
   [_delegate mapProviderDidReady];
 }
 
@@ -469,11 +472,20 @@ static NSInteger shapeZIndex(UIView *shape) {
 #pragma mark - Props
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
+  if (_mapType == mapType)
+    return;
   _mapType = mapType;
+  [self rerenderBaseMap];
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
+  if (_theme == theme)
+    return;
   _theme = theme;
+  [self rerenderBaseMap];
+}
+
+- (void)setIndoorEnabled:(BOOL)enabled {
 }
 
 - (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
@@ -509,24 +521,7 @@ static NSInteger shapeZIndex(UIView *shape) {
   if (UIEdgeInsetsEqualToEdgeInsets(_edgeInsets, edgeInsets))
     return;
   _edgeInsets = edgeInsets;
-
-  if (!_projectionReady)
-    return;
-
-  [self updateProjection];
-
-  // Any in-flight or completed base render targets the old projection. The
-  // initial prop set lands before the first render, so the cached image
-  // (keyed on insets) stays valid.
-  [self cancelBaseRender];
-  if (_baseRenderDone) {
-    _baseRenderDone = NO;
-    self.cachedBaseImage = nil;
-  }
-  __weak StaticMapProviderBase *weakSelf = self;
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
-  });
+  [self rerenderBaseMap];
 }
 
 // Static maps don't animate; apply the final insets directly

@@ -369,7 +369,7 @@ Differences to plan for:
 
 - Google only. `provider="apple"` is ignored.
 - Markers are Advanced Markers, so a `mapId` is required; the library falls back to `DEMO_MAP_ID`. Supply your own for production.
-- Ignored props: `rotateEnabled`, `poiEnabled`, `poiFilter`, `staticKey`, `insetAdjustment`, `userLocationButtonEnabled`.
+- Ignored props: `rotateEnabled`, `poiEnabled`, `poiFilter`, `indoorEnabled`, `staticKey`, `insetAdjustment`, `userLocationButtonEnabled`.
 - `staticMode` keeps a live map with gestures, POI clicks, keyboard shortcuts, and press events disabled.
 - `onLongPress` is emulated (500 ms mousedown without drag).
 - Markers round their position to whole pixels. For a marker moved every frame (Reanimated `animatedProps` works here too), `rasterize={false}` positions it between pixels. Markers with `title`, `callout` or `draggable` keep whole pixels.

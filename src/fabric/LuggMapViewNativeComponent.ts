@@ -71,6 +71,7 @@ export interface NativeProps extends ViewProps {
   rotateEnabled?: CodegenTypes.WithDefault<boolean, true>;
   pitchEnabled?: CodegenTypes.WithDefault<boolean, true>;
   compassEnabled?: CodegenTypes.WithDefault<boolean, true>;
+  indoorEnabled?: CodegenTypes.WithDefault<boolean, true>;
   staticMode?: boolean;
   staticKey?: string;
   edgeInsets?: EdgeInsets;
