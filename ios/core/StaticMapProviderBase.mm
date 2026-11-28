@@ -407,6 +407,25 @@ static NSInteger shapeZIndex(UIView *shape) {
   });
 }
 
+// Any in-flight or completed base render shows the old camera framing or
+// map settings, and a capture would be cached under the new key. The
+// initial prop set lands before the first render, so the cached image
+// (keyed on those props) stays valid.
+- (void)restartBaseRender {
+  if (!_projectionReady)
+    return;
+
+  [self cancelBaseRender];
+  if (_baseRenderDone) {
+    _baseRenderDone = NO;
+    self.cachedBaseImage = nil;
+  }
+  __weak StaticMapProviderBase *weakSelf = self;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [weakSelf renderBaseMapIfNeeded];
+  });
+}
+
 - (void)renderBaseMapIfNeeded {
   if (_baseRenderDone || !_projectionReady || !_wrapperView)
     return;
@@ -470,15 +489,24 @@ static NSInteger shapeZIndex(UIView *shape) {
 #pragma mark - Props
 
 - (void)setMapType:(LuggMapViewMapType)mapType {
+  if (_mapType == mapType)
+    return;
   _mapType = mapType;
+  [self restartBaseRender];
 }
 
 - (void)setTheme:(LuggMapViewTheme)theme {
+  if (_theme == theme)
+    return;
   _theme = theme;
+  [self restartBaseRender];
 }
 
 - (void)setIndoorEnabled:(BOOL)enabled {
+  if (_indoorEnabled == enabled)
+    return;
   _indoorEnabled = enabled;
+  [self restartBaseRender];
 }
 
 - (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {
@@ -519,19 +547,7 @@ static NSInteger shapeZIndex(UIView *shape) {
     return;
 
   [self updateProjection];
-
-  // Any in-flight or completed base render targets the old projection. The
-  // initial prop set lands before the first render, so the cached image
-  // (keyed on insets) stays valid.
-  [self cancelBaseRender];
-  if (_baseRenderDone) {
-    _baseRenderDone = NO;
-    self.cachedBaseImage = nil;
-  }
-  __weak StaticMapProviderBase *weakSelf = self;
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [weakSelf renderBaseMapIfNeeded];
-  });
+  [self restartBaseRender];
 }
 
 // Static maps don't animate; apply the final insets directly

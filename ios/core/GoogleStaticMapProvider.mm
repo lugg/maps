@@ -138,6 +138,8 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   mapView.padding = self.edgeInsets;
   mapView.mapType = LuggGMSMapTypeFromMapType(self.mapType);
   mapView.indoorEnabled = self.indoorEnabled;
+  // The snapshot would bake in a dead floor picker
+  mapView.settings.indoorPicker = NO;
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 
   _warmupMapView = mapView;

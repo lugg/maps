@@ -34,7 +34,7 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
-| `indoorEnabled` | `boolean` | `true` | Show indoor floor plans and the floor picker (Google Maps on iOS and Android) |
+| `indoorEnabled` | `boolean` | `true` | Show indoor floor plans and the floor picker (Google Maps on iOS and Android). Android shows them on only one map at a time |
 | `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
 | `staticKey` | `string` | - | Stable identity for the static snapshot cache (iOS). See [Static Maps](#static-maps) |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
@@ -62,6 +62,8 @@ mounting many live maps is expensive:
   not support cloud-based styling, so `mapId` is ignored on lite static maps.
   Lite mode caps its bitmap at ~2048px per dimension, so larger views (e.g.
   full-screen maps) fall back to a full map with all gestures disabled.
+  Lite mode also ignores `indoorEnabled`, so floor plans in its tiles stay
+  visible.
 - **iOS (Apple)** - `MKMapSnapshotter` renders the base map off the main
   thread, so static maps keep loading while scrolling. With nonzero
   `edgeInsets`, a temporary `MKMapView` renders the image to keep Apple Maps
@@ -100,8 +102,10 @@ Notes:
 - `staticMode` is creation-time only and cannot be toggled after the map is created.
 - Ref methods (`moveCamera`, `fitCoordinates`, `setEdgeInsets`) work like on
   a live map, minus animation - `duration` is ignored and the map re-renders
-  at the final camera (iOS) or re-centers (Android). Map-setting prop
-  updates (e.g. `mapType`) after the snapshot are still ignored on iOS.
+  at the final camera (iOS) or re-centers (Android). On iOS, `mapType`,
+  `theme` and `indoorEnabled` updates re-render the base map; other
+  map-setting props (e.g. `poiFilter`) are ignored after the snapshot.
+- Static maps never show the indoor floor picker.
 - `edgeInsets` shift the visible center like on a live map, so the
   coordinate centers in the inset viewport without changing the zoom.
   On iOS, attribution also respects these insets. Changing insets after the

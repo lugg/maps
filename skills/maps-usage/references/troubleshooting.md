@@ -166,7 +166,7 @@ Common issues with `@lugg/maps`, organized by symptom.
 
 ## `mapType` / `mapId` ignored on Android list maps
 
-**Cause:** Android lite mode doesn't support cloud styling; iOS static maps ignore map-setting prop changes after the snapshot.
+**Cause:** Android lite mode doesn't support cloud styling.
 
 **Fix:** Accept the default style for lite maps, or render a small live map with all gestures disabled (`zoomEnabled={false} scrollEnabled={false} rotateEnabled={false} pitchEnabled={false}`) when styling matters more than memory.
 

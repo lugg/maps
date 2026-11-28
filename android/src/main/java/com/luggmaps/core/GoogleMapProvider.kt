@@ -295,7 +295,7 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     applyUiSettings()
-    map.setIndoorEnabled(indoorEnabled)
+    applyIndoorEnabled()
     applyZoomLimits()
     applyInsetAdjustment()
     applyTheme()
@@ -550,7 +550,7 @@ class GoogleMapProvider(private val context: Context) :
 
   override fun setIndoorEnabled(enabled: Boolean) {
     indoorEnabled = enabled
-    googleMap?.setIndoorEnabled(enabled)
+    applyIndoorEnabled()
   }
 
   @SuppressLint("MissingPermission")
@@ -1422,6 +1422,7 @@ class GoogleMapProvider(private val context: Context) :
         // The non-lite fallback is a full map; keep it behaving like a
         // static image (lite mode ignores gestures anyway)
         setAllGesturesEnabled(false)
+        if (!isLiteMode) isIndoorLevelPickerEnabled = false
         return
       }
       isZoomGesturesEnabled = zoomEnabled
@@ -1431,6 +1432,13 @@ class GoogleMapProvider(private val context: Context) :
       isCompassEnabled = compassEnabled
       isMyLocationButtonEnabled = userLocationButtonEnabled
     }
+  }
+
+  // Lite mode doesn't support indoor maps and logs a warning on the call;
+  // its tiles show floor plans regardless
+  private fun applyIndoorEnabled() {
+    if (isLiteMode) return
+    googleMap?.setIndoorEnabled(indoorEnabled)
   }
 
   private fun applyZoomLimits() {
