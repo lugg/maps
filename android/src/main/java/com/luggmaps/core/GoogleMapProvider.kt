@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.os.SystemClock
-import android.util.Log
 import android.view.Choreographer
 import android.view.View
 import android.view.ViewGroup
@@ -1448,12 +1447,7 @@ class GoogleMapProvider(private val context: Context) :
   // its tiles show floor plans regardless
   private fun applyIndoorEnabled() {
     if (isLiteMode) return
-    val map = googleMap ?: return
-    // Only one map at a time can show indoor maps; the first to enable them
-    // keeps them until it disables them or is destroyed
-    if (!map.setIndoorEnabled(indoorEnabled) && indoorEnabled) {
-      Log.w(TAG, "indoorEnabled: another map already shows indoor maps")
-    }
+    googleMap?.setIndoorEnabled(indoorEnabled)
   }
 
   private fun applyZoomLimits() {
@@ -1762,7 +1756,6 @@ class GoogleMapProvider(private val context: Context) :
 
   companion object {
     const val DEMO_MAP_ID = "DEMO_MAP_ID"
-    private const val TAG = "LuggMaps"
 
     // Undocumented cap on the lite mode bitmap (2048 minus a 2px border,
     // measured empirically)

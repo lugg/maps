@@ -125,7 +125,7 @@ export function App() {
 | `poiEnabled` | `boolean` | `true` | 🍎 | Show points of interest. `false` hides all POIs regardless of `poiFilter` |
 | `poiFilter` | `PoiFilter` | — | 🍎 | `{ mode?: 'including' \| 'excluding', categories: PoiCategory[] }`. Only when `poiEnabled` |
 | `compassEnabled` | `boolean` | `true` | 🍎🅶🤖🌐 | Compass. On web toggles the rotate control |
-| `indoorEnabled` | `boolean` | `true` | 🅶🤖 | Indoor floor plans and the floor picker. `false` turns off both. Android: one map at a time (the others log a warning); lite static maps ignore it. Static maps never show the picker |
+| `indoorEnabled` | `boolean` | `true` | 🅶🤖 | Indoor floor plans and the floor picker. `false` turns off both. Android lite static maps ignore it. Static maps never show the picker |
 | `poiClickEnabled` | `boolean` | `true` | 🌐 | `false` stops place-label clicks from opening Google's place card. Static maps never open it |
 
 ### Camera

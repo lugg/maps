@@ -287,7 +287,7 @@ Linear between keyframes, so add keyframes through corners. `times` instead of `
 14. **Static lists: `pointerEvents="none"` + `Pressable` wrapper, `staticKey` = row id, bounded `windowSize`.**
 15. **Bottom sheets: inset the viewport (`edgeInsets` / `setEdgeInsets`), don't shrink the map.**
 16. **`mapId` defaults to `DEMO_MAP_ID` on Google.** Supply your own cloud Map ID for production styling. Ignored by Android lite-mode static maps. On Apple it's a map configuration name.
-17. **Apple-only props:** `poiEnabled`, `poiFilter`, `'muted-standard'`. `'terrain'` falls back to standard on Apple. **Android-only:** `userLocationButtonEnabled`. **Google-only:** `GroundOverlay.bearing`, `indoorEnabled` (Android: one map at a time). **Web-only:** `poiClickEnabled`.
+17. **Apple-only props:** `poiEnabled`, `poiFilter`, `'muted-standard'`. `'terrain'` falls back to standard on Apple. **Android-only:** `userLocationButtonEnabled`. **Google-only:** `GroundOverlay.bearing`, `indoorEnabled`. **Web-only:** `poiClickEnabled`.
 
 ## Platform Differences at a Glance
 
