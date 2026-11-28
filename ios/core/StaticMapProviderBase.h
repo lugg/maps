@@ -54,6 +54,12 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 /// visible earlier (e.g. a live warmup map) can call it sooner.
 - (void)revealOverlays;
 
+/// Cancels the in-flight base render without a replacement image (e.g. a
+/// stalled warmup gives up its slot). A displayed image rendered for another
+/// projection is removed, and the overlays hide over the placeholder until
+/// the next render reveals them.
+- (void)abandonBaseRender;
+
 #pragma mark - Subclass hooks
 
 /// The map rect the base render covers for the given view size; must match

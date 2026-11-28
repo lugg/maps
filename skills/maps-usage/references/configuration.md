@@ -164,7 +164,7 @@ Static-mode behavior notes:
 - `animated` polylines render complete. Tile overlays are not supported on iOS static maps.
 - Markers stay live views over the base image on iOS; marker prop updates still apply.
 - A theme-aware placeholder shows while loading; set `style.backgroundColor` to override.
-- iOS Google: the base map is captured once tiles finish loading. If tiles fail (offline), the live warm-up map stays and retries next time the row appears. `reload()` forces it.
+- iOS Google: the base map is captured once tiles finish loading. If tiles fail (offline), the live warm-up map stays (or the placeholder, once a waiting row takes its turn) and retries next time the row appears. `reload()` forces it.
 
 ### Location
 

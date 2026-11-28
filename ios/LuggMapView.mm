@@ -278,13 +278,8 @@ static const NSTimeInterval kOffWindowTeardownDelay = 0.5;
 
 // Shown while the map warms up, until the live map or snapshot covers it
 - (void)applyStaticPlaceholderBackground {
-  const auto &viewProps =
-      *std::static_pointer_cast<LuggMapViewProps const>(_props);
-  if (viewProps.backgroundColor) {
-    // A user-provided background acts as the placeholder
-    return;
-  }
-
+  // Also styles the base render, which the 'system' theme inherits, so it
+  // applies with a custom background too
   switch (_theme) {
   case LuggMapViewTheme::Dark:
     _mapWrapperView.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
@@ -296,6 +291,13 @@ static const NSTimeInterval kOffWindowTeardownDelay = 0.5;
     _mapWrapperView.overrideUserInterfaceStyle =
         UIUserInterfaceStyleUnspecified;
     break;
+  }
+
+  const auto &viewProps =
+      *std::static_pointer_cast<LuggMapViewProps const>(_props);
+  if (viewProps.backgroundColor) {
+    // A user-provided background acts as the placeholder
+    return;
   }
   _mapWrapperView.backgroundColor = UIColor.secondarySystemBackgroundColor;
 }
@@ -625,7 +627,8 @@ static const NSTimeInterval kOffWindowTeardownDelay = 0.5;
     _maxZoom = newViewProps.maxZoom;
     [_provider setMaxZoom:_maxZoom];
   }
-  if (newViewProps.theme != prevViewProps.theme) {
+  BOOL themeChanged = newViewProps.theme != prevViewProps.theme;
+  if (themeChanged) {
     _theme = newViewProps.theme;
     [_provider setTheme:_theme];
   }
@@ -653,6 +656,13 @@ static const NSTimeInterval kOffWindowTeardownDelay = 0.5;
   }
 
   [super updateProps:props oldProps:oldProps];
+
+  // The wrapper's style override also styles the base render (the 'system'
+  // theme inherits it), so it has to follow the theme. After super so the
+  // placeholder sees the new backgroundColor; the re-render is async.
+  if (themeChanged && _staticMode && _mapWrapperView) {
+    [self applyStaticPlaceholderBackground];
+  }
 
   // After super so the snapshot cache key sees the new camera props
   if (staticKeyChanged && _staticMode && _mapWrapperView) {

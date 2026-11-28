@@ -79,6 +79,8 @@ mounting many live maps is expensive:
   the overlays and is replaced with a rendered image once tiles finish
   loading, releasing the map's rendering resources. Only a few maps warm
   up at a time; the rest wait their turn, so a long list loads gradually.
+  A map whose tiles fail (e.g. offline) gives way to waiting maps after a
+  few seconds.
 - **Web (Google)** - gestures, POI clicks, keyboard interaction, and press
   events are disabled; the map itself stays live.
 
@@ -133,8 +135,9 @@ Notes:
   the `edgeInsets` prop. The cache is bounded by total memory (128 MB).
 - On iOS (Google), the base map is only captured and cached once the SDK
   reports the map stable with all tiles loaded. If tiles fail (e.g.
-  offline), the live warmup map stays in place instead and renders again
-  the next time the row appears, so a bad render can't get stuck behind
+  offline), the live warmup map stays in place instead (or the
+  placeholder, once a waiting map takes its turn) and renders again the
+  next time the row appears, so a bad render can't get stuck behind
   `staticKey`. To force it, call `reload()` on the ref.
 - Alternatively, keeping rows mounted (larger `windowSize` with
   `removeClippedSubviews`) avoids re-rendering entirely at the cost of
