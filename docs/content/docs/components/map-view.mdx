@@ -34,6 +34,7 @@ import { MapView } from '@lugg/maps';
 | `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
 | `pitchEnabled` | `boolean` | `true` | Enable pitch/tilt gestures |
 | `compassEnabled` | `boolean` | `true` | Show compass on the map (rotate control on web) |
+| `indoorEnabled` | `boolean` | `true` | Show indoor floor plans and the floor picker (Google Maps on iOS and Android) |
 | `staticMode` | `boolean` | `false` | Render as a non-interactive [static map](#static-maps). Ideal for list views |
 | `staticKey` | `string` | - | Stable identity for the static snapshot cache (iOS). See [Static Maps](#static-maps) |
 | `edgeInsets` | `EdgeInsets` | - | Map content edge insets |
@@ -41,6 +42,7 @@ import { MapView } from '@lugg/maps';
 | `userLocationButtonEnabled` | `boolean` | `false` | Show native my-location button (Android only) |
 | `poiEnabled` | `boolean` | `true` | Show points of interest (Apple Maps only) |
 | `poiFilter` | [`PoiFilter`](#poifilter) | - | Filter POI categories (Apple Maps only) |
+| `poiClickEnabled` | `boolean` | `true` | Open Google's place card when a place label is clicked (web only) |
 | `theme` | [`MapTheme`](#maptheme) | `'system'` | Map color theme |
 | `insetAdjustment` | `'automatic' \| 'never'` | `'never'` | Safe area inset adjustment behavior |
 | `idleFrameRate` | [`MapIdleFrameRate`](#mapidleframerate) | `'maximum'` | How often the map redraws for moving `path` markers while the camera is still |

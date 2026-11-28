@@ -262,6 +262,10 @@ LuggInterfaceStyleFromTheme(facebook::react::LuggMapViewTheme theme) {
   _mapView.settings.compassButton = enabled;
 }
 
+- (void)setIndoorEnabled:(BOOL)enabled {
+  _mapView.indoorEnabled = enabled;
+}
+
 - (void)setUserLocationEnabled:(BOOL)enabled {
   _mapView.myLocationEnabled = enabled;
 }

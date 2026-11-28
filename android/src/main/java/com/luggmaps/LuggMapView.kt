@@ -65,6 +65,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var compassEnabled: Boolean = true
+  private var indoorEnabled: Boolean = true
   private var staticMode: Boolean = false
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
@@ -218,6 +219,7 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     provider?.setRotateEnabled(rotateEnabled)
     provider?.setPitchEnabled(pitchEnabled)
     provider?.setCompassEnabled(compassEnabled)
+    provider?.setIndoorEnabled(indoorEnabled)
     provider?.setUserLocationEnabled(userLocationEnabled)
     provider?.setUserLocationButtonEnabled(userLocationButtonEnabled)
     provider?.setMapType(mapType)
@@ -280,6 +282,12 @@ class LuggMapView(private val reactContext: ThemedReactContext) :
     if (compassEnabled == enabled) return
     compassEnabled = enabled
     provider?.setCompassEnabled(enabled)
+  }
+
+  fun setIndoorEnabled(enabled: Boolean) {
+    if (indoorEnabled == enabled) return
+    indoorEnabled = enabled
+    provider?.setIndoorEnabled(enabled)
   }
 
   fun setStaticMode(enabled: Boolean) {

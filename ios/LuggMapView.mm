@@ -57,6 +57,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   BOOL _rotateEnabled;
   BOOL _pitchEnabled;
   BOOL _compassEnabled;
+  BOOL _indoorEnabled;
   BOOL _staticMode;
   NSString *_staticKey;
   BOOL _staticSnapshotDone;
@@ -91,6 +92,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
     _rotateEnabled = YES;
     _pitchEnabled = YES;
     _compassEnabled = YES;
+    _indoorEnabled = YES;
     _staticMode = NO;
     _staticKey = @"";
     _userLocationEnabled = NO;
@@ -268,10 +270,11 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   }
 
   return [NSString
-      stringWithFormat:@"%@|%d|%@|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
+      stringWithFormat:@"%@|%d|%@|%d|%d|%ld|%.0fx%.0f|%.6f,%.6f,%.2f|%@",
                        _staticKey, (int)_providerType, _mapId, (int)_mapType,
-                       (long)style, size.width, size.height, latitude,
-                       longitude, zoom, NSStringFromUIEdgeInsets(_edgeInsets)];
+                       (int)_indoorEnabled, (long)style, size.width,
+                       size.height, latitude, longitude, zoom,
+                       NSStringFromUIEdgeInsets(_edgeInsets)];
 }
 
 - (void)startStaticContent {
@@ -456,6 +459,7 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   [_provider setRotateEnabled:_rotateEnabled];
   [_provider setPitchEnabled:_pitchEnabled];
   [_provider setCompassEnabled:_compassEnabled];
+  [_provider setIndoorEnabled:_indoorEnabled];
   [_provider setUserLocationEnabled:_userLocationEnabled];
   [_provider setMapType:_mapType];
   [_provider setTheme:_theme];
@@ -508,6 +512,10 @@ static NSCache<NSString *, UIImage *> *StaticSnapshotCache(void) {
   if (newViewProps.compassEnabled != prevViewProps.compassEnabled) {
     _compassEnabled = newViewProps.compassEnabled;
     [_provider setCompassEnabled:_compassEnabled];
+  }
+  if (newViewProps.indoorEnabled != prevViewProps.indoorEnabled) {
+    _indoorEnabled = newViewProps.indoorEnabled;
+    [_provider setIndoorEnabled:_indoorEnabled];
   }
   if (newViewProps.userLocationEnabled != prevViewProps.userLocationEnabled) {
     _userLocationEnabled = newViewProps.userLocationEnabled;

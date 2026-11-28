@@ -130,6 +130,7 @@ class GoogleMapProvider(private val context: Context) :
   private var rotateEnabled: Boolean = true
   private var pitchEnabled: Boolean = true
   private var compassEnabled: Boolean = true
+  private var indoorEnabled: Boolean = true
   private var userLocationEnabled: Boolean = false
   private var userLocationButtonEnabled: Boolean = false
 
@@ -294,6 +295,7 @@ class GoogleMapProvider(private val context: Context) :
     }
 
     applyUiSettings()
+    map.setIndoorEnabled(indoorEnabled)
     applyZoomLimits()
     applyInsetAdjustment()
     applyTheme()
@@ -544,6 +546,11 @@ class GoogleMapProvider(private val context: Context) :
   override fun setCompassEnabled(enabled: Boolean) {
     compassEnabled = enabled
     googleMap?.uiSettings?.isCompassEnabled = enabled
+  }
+
+  override fun setIndoorEnabled(enabled: Boolean) {
+    indoorEnabled = enabled
+    googleMap?.setIndoorEnabled(enabled)
   }
 
   @SuppressLint("MissingPermission")

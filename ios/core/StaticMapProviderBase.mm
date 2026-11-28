@@ -249,6 +249,7 @@ static NSInteger shapeZIndex(UIView *shape) {
     _defaultMarkerOverlays = [NSMapTable weakToStrongObjectsMapTable];
     _mapType = LuggMapViewMapType::Standard;
     _theme = LuggMapViewTheme::System;
+    _indoorEnabled = YES;
   }
   return self;
 }
@@ -474,6 +475,10 @@ static NSInteger shapeZIndex(UIView *shape) {
 
 - (void)setTheme:(LuggMapViewTheme)theme {
   _theme = theme;
+}
+
+- (void)setIndoorEnabled:(BOOL)enabled {
+  _indoorEnabled = enabled;
 }
 
 - (void)setIdleFrameRate:(LuggMapViewIdleFrameRate)idleFrameRate {

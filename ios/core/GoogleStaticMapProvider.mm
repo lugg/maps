@@ -137,6 +137,7 @@ static void EnqueueStaticMapView(NSString *mapId, GMSMapView *mapView) {
   // padding on pooled views)
   mapView.padding = self.edgeInsets;
   mapView.mapType = LuggGMSMapTypeFromMapType(self.mapType);
+  mapView.indoorEnabled = self.indoorEnabled;
   mapView.overrideUserInterfaceStyle = LuggInterfaceStyleFromTheme(self.theme);
 
   _warmupMapView = mapView;

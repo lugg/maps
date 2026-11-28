@@ -220,6 +220,12 @@ export interface MapViewProps extends ViewProps {
    */
   compassEnabled?: boolean;
   /**
+   * Show indoor floor plans and the floor picker where Google has them
+   * (Google Maps on iOS and Android).
+   * @default true
+   */
+  indoorEnabled?: boolean;
+  /**
    * Render the map as a non-interactive, static map.
    * Uses Google Maps lite mode on Android. On iOS, the map is replaced
    * with a rendered snapshot once tiles finish loading, releasing the
@@ -267,6 +273,12 @@ export interface MapViewProps extends ViewProps {
    * @platform ios
    */
   poiFilter?: PoiFilter;
+  /**
+   * Open Google's place card when a place label is clicked (web only).
+   * @default true
+   * @platform web
+   */
+  poiClickEnabled?: boolean;
   /**
    * Map color theme
    * @default 'system'

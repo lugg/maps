@@ -137,6 +137,11 @@ class LuggMapViewManager :
     view.setCompassEnabled(value)
   }
 
+  @ReactProp(name = "indoorEnabled", defaultBoolean = true)
+  override fun setIndoorEnabled(view: LuggMapView, value: Boolean) {
+    view.setIndoorEnabled(value)
+  }
+
   @ReactProp(name = "staticMode", defaultBoolean = false)
   override fun setStaticMode(view: LuggMapView, value: Boolean) {
     view.setStaticMode(value)

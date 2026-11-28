@@ -301,6 +301,8 @@ Linear between keyframes, so add keyframes through corners. `times` instead of `
 | `poiEnabled` / `poiFilter` | Yes | No | No | No |
 | `rotateEnabled` / `pitchEnabled` | Yes | Yes | Yes | `pitchEnabled` only |
 | `compassEnabled` | Yes | Yes | Yes | Toggles rotate control |
+| `indoorEnabled` | No | Yes | Yes | No |
+| `poiClickEnabled` | No | No | No | Yes |
 | `userLocationButtonEnabled` | No | No | Yes | No |
 | `insetAdjustment` (safe area) | Yes | Yes | Yes | No |
 | `staticMode` | Snapshot (`MKMapSnapshotter`) | Warm-up map → image | Lite mode bitmap | Live map, gestures off |

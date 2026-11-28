@@ -37,6 +37,7 @@ CGPoint LuggStaticPointForCoordinate(MKMapRect mapRect, CGSize size,
 @property(nonatomic, readonly) BOOL projectionReady;
 @property(nonatomic, readonly) facebook::react::LuggMapViewMapType mapType;
 @property(nonatomic, readonly) facebook::react::LuggMapViewTheme theme;
+@property(nonatomic, readonly) BOOL indoorEnabled;
 
 /// Shows the base image below the overlays, emits the static snapshot
 /// delegate callbacks and marks the base render done.
